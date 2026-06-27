@@ -34,6 +34,15 @@ class Settings(BaseSettings):
 
     INSTAGRAM_COOKIES_FILE: str | None = None
 
+    # Proxy — supports http/https/socks5, e.g. http://127.0.0.1:10809
+    HTTP_PROXY: str | None = None
+    HTTPS_PROXY: str | None = None
+
+    @property
+    def proxy(self) -> str | None:
+        """Return the effective proxy URL (HTTPS takes priority)."""
+        return self.HTTPS_PROXY or self.HTTP_PROXY or None
+
     @property
     def allowed_origins(self) -> list[str]:
         raw = self.ALLOWED_ORIGINS.strip()

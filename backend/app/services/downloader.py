@@ -140,6 +140,10 @@ def _ydl_opts(target_dir: Path) -> dict[str, Any]:
             opts["username"] = username
             opts["password"] = password
 
+    # Proxy
+    if settings.proxy:
+        opts["proxy"] = settings.proxy
+
     return opts
 
 
@@ -192,7 +196,17 @@ def _try_gallery_dl(url: str, target_dir: Path) -> dict[str, Any]:
         if GALLERY_DL_CFG_PATH.exists():
             cmd.extend(["--config", str(GALLERY_DL_CFG_PATH.resolve())])
 
-    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+    # Pass proxy via environment variables for gallery-dl subprocess
+    env = None
+    if settings.proxy:
+        import os
+        env = os.environ.copy()
+        env["HTTP_PROXY"] = settings.proxy
+        env["HTTPS_PROXY"] = settings.proxy
+        env["http_proxy"] = settings.proxy
+        env["https_proxy"] = settings.proxy
+
+    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=180, env=env)
 
     # gallery-dl creates subdirectory structure — search recursively
     all_media = _collect_all_media(abs_dir)
