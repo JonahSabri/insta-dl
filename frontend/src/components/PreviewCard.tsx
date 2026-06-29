@@ -92,7 +92,7 @@ export default function PreviewCard({ result, onReset }: Props) {
       : preview.downloadVideo;
 
   return (
-    <div className="anim-bounce-in glow-card overflow-hidden">
+    <div className="anim-bounce-in result-card overflow-hidden">
 
       {/* ── Thumbnail + info ── */}
       <div className="flex items-start gap-4 p-5">

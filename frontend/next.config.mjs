@@ -17,6 +17,9 @@ const nextConfig = {
     ];
   },
 
+  // Legacy /admin redirect → /en/admin (handled by middleware for / paths too)
+
+
   async headers() {
     return [
       {

@@ -11,7 +11,6 @@ export default function LanguageSwitcher() {
 
   const current = LANGS.find((l) => l.code === lang) ?? LANGS[0];
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handle(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -30,23 +29,23 @@ export default function LanguageSwitcher() {
       >
         <span>{current.flag}</span>
         <span className="hidden sm:inline">{current.label}</span>
-        <svg
-          className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
-        >
+        <svg className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {open && (
-        <div className="absolute end-0 top-full mt-1.5 w-36 overflow-hidden rounded-xl border border-white/10
-          bg-slate-900/95 shadow-2xl backdrop-blur-xl"
-          style={{ zIndex: 100 }}>
+        <div
+          className="absolute end-0 top-full mt-1.5 w-36 overflow-hidden rounded-xl border border-white/10
+            bg-slate-900/95 shadow-2xl backdrop-blur-xl"
+          style={{ zIndex: 100 }}
+        >
           {LANGS.map((l) => (
             <button
               key={l.code}
               onClick={() => { setLang(l.code); setOpen(false); }}
-              className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-colors
+              className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-sm transition-colors
                 hover:bg-white/5
                 ${lang === l.code ? "text-brand-300" : "text-slate-400 hover:text-white"}`}
             >
