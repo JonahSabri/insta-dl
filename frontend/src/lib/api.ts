@@ -147,3 +147,17 @@ export async function deleteCookies(token: string): Promise<void> {
     headers: authHeader(token),
   });
 }
+
+// ─── Proxy ────────────────────────────────────────────────────────────────────
+
+export async function fetchProxy(token: string): Promise<{ proxy: string }> {
+  return request("/admin/proxy", { headers: authHeader(token) });
+}
+
+export async function saveProxy(token: string, proxy: string): Promise<{ saved: boolean; proxy: string }> {
+  return request("/admin/proxy", {
+    method: "POST",
+    headers: authHeader(token),
+    body: JSON.stringify({ proxy }),
+  });
+}

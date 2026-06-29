@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { analyzeUrl, pollStatus } from "@/lib/api";
 import type { DownloadResult, DownloadStep, StatusResponse } from "@/types";
+import { useT } from "@/i18n/context";
 import SteppedProgress from "./SteppedProgress";
 import PreviewCard from "./PreviewCard";
 
@@ -26,6 +27,7 @@ function Spinner() {
 }
 
 export default function DownloadBox() {
+  const t = useT();
   const [url, setUrl] = useState("");
   const [step, setStep] = useState<DownloadStep>("idle");
   const [progress, setProgress] = useState(0);
@@ -43,7 +45,7 @@ export default function DownloadBox() {
     if (!trimmed) return;
 
     if (!isInstagramUrl(trimmed)) {
-      setError("لینک باید از اینستاگرام (instagram.com) باشد.");
+      setError(t.download.errorInvalidUrl);
       return;
     }
 
@@ -57,7 +59,7 @@ export default function DownloadBox() {
       setStep("processing");
       startPolling(data.job_id);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "خطا در ارسال درخواست");
+      setError(err instanceof Error ? err.message : t.download.errorServer);
       setStep("error");
     }
   }
@@ -81,12 +83,12 @@ export default function DownloadBox() {
           setStep("ready");
         } else if (status.status === "failed") {
           clearInterval(pollRef.current!);
-          setError(status.error ?? "دانلود ناموفق بود.");
+          setError(status.error ?? t.download.errorServer);
           setStep("error");
         }
       } catch {
         clearInterval(pollRef.current!);
-        setError("خطا در ارتباط با سرور.");
+        setError(t.download.errorConnection);
         setStep("error");
       }
     }, 2000);
@@ -108,7 +110,6 @@ export default function DownloadBox() {
       {/* ── Input ── */}
       {isIdle && (
         <div className="anim-scale-in">
-          {/* Magic animated border wrapper */}
           <div className={`magic-border ${focused || url ? "active" : ""}`}>
             <div className="magic-border-inner p-1">
               <div className="flex items-stretch gap-0">
@@ -120,7 +121,7 @@ export default function DownloadBox() {
                   onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
                   onFocus={() => setFocused(true)}
                   onBlur={() => setFocused(false)}
-                  placeholder="لینک ریلز یا پست اینستاگرام را اینجا paste کن..."
+                  placeholder={t.download.placeholder}
                   className="min-w-0 flex-1 rounded-r-[14px] bg-transparent px-4 py-3.5 text-sm text-white
                     placeholder-slate-600 outline-none"
                   autoFocus
@@ -137,13 +138,12 @@ export default function DownloadBox() {
                         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                     </svg>
                   )}
-                  دانلود
+                  {t.download.button}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Error */}
           {error && (
             <div className="anim-fade-in mt-3 flex items-start gap-2.5 rounded-2xl border border-red-500/20
               bg-red-500/8 px-4 py-3 text-sm text-red-400"
@@ -153,19 +153,14 @@ export default function DownloadBox() {
             </div>
           )}
 
-          {/* Tip */}
-          <p className="mt-3 text-center text-xs text-slate-700">
-            پشتیبانی از Reel · پست · تصویر · کاروسل
-          </p>
+          <p className="mt-3 text-center text-xs text-slate-700">{t.download.tip}</p>
         </div>
       )}
 
-      {/* ── Progress ── */}
       {isProcessing && (
         <SteppedProgress progress={progress} isAnalyzing={step === "analyzing"} />
       )}
 
-      {/* ── Result ── */}
       {step === "ready" && result && (
         <PreviewCard result={result} onReset={handleReset} />
       )}

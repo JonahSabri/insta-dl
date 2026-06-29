@@ -5,6 +5,8 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.config import settings
 from app.database import init_db
@@ -40,6 +42,18 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Trust X-Forwarded-For from local proxies (Next.js dev server / nginx)
+class ForwardedForMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        xff = request.headers.get("x-forwarded-for")
+        if xff:
+            real_ip = xff.split(",")[0].strip()
+            # Patch scope so request.client.host also returns the real IP
+            request.scope["client"] = (real_ip, 0)
+        return await call_next(request)
+
+app.add_middleware(ForwardedForMiddleware)
 
 app.include_router(download_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api")

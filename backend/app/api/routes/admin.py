@@ -221,6 +221,30 @@ async def clear_credentials(
     return {"cleared": True}
 
 
+# ─── Proxy settings ──────────────────────────────────────────────────────────
+
+class ProxyUpdate(BaseModel):
+    proxy: str = ""
+
+
+@router.get("/proxy")
+async def get_proxy(
+    _: str = Depends(verify_admin),
+) -> dict:
+    proxy = settings_store.get("proxy") or settings.proxy or ""
+    return {"proxy": proxy}
+
+
+@router.post("/proxy")
+async def save_proxy(
+    body: ProxyUpdate,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(verify_admin),
+) -> dict:
+    await settings_store.save("proxy", body.proxy.strip(), db)
+    return {"saved": True, "proxy": body.proxy.strip()}
+
+
 # ─── Cookies file ─────────────────────────────────────────────────────────────
 
 COOKIES_PATH = Path(settings.DOWNLOADS_DIR) / "instagram_cookies.txt"

@@ -1,63 +1,49 @@
 "use client";
 
+import { useT } from "@/i18n/context";
+
 interface Props {
   progress: number;
   isAnalyzing?: boolean;
 }
 
-const STEPS = [
-  { label: "دریافت لینک", icon: "🔗", desc: "تحلیل لینک" },
-  { label: "پردازش فایل", icon: "⚙️", desc: "دانلود محتوا" },
-  { label: "آماده دانلود", icon: "✅", desc: "تحویل فایل" },
-];
-
 export default function SteppedProgress({ progress, isAnalyzing }: Props) {
-  const completed = progress >= 100;
-  const activeStep = isAnalyzing ? 0 : progress < 60 ? 1 : completed ? 2 : 2;
+  const t = useT();
+  const { steps, analyzing, downloading, processing, ready, preparing } = t.progress;
 
-  const messages = isAnalyzing
-    ? "در حال تحلیل لینک..."
+  const completed = progress >= 100;
+  const activeStep = isAnalyzing ? 0 : progress < 60 ? 1 : 2;
+
+  const message = isAnalyzing
+    ? analyzing
     : progress < 50
-      ? "در حال دانلود فایل..."
+      ? downloading
       : progress < 90
-        ? "در حال پردازش..."
+        ? processing
         : completed
-          ? "🎉 دانلود آماده شد!"
-          : "در حال آماده‌سازی...";
+          ? ready
+          : preparing;
 
   return (
     <div className="anim-scale-in glass-card overflow-hidden p-6">
       {/* Steps row */}
       <div className="mb-7 flex items-start justify-between">
-        {STEPS.map((step, i) => {
+        {steps.map((step, i) => {
           const done = completed ? true : i < activeStep;
           const active = i === activeStep && !completed;
 
           return (
             <div key={step.label} className="flex flex-1 items-start">
-              {/* Step + label */}
               <div className="flex flex-col items-center gap-2">
-                {/* Circle */}
                 <div className="relative">
                   <div
-                    className="relative flex h-11 w-11 items-center justify-center rounded-full text-base
-                      transition-all duration-500"
+                    className="relative flex h-11 w-11 items-center justify-center rounded-full text-base transition-all duration-500"
                     style={
                       done
-                        ? {
-                            background: "linear-gradient(135deg,#7c3aed,#6d28d9)",
-                            boxShadow: "0 0 20px rgba(124,58,237,0.6), 0 0 40px rgba(124,58,237,0.25)",
-                          }
+                        ? { background: "linear-gradient(135deg,#7c3aed,#6d28d9)", boxShadow: "0 0 20px rgba(124,58,237,0.6), 0 0 40px rgba(124,58,237,0.25)" }
                         : active
-                          ? {
-                              background: "rgba(124,58,237,0.15)",
-                              border: "1.5px solid rgba(124,58,237,0.6)",
-                              boxShadow: "0 0 16px rgba(124,58,237,0.35)",
-                            }
-                          : {
-                              background: "rgba(255,255,255,0.04)",
-                              border: "1px solid rgba(255,255,255,0.08)",
-                            }
+                          ? { background: "rgba(124,58,237,0.15)", border: "1.5px solid rgba(124,58,237,0.6)", boxShadow: "0 0 16px rgba(124,58,237,0.35)" }
+                          : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }
                     }
                   >
                     {done ? (
@@ -72,7 +58,6 @@ export default function SteppedProgress({ progress, isAnalyzing }: Props) {
                     )}
                   </div>
 
-                  {/* Spinning ring for active step */}
                   {active && (
                     <div className="absolute inset-0 rounded-full"
                       style={{
@@ -84,7 +69,6 @@ export default function SteppedProgress({ progress, isAnalyzing }: Props) {
                   )}
                 </div>
 
-                {/* Label */}
                 <div className="text-center">
                   <p className={`whitespace-nowrap text-xs font-medium transition-colors duration-300
                     ${done || active ? "text-slate-200" : "text-slate-700"}`}>
@@ -96,14 +80,12 @@ export default function SteppedProgress({ progress, isAnalyzing }: Props) {
                 </div>
               </div>
 
-              {/* Connector */}
-              {i < STEPS.length - 1 && (
+              {i < steps.length - 1 && (
                 <div className="relative mx-3 mb-9 mt-5 h-px flex-1 overflow-hidden">
                   <div className="absolute inset-0 rounded-full bg-white/5" />
                   {done && (
                     <div className="absolute inset-0 rounded-full"
-                      style={{ background: "linear-gradient(90deg,#7c3aed,#6d28d9)",
-                               boxShadow: "0 0 6px rgba(124,58,237,0.5)" }} />
+                      style={{ background: "linear-gradient(90deg,#7c3aed,#6d28d9)", boxShadow: "0 0 6px rgba(124,58,237,0.5)" }} />
                   )}
                 </div>
               )}
@@ -114,10 +96,8 @@ export default function SteppedProgress({ progress, isAnalyzing }: Props) {
 
       {/* Progress bar */}
       <div className="relative mb-3 h-2.5 overflow-hidden rounded-full bg-white/5">
-        {/* Track glow */}
         <div className="absolute inset-0 rounded-full opacity-30 blur-sm"
           style={{ background: "linear-gradient(90deg,#7c3aed,#a855f7,#06b6d4)" }} />
-        {/* Fill */}
         <div
           className="relative h-full rounded-full transition-all duration-700 ease-out"
           style={{
@@ -126,7 +106,6 @@ export default function SteppedProgress({ progress, isAnalyzing }: Props) {
             boxShadow: "0 0 12px rgba(124,58,237,0.7)",
           }}
         />
-        {/* Shimmer on bar */}
         {!completed && (
           <div className="absolute inset-0 overflow-hidden rounded-full"
             style={{ width: `${Math.max(5, progress)}%` }}>
@@ -136,14 +115,12 @@ export default function SteppedProgress({ progress, isAnalyzing }: Props) {
         )}
       </div>
 
-      {/* Percentage + message */}
       <div className="flex items-center justify-between">
-        <p className={`text-sm font-medium transition-colors
-          ${completed ? "text-green-400" : "text-slate-400"}`}>
-          {messages}
+        <p className={`text-sm font-medium transition-colors ${completed ? "text-green-400" : "text-slate-400"}`}>
+          {message}
         </p>
         <span className="text-xs tabular-nums text-slate-600">
-          {Math.min(100, Math.round(progress))}٪
+          {Math.min(100, Math.round(progress))}%
         </span>
       </div>
     </div>

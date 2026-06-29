@@ -16,6 +16,17 @@ const nextConfig = {
       },
     ];
   },
+
+  async headers() {
+    return [
+      {
+        source: "/api/:path*",
+        headers: [
+          { key: "X-Forwarded-For", value: ":remote-addr" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -140,9 +140,10 @@ def _ydl_opts(target_dir: Path) -> dict[str, Any]:
             opts["username"] = username
             opts["password"] = password
 
-    # Proxy
-    if settings.proxy:
-        opts["proxy"] = settings.proxy
+    # Proxy — settings_store takes priority over .env
+    proxy = settings_store.get("proxy") or settings.proxy
+    if proxy:
+        opts["proxy"] = proxy
 
     return opts
 
@@ -197,14 +198,15 @@ def _try_gallery_dl(url: str, target_dir: Path) -> dict[str, Any]:
             cmd.extend(["--config", str(GALLERY_DL_CFG_PATH.resolve())])
 
     # Pass proxy via environment variables for gallery-dl subprocess
+    import os
+    proxy = settings_store.get("proxy") or settings.proxy
     env = None
-    if settings.proxy:
-        import os
+    if proxy:
         env = os.environ.copy()
-        env["HTTP_PROXY"] = settings.proxy
-        env["HTTPS_PROXY"] = settings.proxy
-        env["http_proxy"] = settings.proxy
-        env["https_proxy"] = settings.proxy
+        env["HTTP_PROXY"] = proxy
+        env["HTTPS_PROXY"] = proxy
+        env["http_proxy"] = proxy
+        env["https_proxy"] = proxy
 
     proc = subprocess.run(cmd, capture_output=True, text=True, timeout=180, env=env)
 

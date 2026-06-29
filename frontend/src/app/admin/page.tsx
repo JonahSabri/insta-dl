@@ -15,6 +15,8 @@ import {
   fetchCookiesStatus,
   uploadCookies,
   deleteCookies,
+  fetchProxy,
+  saveProxy,
 } from "@/lib/api";
 import type { AdminStats, DownloadRecord, Banner } from "@/types";
 import Link from "next/link";
@@ -284,6 +286,123 @@ function BannerManager({ token }: { token: string }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Proxy Manager ────────────────────────────────────────────────────────────
+
+function ProxyManager({ token }: { token: string }) {
+  const [proxy, setProxy] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  useEffect(() => {
+    fetchProxy(token)
+      .then((d) => setProxy(d.proxy))
+      .catch(() => {});
+  }, [token]);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setMsg(null);
+    try {
+      await saveProxy(token, proxy);
+      setMsg({ type: "ok", text: proxy ? `پراکسی ذخیره شد ✓` : "پراکسی غیرفعال شد." });
+    } catch (err: unknown) {
+      setMsg({ type: "err", text: err instanceof Error ? err.message : "خطا" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const isActive = proxy.trim().length > 0;
+
+  return (
+    <div className="glass-card overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-3 border-b border-white/5 px-5 py-4">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 text-lg">
+          🌐
+        </div>
+        <div className="flex-1">
+          <h3 className="font-semibold text-slate-200">پراکسی</h3>
+          <p className="text-xs text-slate-500">برای عبور از محدودیت‌های شبکه</p>
+        </div>
+        <span className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${
+          isActive
+            ? "border-green-500/30 bg-green-500/10 text-green-400"
+            : "border-white/10 bg-white/5 text-slate-500"
+        }`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-green-400" : "bg-slate-600"}`} />
+          {isActive ? "فعال" : "غیرفعال"}
+        </span>
+      </div>
+
+      <form onSubmit={handleSave} className="space-y-4 p-5">
+        <div>
+          <label className="mb-1.5 block text-xs text-slate-500">آدرس پراکسی</label>
+          <input
+            type="text"
+            value={proxy}
+            onChange={(e) => { setProxy(e.target.value); setMsg(null); }}
+            placeholder="http://127.0.0.1:10809"
+            className="input-field font-mono text-sm"
+            dir="ltr"
+          />
+        </div>
+
+        {/* Examples */}
+        <div className="space-y-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+          <p className="mb-2 text-xs text-slate-600">نمونه فرمت‌ها:</p>
+          {[
+            ["HTTP/HTTPS", "http://127.0.0.1:10809"],
+            ["SOCKS5", "socks5://127.0.0.1:1080"],
+            ["با پسورد", "http://user:pass@host:port"],
+          ].map(([label, example]) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => { setProxy(example); setMsg(null); }}
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/5"
+            >
+              <span className="w-20 shrink-0 text-xs text-slate-600">{label}</span>
+              <code className="truncate text-xs text-slate-400">{example}</code>
+            </button>
+          ))}
+        </div>
+
+        {msg && (
+          <div className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm ${
+            msg.type === "ok"
+              ? "border-green-500/20 bg-green-500/10 text-green-400"
+              : "border-red-500/20 bg-red-500/10 text-red-400"
+          }`}>
+            {msg.type === "ok" ? "✓" : "✗"} {msg.text}
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <button type="submit" disabled={saving} className="btn-primary flex-1 justify-center text-sm disabled:opacity-50">
+            {saving ? (
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path d="M21 12a9 9 0 11-6.219-8.56" strokeLinecap="round" />
+              </svg>
+            ) : "💾"}{" "}
+            ذخیره
+          </button>
+          {isActive && (
+            <button
+              type="button"
+              onClick={() => { setProxy(""); setMsg(null); }}
+              className="btn-secondary text-sm text-slate-400"
+            >
+              پاک‌کردن
+            </button>
+          )}
+        </div>
+      </form>
     </div>
   );
 }
@@ -632,7 +751,7 @@ function CredentialsManager({ token }: { token: string }) {
 export default function AdminPage() {
   const [token, setToken] = useState<string | null>(null);
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [tab, setTab] = useState<"downloads" | "banners" | "cookies" | "credentials">("downloads");
+  const [tab, setTab] = useState<"downloads" | "banners" | "proxy" | "cookies" | "credentials">("downloads");
 
   useEffect(() => {
     const saved = localStorage.getItem("admin_token");
@@ -678,7 +797,7 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-1 rounded-xl bg-white/5 p-1 w-fit">
-          {(["downloads", "banners", "cookies", "credentials"] as const).map((t) => (
+          {(["downloads", "banners", "proxy", "cookies", "credentials"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -688,6 +807,7 @@ export default function AdminPage() {
             >
               {t === "downloads" ? "📥 دانلودها"
                 : t === "banners" ? "🖼 بنرها"
+                : t === "proxy" ? "🌐 پراکسی"
                 : t === "cookies" ? "🍪 کوکی"
                 : "🔑 یوزر/پسورد"}
             </button>
@@ -697,6 +817,7 @@ export default function AdminPage() {
         {/* Content */}
         {tab === "downloads" && <DownloadsTable token={token} />}
         {tab === "banners" && <BannerManager token={token} />}
+        {tab === "proxy" && <ProxyManager token={token} />}
         {tab === "cookies" && <CookiesManager token={token} />}
         {tab === "credentials" && <CredentialsManager token={token} />}
       </main>
