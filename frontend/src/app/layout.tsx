@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { LanguageProvider } from "@/i18n/context";
 
-const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "InstaGet";
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "JazzGhost";
 
 export const metadata: Metadata = {
   title: {
