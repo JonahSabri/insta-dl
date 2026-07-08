@@ -1,4 +1,14 @@
-export type DownloadStep = "idle" | "analyzing" | "processing" | "ready" | "error";
+export type DownloadStep = "idle" | "previewing" | "preview_ready" | "downloading" | "ready" | "error";
+
+export type MediaTypeFilter = "all" | "reel" | "post" | "story";
+
+export interface PreviewData {
+  title: string;
+  thumbnail_url: string | null;
+  duration: number | null;
+  uploader: string | null;
+  media_type: string;
+}
 
 export interface AnalyzeResponse {
   job_id: string;

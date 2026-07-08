@@ -1,4 +1,4 @@
-import type { AnalyzeResponse, StatusResponse, AdminStats, DownloadRecord, Banner } from "@/types";
+import type { AnalyzeResponse, PreviewData, StatusResponse, AdminStats, DownloadRecord, Banner } from "@/types";
 
 const BASE = "/api";
 
@@ -20,6 +20,13 @@ function authHeader(token: string): { Authorization: string } {
 }
 
 // ─── Public ─────────────────────────────────────────────────────────────────
+
+export async function previewUrl(url: string): Promise<PreviewData> {
+  return request<PreviewData>("/v1/download/preview", {
+    method: "POST",
+    body: JSON.stringify({ url }),
+  });
+}
 
 export async function analyzeUrl(url: string): Promise<AnalyzeResponse> {
   return request<AnalyzeResponse>("/v1/download/analyze", {

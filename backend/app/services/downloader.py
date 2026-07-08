@@ -260,6 +260,64 @@ def _try_gallery_dl(url: str, target_dir: Path) -> dict[str, Any]:
     }
 
 
+# ─── Fast preview (metadata only) ────────────────────────────────────────────
+
+def get_preview(url: str) -> dict[str, Any]:
+    """Extract title + thumbnail without downloading the media file."""
+    validate_url(url)
+
+    opts: dict[str, Any] = {
+        "quiet": True,
+        "no_warnings": True,
+        "skip_download": True,
+        "http_headers": {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/125.0.0.0 Safari/537.36"
+            )
+        },
+    }
+
+    proxy = settings_store.get("proxy") or settings.proxy
+    if proxy:
+        opts["proxy"] = proxy
+
+    cookies = _cookies_file()
+    if cookies:
+        opts["cookiefile"] = cookies
+    else:
+        username, password = _ig_credentials()
+        if username and password:
+            opts["username"] = username
+            opts["password"] = password
+
+    try:
+        with YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(url, download=False) or {}
+    except DownloadError as exc:
+        raise RuntimeError(str(exc)[:300]) from exc
+
+    # Best thumbnail — pick highest resolution
+    thumbnails = info.get("thumbnails") or []
+    thumbnail_url: str | None = None
+    if thumbnails:
+        best = max(
+            thumbnails,
+            key=lambda t: (t.get("width") or 0) * (t.get("height") or 0),
+        )
+        thumbnail_url = best.get("url")
+    thumbnail_url = thumbnail_url or info.get("thumbnail")
+
+    return {
+        "title": info.get("title") or "Instagram Media",
+        "thumbnail_url": thumbnail_url,
+        "duration": info.get("duration"),
+        "uploader": info.get("uploader") or info.get("channel"),
+        "media_type": detect_media_type(url),
+    }
+
+
 # ─── Public entry point ───────────────────────────────────────────────────────
 
 def download_media(url: str, job_id: str) -> dict[str, Any]:

@@ -134,13 +134,9 @@ export default function HomePage() {
               ))}
             </div>
 
-            {/* Download box with Instagram ring */}
+              {/* Download box */}
             <div className="anim-fade-up anim-delay-300">
-              <div className="ig-ring-wrap">
-                <div className="ig-ring-inner">
-                  <DownloadBox />
-                </div>
-              </div>
+              <DownloadBox />
             </div>
 
             {/* Trust indicators */}
@@ -212,7 +208,7 @@ export default function HomePage() {
                 Features
               </p>
               <h2 className="anim-fade-up text-2xl font-extrabold text-white sm:text-3xl">
-                {t.features.heading.replace("InstaGet", siteName)}
+                {t.features.heading}
               </h2>
             </div>
 

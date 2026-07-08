@@ -34,10 +34,21 @@ export interface Translations {
   download: {
     placeholder: string;
     button: string;
+    fetchPreview: string;
+    fetchingPreview: string;
+    downloadNow: string;
+    tryAnother: string;
     tip: string;
     errorInvalidUrl: string;
+    errorTypeMismatch: string;
     errorServer: string;
     errorConnection: string;
+    typeLabels: { reel: string; post: string; story: string; all: string };
+  };
+  steps: {
+    step1: string;
+    step2: string;
+    step3: string;
   };
   progress: {
     steps: { label: string; icon: string; desc: string }[];
@@ -73,7 +84,7 @@ const en: Translations = {
     titleLine1: "Download",
     titleHighlight: "Reels & Posts",
     titleLine2: "from Instagram",
-    subtitle: "Paste any Instagram link and download the file in the highest quality.",
+    subtitle: "Pick your content type, paste the link, and download in seconds — for free.",
     supported: [
       { icon: "🎬", label: "Reel" },
       { icon: "📸", label: "Post" },
@@ -91,7 +102,7 @@ const en: Translations = {
     ],
   },
   features: {
-    heading: "Why InstaGet?",
+    heading: "Why JazzGhost?",
     items: [
       { icon: "⚡", title: "Ultra Fast",      desc: "Direct download at the highest available quality, no speed limits.", delay: "anim-delay-100" },
       { icon: "📱", title: "All Formats",     desc: "Reels, posts, images, carousels — we support them all.",            delay: "anim-delay-200" },
@@ -103,10 +114,21 @@ const en: Translations = {
   download: {
     placeholder: "Paste an Instagram reel or post link here...",
     button: "Download",
+    fetchPreview: "Get Preview",
+    fetchingPreview: "Fetching preview…",
+    downloadNow: "Download Now",
+    tryAnother: "← Try another link",
     tip: "Supports Reel · Post · Image · Carousel",
     errorInvalidUrl: "Link must be from Instagram (instagram.com).",
+    errorTypeMismatch: "This link doesn't look like a {type}. Please select the correct type.",
     errorServer: "Error sending request.",
     errorConnection: "Connection error with server.",
+    typeLabels: { reel: "Reel", post: "Post", story: "Story", all: "Any" },
+  },
+  steps: {
+    step1: "Analyzing link",
+    step2: "Downloading media",
+    step3: "Preparing file",
   },
   progress: {
     steps: [
@@ -154,7 +176,7 @@ const pt: Translations = {
     titleLine1: "Baixe",
     titleHighlight: "Reels e Posts",
     titleLine2: "do Instagram",
-    subtitle: "Cole qualquer link do Instagram e baixe o arquivo na maior qualidade disponível.",
+    subtitle: "Escolha o tipo de conteúdo, cole o link e baixe em segundos — de graça.",
     supported: [
       { icon: "🎬", label: "Reel" },
       { icon: "📸", label: "Post" },
@@ -172,7 +194,7 @@ const pt: Translations = {
     ],
   },
   features: {
-    heading: "Por que InstaGet?",
+    heading: "Por que JazzGhost?",
     items: [
       { icon: "⚡", title: "Ultra Rápido",    desc: "Download direto na maior qualidade, sem limite de velocidade.", delay: "anim-delay-100" },
       { icon: "📱", title: "Todos os Formatos", desc: "Reels, posts, imagens, carrosséis — tudo suportado.",         delay: "anim-delay-200" },
@@ -184,10 +206,21 @@ const pt: Translations = {
   download: {
     placeholder: "Cole aqui o link do reel ou post do Instagram...",
     button: "Baixar",
+    fetchPreview: "Ver Preview",
+    fetchingPreview: "Carregando preview…",
+    downloadNow: "Baixar Agora",
+    tryAnother: "← Tentar outro link",
     tip: "Suporta Reel · Post · Imagem · Carrossel",
     errorInvalidUrl: "O link deve ser do Instagram (instagram.com).",
+    errorTypeMismatch: "Este link não parece ser um {type}. Selecione o tipo correto.",
     errorServer: "Erro ao enviar a requisição.",
     errorConnection: "Erro de conexão com o servidor.",
+    typeLabels: { reel: "Reel", post: "Post", story: "Story", all: "Qualquer" },
+  },
+  steps: {
+    step1: "Analisando link",
+    step2: "Baixando mídia",
+    step3: "Preparando arquivo",
   },
   progress: {
     steps: [
@@ -235,7 +268,7 @@ const fa: Translations = {
     titleLine1: "دانلود",
     titleHighlight: "ریلز و پست",
     titleLine2: "اینستاگرام",
-    subtitle: "لینک هر محتوایی از اینستاگرام را بذار و فایل را با بالاترین کیفیت دانلود کن.",
+    subtitle: "نوع محتوا را انتخاب کن، لینک را بذار و در چند ثانیه دانلود کن — رایگان.",
     supported: [
       { icon: "🎬", label: "Reel" },
       { icon: "📸", label: "پست" },
@@ -253,7 +286,7 @@ const fa: Translations = {
     ],
   },
   features: {
-    heading: "چرا InstaGet؟",
+    heading: "چرا JazzGhost؟",
     items: [
       { icon: "⚡", title: "فوق‌سریع",       desc: "دانلود مستقیم با بالاترین کیفیت موجود، بدون محدودیت سرعت.", delay: "anim-delay-100" },
       { icon: "📱", title: "همه فرمت‌ها",    desc: "Reel، پست، تصویر، کاروسل — همه رو پشتیبانی می‌کنیم.",      delay: "anim-delay-200" },
@@ -265,10 +298,21 @@ const fa: Translations = {
   download: {
     placeholder: "لینک ریلز یا پست اینستاگرام را اینجا paste کن...",
     button: "دانلود",
+    fetchPreview: "پیش‌نمایش",
+    fetchingPreview: "در حال دریافت پیش‌نمایش…",
+    downloadNow: "دانلود کن",
+    tryAnother: "← لینک دیگری",
     tip: "پشتیبانی از Reel · پست · تصویر · کاروسل",
     errorInvalidUrl: "لینک باید از اینستاگرام (instagram.com) باشد.",
+    errorTypeMismatch: "این لینک شبیه {type} نیست. نوع صحیح را انتخاب کنید.",
     errorServer: "خطا در ارسال درخواست.",
     errorConnection: "خطا در ارتباط با سرور.",
+    typeLabels: { reel: "ریلز", post: "پست", story: "استوری", all: "همه" },
+  },
+  steps: {
+    step1: "تحلیل لینک",
+    step2: "دانلود محتوا",
+    step3: "آماده‌سازی فایل",
   },
   progress: {
     steps: [

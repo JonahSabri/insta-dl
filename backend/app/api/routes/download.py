@@ -15,7 +15,7 @@ from fastapi import Depends
 from app.config import settings
 from app.database import get_db
 from app.models.download import Download
-from app.services.downloader import detect_media_type, download_media, validate_url
+from app.services.downloader import detect_media_type, download_media, get_preview, validate_url
 from app.services.job_store import create_job, get_job, update_job
 from app.services.rate_limiter import check_rate_limit, record_download
 
@@ -64,6 +64,33 @@ class StatusResponse(BaseModel):
     file_count: int = 1
     carousel_files: list[CarouselFile] | None = None
     error: str | None = None
+
+
+class PreviewResponse(BaseModel):
+    title: str
+    thumbnail_url: str | None = None
+    duration: float | None = None
+    uploader: str | None = None
+    media_type: str
+
+
+@router.post("/preview", response_model=PreviewResponse)
+async def preview(
+    body: AnalyzeRequest,
+    request: Request,
+) -> PreviewResponse:
+    """Fast metadata extraction — no file download, no rate-limit consumption."""
+    try:
+        validate_url(body.url)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    try:
+        data = await asyncio.to_thread(get_preview, body.url)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    return PreviewResponse(**data)
 
 
 async def _run_download(job_id: str, url: str, db: AsyncSession) -> None:
