@@ -2,6 +2,7 @@
 
 import DownloadBox from "@/components/DownloadBox";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import PwaInstallBanner from "@/components/PwaInstallBanner";
 import { useT } from "@/i18n/context";
 import { useParams } from "next/navigation";
 
@@ -286,6 +287,9 @@ export default function HomePage() {
           </div>
         </section>
       </main>
+
+      {/* ══ PWA INSTALL BANNER ══════════════════════════════════════════ */}
+      <PwaInstallBanner />
 
       {/* ══ FOOTER ══════════════════════════════════════════════════════ */}
       <footer className="py-8 text-center text-xs text-slate-700">

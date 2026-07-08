@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { previewUrl, analyzeUrl, pollStatus } from "@/lib/api";
+import { previewUrl, analyzeUrl, pollStatus, getDownloadUrl } from "@/lib/api";
 import type { DownloadResult, DownloadStep, MediaTypeFilter, PreviewData, StatusResponse } from "@/types";
 import { useT } from "@/i18n/context";
 import SkeletonCard from "./SkeletonCard";
@@ -332,6 +332,16 @@ export default function DownloadBox({ onResult }: Props) {
           setResult(res);
           setStep("ready");
           onResult?.(res);
+
+          // Auto-trigger browser download immediately
+          const a = document.createElement("a");
+          a.href = getDownloadUrl(jobId);
+          a.download = "";
+          a.style.display = "none";
+          document.body.appendChild(a);
+          a.click();
+          // Clean up after a tick so the click is processed
+          setTimeout(() => document.body.removeChild(a), 500);
         } else if (status.status === "failed") {
           clearInterval(pollRef.current!);
           setError(status.error ?? t.download.errorServer);
