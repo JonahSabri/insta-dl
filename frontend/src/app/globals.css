@@ -101,7 +101,11 @@
    BASE
 ══════════════════════════════════════════════════════════════ */
 @layer base {
-  html { scroll-behavior: smooth; }
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;   /* prevent any child from causing horizontal scroll */
+    max-width: 100vw;
+  }
 
   body {
     @apply antialiased;
@@ -109,6 +113,7 @@
     background: #060610;
     color: #e2e8f0;
     overflow-x: hidden;
+    max-width: 100vw;
   }
 
   *:focus-visible {
@@ -129,8 +134,9 @@
   position: fixed;
   inset: 0;
   z-index: -1;
-  overflow: hidden;
+  overflow: hidden;        /* clip orbs that go beyond screen */
   pointer-events: none;
+  max-width: 100vw;
   background: radial-gradient(ellipse 120% 80% at 50% 0%,
     rgba(131,58,180,0.06) 0%,
     transparent 60%),
@@ -921,8 +927,19 @@
    RESPONSIVE — MOBILE FIRST
 ══════════════════════════════════════════════════════════════ */
 
+/* Shrink background orbs on mobile to avoid any layout impact */
+@media (max-width: 640px) {
+  .bg-orb-1 { width: 400px; height: 400px; right: -100px; top: -150px; }
+  .bg-orb-2 { width: 350px; height: 350px; left: -100px; bottom: -100px; }
+  .bg-orb-3 { width: 280px; height: 280px; }
+  .bg-orb-4 { width: 250px; height: 250px; }
+}
+
 /* Type selector: scroll horizontally on very small screens */
 @media (max-width: 480px) {
+  /* Clip the overflow at the DownloadBox container level */
+  .mx-auto.w-full.max-w-2xl { overflow-x: hidden; }
+
   .type-selector {
     gap: 0.35rem;
     padding: 0.2rem;
@@ -931,6 +948,9 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     justify-content: flex-start;
+    /* Prevent the scrollable bar itself from widening the page */
+    max-width: 100%;
+    box-sizing: border-box;
   }
   .type-selector::-webkit-scrollbar { display: none; }
 

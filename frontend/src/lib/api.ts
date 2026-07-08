@@ -22,10 +22,15 @@ function authHeader(token: string): { Authorization: string } {
 // ─── Public ─────────────────────────────────────────────────────────────────
 
 export async function previewUrl(url: string): Promise<PreviewData> {
-  return request<PreviewData>("/v1/download/preview", {
+  const data = await request<PreviewData>("/v1/download/preview", {
     method: "POST",
     body: JSON.stringify({ url }),
   });
+  // Proxy the thumbnail through our backend so the browser avoids Instagram CDN restrictions
+  if (data.thumbnail_url) {
+    data.thumbnail_url = `${BASE}/v1/download/thumbnail-proxy?url=${encodeURIComponent(data.thumbnail_url)}`;
+  }
+  return data;
 }
 
 export async function analyzeUrl(url: string): Promise<AnalyzeResponse> {

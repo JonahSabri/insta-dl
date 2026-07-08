@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import asyncio
+import urllib.request
 import uuid
 from pathlib import Path
 
 import mimetypes
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
 
 from app.config import settings
 from app.database import get_db
@@ -91,6 +91,43 @@ async def preview(
         raise HTTPException(status_code=422, detail=str(exc))
 
     return PreviewResponse(**data)
+
+
+@router.get("/thumbnail-proxy")
+async def thumbnail_proxy(url: str = Query(..., description="Instagram CDN URL to proxy")) -> Response:
+    """Proxy an Instagram CDN thumbnail so the browser never hits the CDN directly."""
+
+    def _fetch(target: str) -> tuple[bytes, str]:
+        req = urllib.request.Request(
+            target,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/125.0.0.0 Safari/537.36"
+                ),
+                "Referer": "https://www.instagram.com/",
+                "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=12) as resp:  # noqa: S310
+            data = resp.read()
+            ct = resp.headers.get("Content-Type", "image/jpeg").split(";")[0].strip()
+            return data, ct
+
+    try:
+        data, content_type = await asyncio.to_thread(_fetch, url)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Could not fetch thumbnail: {exc}") from exc
+
+    return Response(
+        content=data,
+        media_type=content_type,
+        headers={
+            "Cache-Control": "public, max-age=600",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 async def _run_download(job_id: str, url: str, db: AsyncSession) -> None:

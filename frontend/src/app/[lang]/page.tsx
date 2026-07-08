@@ -26,7 +26,7 @@ export default function HomePage() {
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "JazzGhost";
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col overflow-x-hidden w-full">
 
       {/* ══ HEADER ══════════════════════════════════════════════════════ */}
       <header
