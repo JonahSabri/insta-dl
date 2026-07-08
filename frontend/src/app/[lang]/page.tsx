@@ -3,8 +3,22 @@
 import DownloadBox from "@/components/DownloadBox";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useT } from "@/i18n/context";
-import Link from "next/link";
 import { useParams } from "next/navigation";
+
+/* ── Inline SVG icon atoms ─────────────────────────────────────────────── */
+function IconReel()     { return <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>; }
+function IconPost()     { return <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>; }
+function IconCarousel() { return <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M18 8h2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>; }
+function IconStory()    { return <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>; }
+
+function FeatureIcon({ id }: { id: string }) {
+  const cls = "w-5 h-5";
+  if (id === "fast")    return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
+  if (id === "formats") return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>;
+  if (id === "private") return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
+  if (id === "free")    return <svg className={cls} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>;
+  return null;
+}
 
 export default function HomePage() {
   const t = useT();
@@ -25,15 +39,19 @@ export default function HomePage() {
       >
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           {/* Logo */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <div
-              className="flex h-8 w-8 items-center justify-center rounded-xl text-sm font-bold text-white"
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-white"
               style={{
                 background: "linear-gradient(135deg,#833ab4,#e1306c,#fcb045)",
                 boxShadow: "0 0 16px rgba(131,58,180,0.5), 0 0 32px rgba(225,48,108,0.2)",
               }}
             >
-              ↓
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
             </div>
             <span className="ig-gradient-text text-lg font-extrabold tracking-tight">
               {siteName}
@@ -42,18 +60,6 @@ export default function HomePage() {
 
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
-            <Link
-              href={`/${lang}/admin`}
-              className="rounded-lg border px-3 py-1.5 text-xs text-slate-400 transition-all
-                hover:text-white"
-              style={{
-                background: "rgba(131,58,180,0.06)",
-                borderColor: "rgba(131,58,180,0.18)",
-                backdropFilter: "blur(8px)",
-              }}
-            >
-              {t.header.admin}
-            </Link>
           </div>
         </div>
       </header>
@@ -61,7 +67,7 @@ export default function HomePage() {
       <main className="flex-1">
 
         {/* ══ HERO ════════════════════════════════════════════════════════ */}
-        <section className="relative overflow-hidden px-4 pb-24 pt-20 text-center">
+        <section className="relative overflow-hidden px-4 pb-16 pt-12 sm:pb-24 sm:pt-20 text-center">
 
           {/* Hero glow blobs */}
           <div className="pointer-events-none absolute inset-0">
@@ -94,7 +100,7 @@ export default function HomePage() {
             </div>
 
             {/* Main title */}
-            <h1 className="anim-fade-up mb-5 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="anim-fade-up mb-4 text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
               <span className="block text-white/90">{t.hero.titleLine1}</span>
               <span
                 className="block"
@@ -116,9 +122,14 @@ export default function HomePage() {
               {t.hero.subtitle}
             </p>
 
-            {/* Supported badges */}
+            {/* Supported badges — icon labels (no emojis) */}
             <div className="anim-fade-up anim-delay-200 mb-10 flex flex-wrap justify-center gap-2">
-              {t.hero.supported.map((s, i) => (
+              {[
+                { label: "Reel",     icon: <IconReel /> },
+                { label: "Post",     icon: <IconPost /> },
+                { label: "Carousel", icon: <IconCarousel /> },
+                { label: "Story",    icon: <IconStory /> },
+              ].map((s) => (
                 <span
                   key={s.label}
                   className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs backdrop-blur-sm"
@@ -126,7 +137,6 @@ export default function HomePage() {
                     background: "rgba(255,255,255,0.04)",
                     border: "1px solid rgba(255,255,255,0.08)",
                     color: "#94a3b8",
-                    animationDelay: `${0.2 + i * 0.06}s`,
                   }}
                 >
                   {s.icon} {s.label}
@@ -141,15 +151,21 @@ export default function HomePage() {
 
             {/* Trust indicators */}
             <div className="anim-fade-in anim-delay-500 mt-6 flex flex-wrap justify-center gap-5 text-xs text-slate-600">
-              {["🔒 No login required", "⚡ HD quality", "🆓 Always free"].map((item) => (
-                <span key={item}>{item}</span>
+              {[
+                { icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>, label: "No login required" },
+                { icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>, label: "HD quality" },
+                { icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>, label: "Always free" },
+              ].map((item) => (
+                <span key={item.label} className="flex items-center gap-1.5">
+                  {item.icon} {item.label}
+                </span>
               ))}
             </div>
           </div>
         </section>
 
         {/* ══ HOW TO ══════════════════════════════════════════════════════ */}
-        <section className="section-glow relative px-4 py-20">
+        <section className="section-glow relative px-4 py-12 sm:py-20">
           {/* Section background */}
           <div className="pointer-events-none absolute inset-0"
             style={{
@@ -184,8 +200,13 @@ export default function HomePage() {
                   <p className="text-sm leading-relaxed text-slate-500">{item.desc}</p>
 
                   {/* Decorative corner */}
-                  <div className="absolute right-3 top-3 text-2xl opacity-10 transition-opacity group-hover:opacity-20">
-                    {i === 0 ? "🔗" : i === 1 ? "📋" : "🎯"}
+                  <div className="absolute right-3 top-3 opacity-10 transition-opacity group-hover:opacity-20 text-white">
+                    {i === 0
+                      ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                      : i === 1
+                      ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    }
                   </div>
                 </div>
               ))}
@@ -194,7 +215,7 @@ export default function HomePage() {
         </section>
 
         {/* ══ FEATURES ════════════════════════════════════════════════════ */}
-        <section className="section-glow relative px-4 py-20">
+        <section className="section-glow relative px-4 py-12 sm:py-20">
           <div className="pointer-events-none absolute inset-0"
             style={{
               background: "linear-gradient(180deg, rgba(6,6,16,0) 0%, rgba(131,58,180,0.04) 50%, rgba(6,6,16,0) 100%)",
@@ -213,12 +234,14 @@ export default function HomePage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              {t.features.items.map((f, i) => (
+              {t.features.items.map((f) => (
                 <div
                   key={f.title}
                   className={`glass-card anim-fade-up group flex gap-4 p-6 ${f.delay}`}
                 >
-                  <div className="feature-icon">{f.icon}</div>
+                  <div className="feature-icon">
+                    <FeatureIcon id={f.icon} />
+                  </div>
                   <div className="min-w-0">
                     <h3 className="mb-1.5 font-bold text-slate-100">{f.title}</h3>
                     <p className="text-sm leading-relaxed text-slate-500">{f.desc}</p>

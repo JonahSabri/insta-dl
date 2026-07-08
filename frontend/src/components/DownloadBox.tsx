@@ -7,6 +7,9 @@ import { useT } from "@/i18n/context";
 import SkeletonCard from "./SkeletonCard";
 import PreviewCard from "./PreviewCard";
 
+/* ─── types ────────────────────────────────────────────────────────────────── */
+export type ExtendedMediaTypeFilter = MediaTypeFilter | "carousel";
+
 /* ─── helpers ──────────────────────────────────────────────────────────────── */
 
 function isInstagramUrl(url: string): boolean {
@@ -17,14 +20,42 @@ function isInstagramUrl(url: string): boolean {
   }
 }
 
-function matchesType(url: string, type: MediaTypeFilter): boolean {
+function matchesType(url: string, type: ExtendedMediaTypeFilter): boolean {
   if (type === "all") return true;
   const path = url.toLowerCase();
-  if (type === "reel") return path.includes("/reel/");
-  if (type === "post") return path.includes("/p/");
-  if (type === "story") return path.includes("/stories/");
+  if (type === "reel")     return path.includes("/reel/");
+  if (type === "post")     return path.includes("/p/");
+  if (type === "carousel") return path.includes("/p/");
+  if (type === "story")    return path.includes("/stories/");
   return true;
 }
+
+/* ─── SVG icon atoms ────────────────────────────────────────────────────────── */
+const IcoReel = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+  </svg>
+);
+const IcoPost = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+  </svg>
+);
+const IcoCarousel = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="6" width="14" height="12" rx="2"/><path d="M18 8h2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/>
+  </svg>
+);
+const IcoStory = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+  </svg>
+);
+const IcoAll = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+  </svg>
+);
 
 function Spinner() {
   return (
@@ -38,23 +69,23 @@ function Spinner() {
 /* ─── Type selector ─────────────────────────────────────────────────────────── */
 
 interface TypeOption {
-  id: MediaTypeFilter;
-  emoji: string;
+  id: ExtendedMediaTypeFilter;
+  icon: React.ReactNode;
   labelKey: string;
-  urlHint: string;
   placeholder: string;
 }
 
 const TYPE_OPTIONS: TypeOption[] = [
-  { id: "reel",    emoji: "🎬", labelKey: "reel",    urlHint: "/reel/",    placeholder: "https://www.instagram.com/reel/..." },
-  { id: "post",    emoji: "🖼️", labelKey: "post",    urlHint: "/p/",       placeholder: "https://www.instagram.com/p/..." },
-  { id: "story",   emoji: "⭕", labelKey: "story",   urlHint: "/stories/", placeholder: "https://www.instagram.com/stories/..." },
-  { id: "all",     emoji: "🔗", labelKey: "all",     urlHint: "",          placeholder: "https://www.instagram.com/..." },
+  { id: "reel",     icon: <IcoReel />,     labelKey: "reel",     placeholder: "https://www.instagram.com/reel/..." },
+  { id: "post",     icon: <IcoPost />,     labelKey: "post",     placeholder: "https://www.instagram.com/p/..." },
+  { id: "carousel", icon: <IcoCarousel />, labelKey: "carousel", placeholder: "https://www.instagram.com/p/..." },
+  { id: "story",    icon: <IcoStory />,    labelKey: "story",    placeholder: "https://www.instagram.com/stories/..." },
+  { id: "all",      icon: <IcoAll />,      labelKey: "all",      placeholder: "https://www.instagram.com/..." },
 ];
 
 interface TypeSelectorProps {
-  selected: MediaTypeFilter;
-  onChange: (t: MediaTypeFilter) => void;
+  selected: ExtendedMediaTypeFilter;
+  onChange: (t: ExtendedMediaTypeFilter) => void;
   labels: Record<string, string>;
 }
 
@@ -68,7 +99,7 @@ function TypeSelector({ selected, onChange, labels }: TypeSelectorProps) {
           className={`type-pill ${selected === opt.id ? "active" : ""}`}
           type="button"
         >
-          <span className="type-pill-emoji">{opt.emoji}</span>
+          <span className="type-pill-icon">{opt.icon}</span>
           <span className="type-pill-label">{labels[opt.id] ?? opt.id}</span>
         </button>
       ))}
@@ -146,7 +177,10 @@ function PreviewStageCard({ preview, onDownload, onReset, t }: PreviewStageCardP
             </svg>
             {t.download.downloadNow}
           </button>
-          <button onClick={onReset} className="btn-secondary w-full">
+          <button onClick={onReset} className="btn-secondary w-full flex items-center justify-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
             {t.download.tryAnother}
           </button>
         </div>
@@ -164,9 +198,9 @@ interface DownloadingOverlayProps {
 
 function DownloadingOverlay({ progress, t }: DownloadingOverlayProps) {
   const steps = [
-    { label: t.steps.step1, done: progress >= 30 },
-    { label: t.steps.step2, done: progress >= 60 },
-    { label: t.steps.step3, done: progress >= 90 },
+    { label: t.steps.step1, done: progress >= 30,  icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> },
+    { label: t.steps.step2, done: progress >= 60,  icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> },
+    { label: t.steps.step3, done: progress >= 90,  icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg> },
   ];
 
   return (
@@ -199,7 +233,7 @@ function DownloadingOverlay({ progress, t }: DownloadingOverlayProps) {
       <div className="dl-steps">
         {steps.map((s, i) => (
           <div key={i} className={`dl-step ${s.done ? "done" : i === steps.filter(x => x.done).length ? "active" : ""}`}>
-            <span className="dl-step-dot" />
+            <span className="dl-step-icon">{s.icon}</span>
             <span className="dl-step-label">{s.label}</span>
           </div>
         ))}
@@ -217,7 +251,7 @@ interface Props {
 export default function DownloadBox({ onResult }: Props) {
   const t = useT();
 
-  const [mediaType, setMediaType] = useState<MediaTypeFilter>("reel");
+  const [mediaType, setMediaType] = useState<ExtendedMediaTypeFilter>("reel");
   const [url, setUrl] = useState("");
   const [step, setStep] = useState<DownloadStep>("idle");
   const [progress, setProgress] = useState(0);
@@ -231,7 +265,7 @@ export default function DownloadBox({ onResult }: Props) {
 
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
-  const currentTypeOpt = TYPE_OPTIONS.find(o => o.id === mediaType) ?? TYPE_OPTIONS[3];
+  const currentTypeOpt = TYPE_OPTIONS.find(o => o.id === mediaType) ?? TYPE_OPTIONS[4];
   const typeLabels = t.download.typeLabels;
 
   /* ── Phase 1: fetch preview ──────────────────────────────────────────────── */
@@ -330,10 +364,11 @@ export default function DownloadBox({ onResult }: Props) {
             selected={mediaType}
             onChange={(t) => { setMediaType(t); setError(null); }}
             labels={{
-              reel:  typeLabels.reel,
-              post:  typeLabels.post,
-              story: typeLabels.story,
-              all:   typeLabels.all,
+              reel:     typeLabels.reel,
+              post:     typeLabels.post,
+              carousel: typeLabels.carousel ?? "Carousel",
+              story:    typeLabels.story,
+              all:      typeLabels.all,
             }}
           />
         </div>

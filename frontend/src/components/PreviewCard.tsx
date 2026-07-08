@@ -40,7 +40,10 @@ function SlideRow({ file, index, imageLabel, videoLabel }: {
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm"
         style={{ background: isVideo ? "rgba(168,85,247,0.15)" : "rgba(6,182,212,0.12)" }}
       >
-        {isVideo ? "🎬" : "🖼️"}
+        {isVideo
+        ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      }
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs font-medium text-slate-300">
@@ -95,8 +98,8 @@ export default function PreviewCard({ result, onReset }: Props) {
     <div className="anim-bounce-in result-card overflow-hidden">
 
       {/* ── Thumbnail + info ── */}
-      <div className="flex items-start gap-4 p-5">
-        <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-slate-800/80">
+      <div className="flex flex-col sm:flex-row items-start gap-4 p-4 sm:p-5">
+        <div className="relative h-44 w-full sm:h-28 sm:w-28 shrink-0 overflow-hidden rounded-2xl bg-slate-800/80">
           {result.thumbnail_url ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -109,13 +112,15 @@ export default function PreviewCard({ result, onReset }: Props) {
                 style={{ background: "linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 65%)" }} />
             </>
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-4xl">{meta.icon}</div>
+            <div className="flex h-full w-full items-center justify-center text-white/20">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            </div>
           )}
 
-          <span className="absolute bottom-1.5 right-1.5 rounded-md px-1.5 py-0.5
+            <span className="absolute bottom-1.5 right-1.5 rounded-md px-1.5 py-0.5
             text-[10px] font-semibold text-white backdrop-blur-md"
             style={{ background: "rgba(0,0,0,0.7)", border: "1px solid rgba(255,255,255,0.12)" }}>
-            {meta.icon} {meta.label}
+            {meta.label}
           </span>
 
           {isCarousel && (
@@ -149,11 +154,12 @@ export default function PreviewCard({ result, onReset }: Props) {
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="badge rounded-lg px-2.5 py-1 text-xs font-medium"
               style={{ background: `${meta.color}18`, border: `1px solid ${meta.color}35`, color: meta.color }}>
-              {meta.icon} {meta.label}
+              {meta.label}
             </span>
             {isCarousel && (
-              <span className="badge rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-400">
-                📦 {result.file_count} files
+              <span className="badge flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-400">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M18 8h2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>
+                {result.file_count} files
               </span>
             )}
           </div>

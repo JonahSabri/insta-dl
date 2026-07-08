@@ -27,8 +27,10 @@ export default function LanguageSwitcher() {
           text-xs text-slate-400 backdrop-blur-sm transition-all hover:border-white/20 hover:text-white"
         aria-label="Change language"
       >
-        <span>{current.flag}</span>
-        <span className="hidden sm:inline">{current.label}</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        <span className="text-xs font-semibold uppercase tracking-wide">{current.code}</span>
         <svg className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
           viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -49,7 +51,7 @@ export default function LanguageSwitcher() {
                 hover:bg-white/5
                 ${lang === l.code ? "text-brand-300" : "text-slate-400 hover:text-white"}`}
             >
-              <span className="text-base">{l.flag}</span>
+              <span className="text-xs font-bold uppercase tracking-wide w-6">{l.code}</span>
               <span>{l.label}</span>
               {lang === l.code && (
                 <svg className="ms-auto h-3.5 w-3.5 text-brand-400" viewBox="0 0 24 24" fill="none"

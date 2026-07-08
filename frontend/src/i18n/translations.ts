@@ -43,7 +43,7 @@ export interface Translations {
     errorTypeMismatch: string;
     errorServer: string;
     errorConnection: string;
-    typeLabels: { reel: string; post: string; story: string; all: string };
+    typeLabels: { reel: string; post: string; carousel: string; story: string; all: string };
   };
   steps: {
     step1: string;
@@ -104,10 +104,10 @@ const en: Translations = {
   features: {
     heading: "Why JazzGhost?",
     items: [
-      { icon: "⚡", title: "Ultra Fast",      desc: "Direct download at the highest available quality, no speed limits.", delay: "anim-delay-100" },
-      { icon: "📱", title: "All Formats",     desc: "Reels, posts, images, carousels — we support them all.",            delay: "anim-delay-200" },
-      { icon: "🔒", title: "Private",         desc: "Files are never stored permanently. Deleted after download.",       delay: "anim-delay-300" },
-      { icon: "🆓", title: "Completely Free", desc: "No sign-up or payment needed for daily downloads.",                 delay: "anim-delay-400" },
+      { icon: "fast",    title: "Ultra Fast",      desc: "Direct download at the highest available quality, no speed limits.", delay: "anim-delay-100" },
+      { icon: "formats", title: "All Formats",     desc: "Reels, posts, images, carousels — we support them all.",            delay: "anim-delay-200" },
+      { icon: "private", title: "Private",         desc: "Files are never stored permanently. Deleted after download.",       delay: "anim-delay-300" },
+      { icon: "free",    title: "Completely Free", desc: "No sign-up or payment needed for daily downloads.",                 delay: "anim-delay-400" },
     ],
   },
   footer: { madeWith: "Made with ❤️ by Jonah Sabri" },
@@ -123,7 +123,7 @@ const en: Translations = {
     errorTypeMismatch: "This link doesn't look like a {type}. Please select the correct type.",
     errorServer: "Error sending request.",
     errorConnection: "Connection error with server.",
-    typeLabels: { reel: "Reel", post: "Post", story: "Story", all: "Any" },
+    typeLabels: { reel: "Reel", post: "Post", carousel: "Carousel", story: "Story", all: "Any" },
   },
   steps: {
     step1: "Analyzing link",
@@ -196,10 +196,10 @@ const pt: Translations = {
   features: {
     heading: "Por que JazzGhost?",
     items: [
-      { icon: "⚡", title: "Ultra Rápido",    desc: "Download direto na maior qualidade, sem limite de velocidade.", delay: "anim-delay-100" },
-      { icon: "📱", title: "Todos os Formatos", desc: "Reels, posts, imagens, carrosséis — tudo suportado.",         delay: "anim-delay-200" },
-      { icon: "🔒", title: "Privacidade",      desc: "Arquivos não ficam armazenados. Excluídos após o download.",  delay: "anim-delay-300" },
-      { icon: "🆓", title: "Completamente Grátis", desc: "Sem cadastro ou pagamento para downloads diários.",       delay: "anim-delay-400" },
+      { icon: "fast",    title: "Ultra Rápido",        desc: "Download direto na maior qualidade, sem limite de velocidade.", delay: "anim-delay-100" },
+      { icon: "formats", title: "Todos os Formatos",   desc: "Reels, posts, imagens, carrosséis — tudo suportado.",         delay: "anim-delay-200" },
+      { icon: "private", title: "Privacidade",         desc: "Arquivos não ficam armazenados. Excluídos após o download.",  delay: "anim-delay-300" },
+      { icon: "free",    title: "Completamente Grátis",desc: "Sem cadastro ou pagamento para downloads diários.",           delay: "anim-delay-400" },
     ],
   },
   footer: { madeWith: "Feito com ❤️ por Jonah Sabri" },
@@ -215,7 +215,7 @@ const pt: Translations = {
     errorTypeMismatch: "Este link não parece ser um {type}. Selecione o tipo correto.",
     errorServer: "Erro ao enviar a requisição.",
     errorConnection: "Erro de conexão com o servidor.",
-    typeLabels: { reel: "Reel", post: "Post", story: "Story", all: "Qualquer" },
+    typeLabels: { reel: "Reel", post: "Post", carousel: "Carrossel", story: "Story", all: "Qualquer" },
   },
   steps: {
     step1: "Analisando link",
@@ -288,10 +288,10 @@ const fa: Translations = {
   features: {
     heading: "چرا JazzGhost؟",
     items: [
-      { icon: "⚡", title: "فوق‌سریع",       desc: "دانلود مستقیم با بالاترین کیفیت موجود، بدون محدودیت سرعت.", delay: "anim-delay-100" },
-      { icon: "📱", title: "همه فرمت‌ها",    desc: "Reel، پست، تصویر، کاروسل — همه رو پشتیبانی می‌کنیم.",      delay: "anim-delay-200" },
-      { icon: "🔒", title: "حریم خصوصی",     desc: "فایل‌ها روی سرور ذخیره نمی‌مانند. بعد از دانلود پاک می‌شوند.", delay: "anim-delay-300" },
-      { icon: "🆓", title: "کاملاً رایگان",  desc: "بدون نیاز به ثبت‌نام یا پرداخت برای دانلودهای روزانه.",   delay: "anim-delay-400" },
+      { icon: "fast",    title: "فوق‌سریع",      desc: "دانلود مستقیم با بالاترین کیفیت موجود، بدون محدودیت سرعت.", delay: "anim-delay-100" },
+      { icon: "formats", title: "همه فرمت‌ها",   desc: "Reel، پست، تصویر، کاروسل — همه رو پشتیبانی می‌کنیم.",      delay: "anim-delay-200" },
+      { icon: "private", title: "حریم خصوصی",    desc: "فایل‌ها روی سرور ذخیره نمی‌مانند. بعد از دانلود پاک می‌شوند.", delay: "anim-delay-300" },
+      { icon: "free",    title: "کاملاً رایگان", desc: "بدون نیاز به ثبت‌نام یا پرداخت برای دانلودهای روزانه.",   delay: "anim-delay-400" },
     ],
   },
   footer: { madeWith: "ساخته‌شده با ❤️ توسط Jonah Sabri" },
@@ -307,7 +307,7 @@ const fa: Translations = {
     errorTypeMismatch: "این لینک شبیه {type} نیست. نوع صحیح را انتخاب کنید.",
     errorServer: "خطا در ارسال درخواست.",
     errorConnection: "خطا در ارتباط با سرور.",
-    typeLabels: { reel: "ریلز", post: "پست", story: "استوری", all: "همه" },
+    typeLabels: { reel: "ریلز", post: "پست", carousel: "کاروسل", story: "استوری", all: "همه" },
   },
   steps: {
     step1: "تحلیل لینک",
