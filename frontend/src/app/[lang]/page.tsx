@@ -23,7 +23,7 @@ function FeatureIcon({ id }: { id: string }) {
 export default function HomePage() {
   const t = useT();
   const { lang } = useParams<{ lang: string }>();
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "InstaGet";
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "JazzGhost";
 
   return (
     <div className="flex min-h-screen flex-col">

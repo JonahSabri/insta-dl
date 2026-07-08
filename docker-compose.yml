@@ -28,7 +28,7 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://backend:8000
-      - NEXT_PUBLIC_SITE_NAME=${SITE_NAME:-InstaGet}
+      - NEXT_PUBLIC_SITE_NAME=${SITE_NAME:-JazzGhost}
     depends_on:
       - backend
     restart: unless-stopped

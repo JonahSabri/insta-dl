@@ -13,7 +13,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const { lang } = await params;
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "InstaGet";
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "JazzGhost";
 
   const meta: Record<string, { title: string; description: string }> = {
     en: {

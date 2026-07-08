@@ -1,4 +1,4 @@
-# InstaGet — Instagram Downloader Platform
+# JazzGhost — Instagram Downloader Platform
 
 پلتفرم دانلود محتوای اینستاگرام با FastAPI + Next.js.
 
