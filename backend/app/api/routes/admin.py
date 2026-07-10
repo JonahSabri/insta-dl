@@ -17,6 +17,33 @@ from app.models.banner import Banner
 from app.models.download import Download
 from app.services import settings_store
 
+
+# ─── User-Agent parser ───────────────────────────────────────────────────────
+
+def _parse_ua(ua_string: str | None) -> dict:
+    """Return browser and device info parsed from a User-Agent string."""
+    if not ua_string:
+        return {"browser": "Unknown", "device": "Unknown", "os": "Unknown"}
+    try:
+        from user_agents import parse as ua_parse
+        ua = ua_parse(ua_string)
+        browser = ua.browser.family or "Unknown"
+        if ua.browser.version_string:
+            major = ua.browser.version_string.split(".")[0]
+            browser = f"{browser} {major}"
+        if ua.is_mobile:
+            device_type = "📱 Mobile"
+        elif ua.is_tablet:
+            device_type = "📟 Tablet"
+        elif ua.is_bot:
+            device_type = "🤖 Bot"
+        else:
+            device_type = "💻 Desktop"
+        os_name = ua.os.family or "Unknown"
+        return {"browser": browser, "device": device_type, "os": os_name}
+    except Exception:
+        return {"browser": "Unknown", "device": "Unknown", "os": "Unknown"}
+
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
@@ -96,6 +123,7 @@ async def list_downloads(
                 "media_type": d.media_type,
                 "title": d.title,
                 "created_at": d.created_at.isoformat(),
+                **_parse_ua(d.user_agent),
             }
             for d in downloads
         ],

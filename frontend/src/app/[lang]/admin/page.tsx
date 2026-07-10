@@ -154,6 +154,8 @@ function DownloadsTable({ token }: { token: string }) {
                 <tr className="border-b border-white/5 text-right text-xs text-slate-600">
                   <th className="px-4 py-2">Job ID</th>
                   <th className="px-4 py-2">IP</th>
+                  <th className="px-4 py-2">مرورگر / دستگاه</th>
+                  <th className="px-4 py-2">سیستم‌عامل</th>
                   <th className="px-4 py-2">نوع</th>
                   <th className="px-4 py-2">وضعیت</th>
                   <th className="px-4 py-2">زمان</th>
@@ -163,7 +165,14 @@ function DownloadsTable({ token }: { token: string }) {
                 {items.map((d) => (
                   <tr key={d.job_id} className="border-b border-white/5 hover:bg-white/[0.02]">
                     <td className="px-4 py-2 font-mono text-xs text-slate-500">{d.job_id.slice(0, 8)}…</td>
-                    <td className="px-4 py-2 text-slate-400">{d.ip_address}</td>
+                    <td className="px-4 py-2 text-slate-400 font-mono text-xs">{d.ip_address}</td>
+                    <td className="px-4 py-2">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-slate-300">{d.browser ?? "—"}</span>
+                        <span className="text-[10px] text-slate-600">{d.device ?? "—"}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-2 text-xs text-slate-500">{d.os ?? "—"}</td>
                     <td className="px-4 py-2 text-slate-400">{d.media_type}</td>
                     <td className="px-4 py-2">
                       <span className={`badge ${statusBadge(d.status)}`}>{d.status}</span>

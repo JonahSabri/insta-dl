@@ -67,4 +67,7 @@ export interface DownloadRecord {
   media_type: string;
   title?: string | null;
   created_at: string;
+  browser?: string;
+  device?: string;
+  os?: string;
 }
