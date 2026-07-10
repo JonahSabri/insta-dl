@@ -18,31 +18,91 @@ from app.models.download import Download
 from app.services import settings_store
 
 
-# ─── User-Agent parser ───────────────────────────────────────────────────────
+# ─── User-Agent parser (no external deps) ────────────────────────────────────
+
+import re as _re
 
 def _parse_ua(ua_string: str | None) -> dict:
-    """Return browser and device info parsed from a User-Agent string."""
+    """Return browser, device, and OS info parsed from a User-Agent string."""
     if not ua_string:
-        return {"browser": "Unknown", "device": "Unknown", "os": "Unknown"}
-    try:
-        from user_agents import parse as ua_parse
-        ua = ua_parse(ua_string)
-        browser = ua.browser.family or "Unknown"
-        if ua.browser.version_string:
-            major = ua.browser.version_string.split(".")[0]
-            browser = f"{browser} {major}"
-        if ua.is_mobile:
-            device_type = "📱 Mobile"
-        elif ua.is_tablet:
-            device_type = "📟 Tablet"
-        elif ua.is_bot:
-            device_type = "🤖 Bot"
-        else:
-            device_type = "💻 Desktop"
-        os_name = ua.os.family or "Unknown"
-        return {"browser": browser, "device": device_type, "os": os_name}
-    except Exception:
-        return {"browser": "Unknown", "device": "Unknown", "os": "Unknown"}
+        return {"browser": "—", "device": "—", "os": "—"}
+
+    ua = ua_string
+
+    # ── OS ───────────────────────────────────────────────────────────────────
+    if "Windows NT" in ua:
+        nt = _re.search(r"Windows NT ([\d.]+)", ua)
+        nt_map = {"10.0": "Windows 11/10", "6.3": "Windows 8.1",
+                  "6.2": "Windows 8", "6.1": "Windows 7"}
+        ver = nt.group(1) if nt else ""
+        os_name = nt_map.get(ver, f"Windows {ver}") if ver else "Windows"
+    elif "Android" in ua:
+        ver = _re.search(r"Android ([\d.]+)", ua)
+        os_name = f"Android {ver.group(1)}" if ver else "Android"
+    elif "iPhone OS" in ua or "iPhone" in ua:
+        ver = _re.search(r"OS ([\d_]+)", ua)
+        os_name = f"iOS {ver.group(1).replace('_', '.')}" if ver else "iOS"
+    elif "iPad" in ua:
+        ver = _re.search(r"OS ([\d_]+)", ua)
+        os_name = f"iPadOS {ver.group(1).replace('_', '.')}" if ver else "iPadOS"
+    elif "Mac OS X" in ua:
+        ver = _re.search(r"Mac OS X ([\d_]+)", ua)
+        os_name = f"macOS {ver.group(1).replace('_', '.')}" if ver else "macOS"
+    elif "Linux" in ua:
+        os_name = "Linux"
+    elif "CrOS" in ua:
+        os_name = "ChromeOS"
+    else:
+        os_name = "—"
+
+    # ── Device type ───────────────────────────────────────────────────────────
+    bot_keywords = ("bot", "spider", "crawl", "slurp", "facebookexternalhit",
+                    "Googlebot", "bingbot", "Baiduspider", "YandexBot")
+    if any(k.lower() in ua.lower() for k in bot_keywords):
+        device_type = "🤖 Bot"
+    elif "iPad" in ua:
+        device_type = "📟 Tablet"
+    elif "Mobile" in ua or "Android" in ua and "Mobile" in ua:
+        device_type = "📱 Mobile"
+    elif "Android" in ua:
+        device_type = "📟 Tablet"
+    elif "iPhone" in ua:
+        device_type = "📱 Mobile"
+    else:
+        device_type = "💻 Desktop"
+
+    # ── Browser ───────────────────────────────────────────────────────────────
+    # Order matters: check specific browsers before generic ones
+    if m := _re.search(r"Edg(?:e|A|iOS)?/([\d]+)", ua):
+        browser = f"Edge {m.group(1)}"
+    elif m := _re.search(r"OPR/([\d]+)", ua):
+        browser = f"Opera {m.group(1)}"
+    elif m := _re.search(r"Opera/([\d]+)", ua):
+        browser = f"Opera {m.group(1)}"
+    elif m := _re.search(r"SamsungBrowser/([\d]+)", ua):
+        browser = f"Samsung {m.group(1)}"
+    elif m := _re.search(r"UCBrowser/([\d]+)", ua):
+        browser = f"UC Browser {m.group(1)}"
+    elif m := _re.search(r"YaBrowser/([\d]+)", ua):
+        browser = f"Yandex {m.group(1)}"
+    elif m := _re.search(r"Firefox/([\d]+)", ua):
+        browser = f"Firefox {m.group(1)}"
+    elif m := _re.search(r"FxiOS/([\d]+)", ua):
+        browser = f"Firefox {m.group(1)}"
+    elif m := _re.search(r"CriOS/([\d]+)", ua):
+        browser = f"Chrome {m.group(1)}"
+    elif m := _re.search(r"Chrome/([\d]+)", ua):
+        browser = f"Chrome {m.group(1)}"
+    elif m := _re.search(r"Version/([\d]+).*Safari", ua):
+        browser = f"Safari {m.group(1)}"
+    elif "Safari" in ua:
+        browser = "Safari"
+    elif "MSIE" in ua or "Trident" in ua:
+        browser = "Internet Explorer"
+    else:
+        browser = "—"
+
+    return {"browser": browser, "device": device_type, "os": os_name}
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
