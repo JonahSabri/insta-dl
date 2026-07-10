@@ -297,6 +297,38 @@ async def delete_cookies(
     return {"deleted": True}
 
 
+# ─── Rate limit settings ─────────────────────────────────────────────────────
+
+class RateLimitUpdate(BaseModel):
+    enabled: bool
+    daily_limit: int
+
+
+@router.get("/rate-limit")
+async def get_rate_limit(
+    _: str = Depends(verify_admin),
+) -> dict:
+    enabled_str = settings_store.get("rate_limit_enabled", "true")
+    daily_str = settings_store.get("rate_limit_daily", "")
+    return {
+        "enabled": enabled_str.lower() != "false",
+        "daily_limit": int(daily_str) if daily_str.isdigit() and int(daily_str) > 0 else settings.GUEST_DAILY_LIMIT,
+    }
+
+
+@router.post("/rate-limit")
+async def save_rate_limit(
+    body: RateLimitUpdate,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(verify_admin),
+) -> dict:
+    if body.daily_limit < 1:
+        raise HTTPException(status_code=400, detail="daily_limit must be at least 1.")
+    await settings_store.save("rate_limit_enabled", "true" if body.enabled else "false", db)
+    await settings_store.save("rate_limit_daily", str(body.daily_limit), db)
+    return {"saved": True, "enabled": body.enabled, "daily_limit": body.daily_limit}
+
+
 # ─── Public banners (no auth) ─────────────────────────────────────────────────
 
 @router.get("/banners/public")

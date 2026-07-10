@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const SUPPORTED_LANGS = ["en", "pt", "fa"];
+const SUPPORTED_LANGS = ["en", "pt", "fa", "de", "fr", "ja", "nl", "sv", "no", "da", "it", "es", "tr", "ar"];
 const DEFAULT_LANG = "en";
 
 function detectLang(request: NextRequest): string {
@@ -11,8 +11,21 @@ function detectLang(request: NextRequest): string {
 
   // Detect from Accept-Language header
   const accept = request.headers.get("accept-language") ?? "";
+
   if (accept.includes("fa") || accept.includes("ir")) return "fa";
+  if (accept.includes("ar")) return "ar";
+  if (accept.includes("de")) return "de";
+  if (accept.includes("fr")) return "fr";
+  if (accept.includes("ja")) return "ja";
+  if (accept.includes("nl")) return "nl";
+  if (accept.includes("sv")) return "sv";
+  if (accept.includes("no")) return "no";
+  if (accept.includes("da")) return "da";
+  if (accept.includes("it")) return "it";
+  if (accept.includes("es")) return "es";
+  if (accept.includes("tr")) return "tr";
   if (accept.includes("pt")) return "pt";
+
   return DEFAULT_LANG;
 }
 

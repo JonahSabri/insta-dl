@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { previewUrl, analyzeUrl, pollStatus, getDownloadUrl } from "@/lib/api";
+import { previewUrl, analyzeUrl, pollStatus, getDownloadUrl, RateLimitError } from "@/lib/api";
 import type { DownloadResult, DownloadStep, MediaTypeFilter, PreviewData, StatusResponse } from "@/types";
 import { useT } from "@/i18n/context";
 import SkeletonCard from "./SkeletonCard";
@@ -308,7 +308,11 @@ export default function DownloadBox({ onResult }: Props) {
       setProgress(20);
       startPolling(data.job_id);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t.download.errorServer);
+      if (err instanceof RateLimitError) {
+        setError(t.download.errorRateLimit(err.limit));
+      } else {
+        setError(err instanceof Error ? err.message : t.download.errorServer);
+      }
       setStep("error");
     }
   }

@@ -43,7 +43,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   // Update <html> lang + dir
   useEffect(() => {
     const meta = LANGS.find((l) => l.code === lang);
-    document.documentElement.lang = lang === "pt" ? "pt-BR" : lang;
+    const htmlLangMap: Partial<Record<string, string>> = { pt: "pt-BR", no: "nb-NO" };
+    document.documentElement.lang = htmlLangMap[lang] ?? lang;
     document.documentElement.dir = meta?.dir ?? "ltr";
     // Save preference as cookie for middleware detection
     document.cookie = `lang=${lang};path=/;max-age=31536000;SameSite=Lax`;

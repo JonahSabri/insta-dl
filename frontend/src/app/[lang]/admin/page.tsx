@@ -17,6 +17,8 @@ import {
   deleteCookies,
   fetchProxy,
   saveProxy,
+  fetchRateLimit,
+  saveRateLimit,
 } from "@/lib/api";
 import type { AdminStats, DownloadRecord, Banner } from "@/types";
 import Link from "next/link";
@@ -746,12 +748,136 @@ function CredentialsManager({ token }: { token: string }) {
   );
 }
 
+// ─── Rate Limit Manager ───────────────────────────────────────────────────────
+
+function RateLimitManager({ token }: { token: string }) {
+  const [enabled, setEnabled] = useState(true);
+  const [dailyLimit, setDailyLimit] = useState(3);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  useEffect(() => {
+    fetchRateLimit(token)
+      .then((d) => { setEnabled(d.enabled); setDailyLimit(d.daily_limit); })
+      .catch(() => {});
+  }, [token]);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setMsg(null);
+    try {
+      await saveRateLimit(token, enabled, dailyLimit);
+      setMsg({ type: "ok", text: "تنظیمات ذخیره شد ✓" });
+    } catch (err: unknown) {
+      setMsg({ type: "err", text: err instanceof Error ? err.message : "خطا" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="glass-card overflow-hidden">
+      <div className="flex items-center gap-3 border-b border-white/5 px-5 py-4">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 text-lg">
+          🚦
+        </div>
+        <div className="flex-1">
+          <h3 className="font-semibold text-slate-200">محدودیت دانلود روزانه</h3>
+          <p className="text-xs text-slate-500">تعداد دانلود مجاز هر IP در روز</p>
+        </div>
+        <span className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${
+          enabled
+            ? "border-orange-500/30 bg-orange-500/10 text-orange-400"
+            : "border-white/10 bg-white/5 text-slate-500"
+        }`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${enabled ? "bg-orange-400" : "bg-slate-600"}`} />
+          {enabled ? "فعال" : "غیرفعال"}
+        </span>
+      </div>
+
+      <form onSubmit={handleSave} className="space-y-4 p-5">
+        {/* Toggle */}
+        <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-slate-200">فعال‌بودن محدودیت</p>
+            <p className="text-xs text-slate-500">در صورت غیرفعال‌بودن، همه می‌توانند بدون محدودیت دانلود کنند</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setEnabled(!enabled); setMsg(null); }}
+            className={`relative h-6 w-11 rounded-full transition-colors ${enabled ? "bg-orange-500" : "bg-white/10"}`}
+          >
+            <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-all ${enabled ? "left-6" : "left-1"}`} />
+          </button>
+        </div>
+
+        {/* Daily limit */}
+        <div>
+          <label className="mb-1.5 block text-xs text-slate-500">
+            تعداد دانلود مجاز در روز (به ازای هر IP)
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={1}
+              max={1000}
+              value={dailyLimit}
+              onChange={(e) => { setDailyLimit(Number(e.target.value)); setMsg(null); }}
+              className="input-field w-32 text-sm font-mono"
+              dir="ltr"
+              disabled={!enabled}
+            />
+            <span className="text-xs text-slate-500">دانلود در روز</span>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {[1, 3, 5, 10, 20, 50].map((n) => (
+              <button
+                key={n}
+                type="button"
+                disabled={!enabled}
+                onClick={() => { setDailyLimit(n); setMsg(null); }}
+                className={`rounded-lg border px-3 py-1 text-xs transition-colors disabled:opacity-40 ${
+                  dailyLimit === n
+                    ? "border-brand-500/50 bg-brand-500/20 text-brand-300"
+                    : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10"
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {msg && (
+          <div className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm ${
+            msg.type === "ok"
+              ? "border-green-500/20 bg-green-500/10 text-green-400"
+              : "border-red-500/20 bg-red-500/10 text-red-400"
+          }`}>
+            {msg.type === "ok" ? "✓" : "✗"} {msg.text}
+          </div>
+        )}
+
+        <button type="submit" disabled={saving} className="btn-primary text-sm disabled:opacity-50">
+          {saving ? (
+            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path d="M21 12a9 9 0 11-6.219-8.56" strokeLinecap="round" />
+            </svg>
+          ) : "💾"}{" "}
+          ذخیره تنظیمات
+        </button>
+      </form>
+    </div>
+  );
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function AdminPage() {
   const [token, setToken] = useState<string | null>(null);
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [tab, setTab] = useState<"downloads" | "banners" | "proxy" | "cookies" | "credentials">("downloads");
+  const [tab, setTab] = useState<"downloads" | "banners" | "proxy" | "cookies" | "credentials" | "ratelimit">("downloads");
 
   useEffect(() => {
     const saved = localStorage.getItem("admin_token");
@@ -797,7 +923,7 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-1 rounded-xl bg-white/5 p-1 w-fit">
-          {(["downloads", "banners", "proxy", "cookies", "credentials"] as const).map((t) => (
+          {(["downloads", "banners", "ratelimit", "proxy", "cookies", "credentials"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -807,6 +933,7 @@ export default function AdminPage() {
             >
               {t === "downloads" ? "📥 دانلودها"
                 : t === "banners" ? "🖼 بنرها"
+                : t === "ratelimit" ? "🚦 محدودیت"
                 : t === "proxy" ? "🌐 پراکسی"
                 : t === "cookies" ? "🍪 کوکی"
                 : "🔑 یوزر/پسورد"}
@@ -817,6 +944,7 @@ export default function AdminPage() {
         {/* Content */}
         {tab === "downloads" && <DownloadsTable token={token} />}
         {tab === "banners" && <BannerManager token={token} />}
+        {tab === "ratelimit" && <RateLimitManager token={token} />}
         {tab === "proxy" && <ProxyManager token={token} />}
         {tab === "cookies" && <CookiesManager token={token} />}
         {tab === "credentials" && <CredentialsManager token={token} />}

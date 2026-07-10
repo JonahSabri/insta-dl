@@ -168,12 +168,21 @@ async def analyze(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
-    allowed, remaining = check_rate_limit(ip, settings.GUEST_DAILY_LIMIT)
-    if not allowed:
-        raise HTTPException(
-            status_code=429,
-            detail="سهمیه روزانه شما تمام شده است. فردا دوباره تلاش کنید.",
-        )
+    from app.services import settings_store as _ss
+    # Allow admin to override limit and toggle rate limiting via DB settings
+    _rl_enabled = _ss.get("rate_limit_enabled", "true").lower() != "false"
+    _rl_limit_str = _ss.get("rate_limit_daily", "")
+    _daily_limit = int(_rl_limit_str) if _rl_limit_str.isdigit() and int(_rl_limit_str) > 0 else settings.GUEST_DAILY_LIMIT
+
+    if _rl_enabled:
+        allowed, remaining = check_rate_limit(ip, _daily_limit)
+        if not allowed:
+            raise HTTPException(
+                status_code=429,
+                detail={"code": "RATE_LIMIT_EXCEEDED", "limit": _daily_limit},
+            )
+    else:
+        remaining = _daily_limit
 
     job_id = str(uuid.uuid4())
     await create_job(job_id)

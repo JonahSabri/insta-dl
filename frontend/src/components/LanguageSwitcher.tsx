@@ -27,9 +27,7 @@ export default function LanguageSwitcher() {
           text-xs text-slate-400 backdrop-blur-sm transition-all hover:border-white/20 hover:text-white"
         aria-label="Change language"
       >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-        </svg>
+        <span className="text-base leading-none">{current.flag}</span>
         <span className="text-xs font-semibold uppercase tracking-wide">{current.code}</span>
         <svg className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
           viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
@@ -39,22 +37,22 @@ export default function LanguageSwitcher() {
 
       {open && (
         <div
-          className="absolute end-0 top-full mt-1.5 w-36 overflow-hidden rounded-xl border border-white/10
+          className="absolute end-0 top-full mt-1.5 w-44 overflow-hidden rounded-xl border border-white/10
             bg-slate-900/95 shadow-2xl backdrop-blur-xl"
-          style={{ zIndex: 100 }}
+          style={{ zIndex: 100, maxHeight: "320px", overflowY: "auto" }}
         >
           {LANGS.map((l) => (
             <button
               key={l.code}
               onClick={() => { setLang(l.code); setOpen(false); }}
-              className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-sm transition-colors
+              className={`flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors
                 hover:bg-white/5
-                ${lang === l.code ? "text-brand-300" : "text-slate-400 hover:text-white"}`}
+                ${lang === l.code ? "text-brand-300 bg-white/[0.03]" : "text-slate-400 hover:text-white"}`}
             >
-              <span className="text-xs font-bold uppercase tracking-wide w-6">{l.code}</span>
-              <span>{l.label}</span>
+              <span className="text-base leading-none w-5 text-center">{l.flag}</span>
+              <span className="flex-1 text-left text-xs" dir={l.dir}>{l.label}</span>
               {lang === l.code && (
-                <svg className="ms-auto h-3.5 w-3.5 text-brand-400" viewBox="0 0 24 24" fill="none"
+                <svg className="ms-auto h-3.5 w-3.5 text-brand-400 shrink-0" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" strokeWidth={3}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>

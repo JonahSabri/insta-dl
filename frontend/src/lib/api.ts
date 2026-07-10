@@ -2,6 +2,15 @@ import type { AnalyzeResponse, PreviewData, StatusResponse, AdminStats, Download
 
 const BASE = "/api";
 
+export class RateLimitError extends Error {
+  limit: number;
+  constructor(limit: number) {
+    super("RATE_LIMIT_EXCEEDED");
+    this.limit = limit;
+    this.name = "RateLimitError";
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const { headers: extraHeaders, ...restInit } = init ?? {};
   const res = await fetch(`${BASE}${path}`, {
@@ -10,7 +19,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error((body as { detail?: string }).detail ?? `HTTP ${res.status}`);
+    const detail = (body as { detail?: unknown }).detail;
+    if (res.status === 429 && detail && typeof detail === "object" && (detail as { code?: string }).code === "RATE_LIMIT_EXCEEDED") {
+      throw new RateLimitError((detail as { limit?: number }).limit ?? 3);
+    }
+    throw new Error(typeof detail === "string" ? detail : `HTTP ${res.status}`);
   }
   return res.json() as Promise<T>;
 }
@@ -171,5 +184,25 @@ export async function saveProxy(token: string, proxy: string): Promise<{ saved: 
     method: "POST",
     headers: authHeader(token),
     body: JSON.stringify({ proxy }),
+  });
+}
+
+// ─── Rate limit ───────────────────────────────────────────────────────────────
+
+export async function fetchRateLimit(
+  token: string
+): Promise<{ enabled: boolean; daily_limit: number }> {
+  return request("/admin/rate-limit", { headers: authHeader(token) });
+}
+
+export async function saveRateLimit(
+  token: string,
+  enabled: boolean,
+  daily_limit: number
+): Promise<{ saved: boolean; enabled: boolean; daily_limit: number }> {
+  return request("/admin/rate-limit", {
+    method: "POST",
+    headers: authHeader(token),
+    body: JSON.stringify({ enabled, daily_limit }),
   });
 }
