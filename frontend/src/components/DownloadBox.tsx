@@ -307,7 +307,10 @@ export default function DownloadBox({ onResult }: Props) {
     setProgress(10);
 
     try {
-      const data = await analyzeUrl(trimmed);
+      // Pass the already-proxied preview thumbnail URL to the backend so it can
+      // be used as a guaranteed fallback if yt-dlp doesn't write a thumbnail file.
+      const previewThumbUrl = previewDataRef.current?.thumbnail_url ?? undefined;
+      const data = await analyzeUrl(trimmed, previewThumbUrl);
       setProgress(20);
       startPolling(data.job_id);
     } catch (err: unknown) {
@@ -332,9 +335,10 @@ export default function DownloadBox({ onResult }: Props) {
           const res: DownloadResult = {
             job_id: jobId,
             title: status.title ?? "Instagram Media",
-            // Use the preview thumbnail first (already proxied & confirmed working);
-            // fall back to the job thumbnail only when no preview thumbnail exists
-            thumbnail_url: cached?.thumbnail_url || status.thumbnail_url || "",
+            // status.thumbnail_url is either the downloaded job thumbnail or the
+            // pre-cached preview thumbnail we sent via preview_thumbnail_url —
+            // either way it's reliable. Fall back to cached preview as last resort.
+            thumbnail_url: status.thumbnail_url || cached?.thumbnail_url || "",
             media_type: status.media_type ?? cached?.media_type ?? "unknown",
             file_count: status.file_count ?? 1,
             carousel_files: status.carousel_files ?? null,

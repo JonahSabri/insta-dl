@@ -46,10 +46,10 @@ export async function previewUrl(url: string): Promise<PreviewData> {
   return data;
 }
 
-export async function analyzeUrl(url: string): Promise<AnalyzeResponse> {
+export async function analyzeUrl(url: string, previewThumbnailUrl?: string): Promise<AnalyzeResponse> {
   return request<AnalyzeResponse>("/v1/download/analyze", {
     method: "POST",
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({ url, preview_thumbnail_url: previewThumbnailUrl ?? null }),
   });
 }
 

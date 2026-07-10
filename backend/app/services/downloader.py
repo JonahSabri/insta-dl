@@ -19,6 +19,9 @@ from app.services import settings_store
 ALLOWED_HOSTS = {"instagram.com", "www.instagram.com", "m.instagram.com"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".webp", ".png"}
 VIDEO_EXTS = {".mp4", ".mkv", ".mov", ".webm", ".m4v"}
+# Formats we want to deliver to the user (no webp/mkv/etc.)
+PREFERRED_IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
+PREFERRED_VIDEO_EXT = ".mp4"
 
 
 # ─── URL helpers ─────────────────────────────────────────────────────────────
@@ -44,11 +47,9 @@ def detect_media_type(url: str) -> str:
 
 
 def _shortcode(url: str) -> str:
-    # Post / reel shortcode
     m = re.search(r"/(?:p|reel)/([A-Za-z0-9_-]+)", url)
     if m:
         return m.group(1)
-    # Story: /stories/username/story_id/
     m = re.search(r"/stories/[^/]+/(\d+)", url)
     if m:
         return m.group(1)
@@ -60,24 +61,81 @@ def _story_username(url: str) -> str:
     return m.group(1) if m else "instagram"
 
 
+# ─── Format conversion helpers ────────────────────────────────────────────────
+
+def _convert_image_to_jpg(src: Path) -> Path:
+    """Convert any image to JPG using FFmpeg. Returns new path (or original on failure)."""
+    if src.suffix.lower() in PREFERRED_IMAGE_EXTS:
+        return src
+    dst = src.with_suffix(".jpg")
+    try:
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-i", str(src), "-q:v", "2", str(dst)],
+            capture_output=True, timeout=60,
+        )
+        if result.returncode == 0 and dst.exists() and dst.stat().st_size > 0:
+            src.unlink(missing_ok=True)
+            return dst
+    except Exception:
+        pass
+    return src
+
+
+def _convert_video_to_mp4(src: Path) -> Path:
+    """Convert any video to MP4 using FFmpeg. Returns new path (or original on failure)."""
+    if src.suffix.lower() == PREFERRED_VIDEO_EXT:
+        return src
+    dst = src.with_suffix(".mp4")
+    try:
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-i", str(src), "-c:v", "copy", "-c:a", "aac", str(dst)],
+            capture_output=True, timeout=300,
+        )
+        if result.returncode == 0 and dst.exists() and dst.stat().st_size > 0:
+            src.unlink(missing_ok=True)
+            return dst
+    except Exception:
+        pass
+    return src
+
+
+def _ensure_formats(files: list[Path]) -> list[Path]:
+    """Convert all images to JPG and all videos to MP4."""
+    converted: list[Path] = []
+    for f in files:
+        ext = f.suffix.lower()
+        if ext in VIDEO_EXTS:
+            converted.append(_convert_video_to_mp4(f))
+        elif ext in IMAGE_EXTS:
+            converted.append(_convert_image_to_jpg(f))
+        else:
+            converted.append(f)
+    return converted
+
+
 # ─── File helpers ─────────────────────────────────────────────────────────────
 
 def _find_video_and_thumb(target_dir: Path) -> tuple[Path | None, Path | None]:
+    """Search recursively for newest video and image files."""
     video: Path | None = None
     thumb: Path | None = None
-    for p in sorted(target_dir.iterdir(), key=lambda f: f.stat().st_mtime, reverse=True):
-        if not p.is_file():
-            continue
+    all_files = sorted(
+        [p for p in target_dir.rglob("*") if p.is_file()],
+        key=lambda f: f.stat().st_mtime,
+        reverse=True,
+    )
+    for p in all_files:
         ext = p.suffix.lower()
         if ext in VIDEO_EXTS and video is None:
             video = p
         elif ext in IMAGE_EXTS and thumb is None:
             thumb = p
+        if video and thumb:
+            break
     return video, thumb
 
 
 def _collect_images(target_dir: Path) -> list[Path]:
-    """Search recursively — gallery-dl creates subdirectories."""
     return sorted(
         [f for f in target_dir.rglob("*") if f.is_file() and f.suffix.lower() in IMAGE_EXTS],
         key=lambda p: p.name,
@@ -85,7 +143,6 @@ def _collect_images(target_dir: Path) -> list[Path]:
 
 
 def _collect_all_media(target_dir: Path) -> list[Path]:
-    """Collect all images AND videos, sorted by filename (preserves carousel order)."""
     return sorted(
         [
             f for f in target_dir.rglob("*")
@@ -101,7 +158,6 @@ _COOKIES_PATH = Path(settings.DOWNLOADS_DIR) / "instagram_cookies.txt"
 
 
 def _cookies_file() -> str | None:
-    """Return path to uploaded cookies file if it exists."""
     if settings.INSTAGRAM_COOKIES_FILE:
         p = Path(settings.INSTAGRAM_COOKIES_FILE)
         if p.exists():
@@ -112,14 +168,12 @@ def _cookies_file() -> str | None:
 
 
 def _ig_credentials() -> tuple[str | None, str | None]:
-    """Return (username, password) from settings store."""
     username = settings_store.get("instagram_username") or None
     password = settings_store.get("instagram_password") or None
     return username, password
 
 
 def _has_auth() -> bool:
-    """Return True if any form of Instagram auth is configured."""
     if _cookies_file():
         return True
     u, p = _ig_credentials()
@@ -130,6 +184,7 @@ def _has_auth() -> bool:
 
 def _ydl_opts(target_dir: Path, *, for_story: bool = False) -> dict[str, Any]:
     opts: dict[str, Any] = {
+        # Always request MP4 video
         "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
         "merge_output_format": "mp4",
         "outtmpl": str(target_dir / "%(title).80B-%(id)s.%(ext)s"),
@@ -149,10 +204,8 @@ def _ydl_opts(target_dir: Path, *, for_story: bool = False) -> dict[str, Any]:
     }
 
     if not for_story:
-        # Stories don't need include_feed_video; it can confuse the extractor
         opts["extractor_args"] = {"instagram": {"include_feed_video": True}}
 
-    # Cookies file takes priority over username/password
     cookies = _cookies_file()
     if cookies:
         opts["cookiefile"] = cookies
@@ -162,7 +215,6 @@ def _ydl_opts(target_dir: Path, *, for_story: bool = False) -> dict[str, Any]:
             opts["username"] = username
             opts["password"] = password
 
-    # Proxy — settings_store takes priority over .env
     proxy = settings_store.get("proxy") or settings.proxy
     if proxy:
         opts["proxy"] = proxy
@@ -182,11 +234,17 @@ def _try_ytdlp(url: str, target_dir: Path, *, for_story: bool = False) -> dict[s
 
     video_path, thumb_path = _find_video_and_thumb(target_dir)
 
+    # If we only found an image (no video — e.g. image post via yt-dlp), treat it as the file
     if not video_path:
         if thumb_path:
             video_path, thumb_path = thumb_path, None
         else:
             raise RuntimeError("yt-dlp: هیچ فایلی دانلود نشد.")
+
+    # Convert video to MP4 and thumbnail to JPG
+    video_path = _convert_video_to_mp4(video_path)
+    if thumb_path:
+        thumb_path = _convert_image_to_jpg(thumb_path)
 
     return {
         "file_path": str(video_path),
@@ -197,17 +255,16 @@ def _try_ytdlp(url: str, target_dir: Path, *, for_story: bool = False) -> dict[s
     }
 
 
-# ─── gallery-dl (fallback for /p/ image & carousel posts, also stories) ──────
+# ─── gallery-dl ──────────────────────────────────────────────────────────────
 
 def _try_gallery_dl(url: str, target_dir: Path) -> dict[str, Any]:
-    # Use absolute path so the subprocess finds files correctly
     abs_dir = target_dir.resolve()
     cookies = _cookies_file()
     cookies_abs = str(Path(cookies).resolve()) if cookies else None
 
     cmd = [
         sys.executable, "-m", "gallery_dl",
-        "-D", str(abs_dir),    # download directly into this dir (no extra subdirs)
+        "-D", str(abs_dir),
         "--no-skip",
         url,
     ]
@@ -219,7 +276,6 @@ def _try_gallery_dl(url: str, target_dir: Path) -> dict[str, Any]:
         if GALLERY_DL_CFG_PATH.exists():
             cmd.extend(["--config", str(GALLERY_DL_CFG_PATH.resolve())])
 
-    # Pass proxy via environment variables for gallery-dl subprocess
     import os
     proxy = settings_store.get("proxy") or settings.proxy
     env = None
@@ -232,7 +288,6 @@ def _try_gallery_dl(url: str, target_dir: Path) -> dict[str, Any]:
 
     proc = subprocess.run(cmd, capture_output=True, text=True, timeout=180, env=env)
 
-    # gallery-dl creates subdirectory structure — search recursively
     all_media = _collect_all_media(abs_dir)
 
     if not all_media:
@@ -240,10 +295,14 @@ def _try_gallery_dl(url: str, target_dir: Path) -> dict[str, Any]:
         clean_err = re.sub(r"\x1b\[[0-9;]*m", "", raw_err)
         raise RuntimeError(clean_err[:400] if clean_err else "gallery-dl: هیچ فایلی دانلود نشد.")
 
-    images = [f for f in all_media if f.suffix.lower() in IMAGE_EXTS]
+    # Convert all files to preferred formats (JPG for images, MP4 for videos)
+    all_media = _ensure_formats(all_media)
+    # Re-sort after potential rename
+    all_media = sorted([f for f in all_media if f.exists()], key=lambda p: p.name)
+
+    images = [f for f in all_media if f.suffix.lower() in PREFERRED_IMAGE_EXTS | {".webp"}]
     first_thumb = images[0] if images else None
 
-    # Single file (image or video)
     if len(all_media) == 1:
         f = all_media[0]
         is_vid = f.suffix.lower() in VIDEO_EXTS
@@ -256,7 +315,7 @@ def _try_gallery_dl(url: str, target_dir: Path) -> dict[str, Any]:
             "carousel_files": None,
         }
 
-    # Multiple files → ZIP + individual file list
+    # Multiple files → ZIP
     sc = _shortcode(url)
     zip_path = target_dir / f"{sc}_carousel.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -320,21 +379,19 @@ def get_preview(url: str) -> dict[str, Any]:
         with YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False) or {}
     except DownloadError as exc:
-        msg = str(exc)
         if is_story:
-            # Stories almost always need auth — return a generic placeholder
-            # so the user can still proceed to download (which will also try auth)
+            # Stories need auth — return a generic placeholder so the UI can still proceed
             uname = _story_username(url)
             return {
-                "title": f"Instagram Story",
+                "title": "Instagram Story",
                 "thumbnail_url": None,
                 "duration": None,
                 "uploader": f"@{uname}",
                 "media_type": "story",
             }
-        raise RuntimeError(msg[:300]) from exc
+        raise RuntimeError(str(exc)[:300]) from exc
 
-    # Best thumbnail — pick highest resolution
+    # Pick highest-resolution thumbnail
     thumbnails = info.get("thumbnails") or []
     thumbnail_url: str | None = None
     if thumbnails:
@@ -345,8 +402,10 @@ def get_preview(url: str) -> dict[str, Any]:
         thumbnail_url = best.get("url")
     thumbnail_url = thumbnail_url or info.get("thumbnail")
 
+    title = info.get("title") or ("Instagram Story" if is_story else "Instagram Media")
+
     return {
-        "title": info.get("title") or "Instagram Story" if is_story else info.get("title") or "Instagram Media",
+        "title": title,
         "thumbnail_url": thumbnail_url,
         "duration": info.get("duration"),
         "uploader": info.get("uploader") or info.get("channel"),
@@ -370,7 +429,7 @@ def download_media(url: str, job_id: str) -> dict[str, Any]:
     ytdlp_err: str | None = None
     gdl_err:   str | None = None
 
-    # ── Image / carousel posts: gallery-dl first, yt-dlp fallback ────────────
+    # ── Image / carousel posts: gallery-dl first (images), yt-dlp fallback ───
     if is_post:
         try:
             return _try_gallery_dl(url, target_dir)
@@ -387,7 +446,7 @@ def download_media(url: str, job_id: str) -> dict[str, Any]:
             f"• yt-dlp: {ytdlp_err}"
         )
 
-    # ── Stories: yt-dlp first (better story support), gallery-dl fallback ────
+    # ── Stories: yt-dlp first, gallery-dl fallback ────────────────────────────
     if is_story:
         try:
             return _try_ytdlp(url, target_dir, for_story=True)
@@ -400,7 +459,6 @@ def download_media(url: str, job_id: str) -> dict[str, Any]:
             gdl_err = str(exc)
 
         shutil.rmtree(target_dir, ignore_errors=True)
-
         auth_hint = (
             "" if _has_auth()
             else "\n\n💡 استوری‌ها نیاز به لاگین دارند. در پنل ادمین کوکی یا اطلاعات ورود اینستاگرام را تنظیم کنید."

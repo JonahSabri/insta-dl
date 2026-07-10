@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import urllib.request
 import uuid
 from pathlib import Path
@@ -21,23 +22,27 @@ from app.services.rate_limiter import check_rate_limit, record_download
 
 router = APIRouter(prefix="/download", tags=["download"])
 
+# Directory for locally cached preview thumbnails (so CDN URLs don't expire)
+_THUMB_CACHE_DIR = Path(settings.DOWNLOADS_DIR) / "thumb_cache"
+
 
 def _real_ip(request: Request) -> str:
     """Extract the real client IP, handling reverse-proxy forwarded headers."""
-    # Next.js rewrite passes X-Forwarded-For; also respect X-Real-IP
     forwarded = (
         request.headers.get("x-forwarded-for")
         or request.headers.get("x-real-ip")
         or ""
     )
     if forwarded:
-        # X-Forwarded-For can be a comma-separated list; take the first (real client)
         return forwarded.split(",")[0].strip()
     return request.client.host if request.client else "unknown"
 
 
 class AnalyzeRequest(BaseModel):
     url: str
+    # Frontend passes the already-proxied preview thumbnail URL so we can
+    # store it as a guaranteed fallback if yt-dlp doesn't write a thumbnail.
+    preview_thumbnail_url: str | None = None
 
 
 class AnalyzeResponse(BaseModel):
@@ -74,6 +79,32 @@ class PreviewResponse(BaseModel):
     media_type: str
 
 
+# ─── Thumbnail proxy helpers ─────────────────────────────────────────────────
+
+def _thumb_cache_path(url: str) -> Path:
+    key = hashlib.sha256(url.encode()).hexdigest()[:24]
+    return _THUMB_CACHE_DIR / f"{key}.jpg"
+
+
+def _fetch_thumbnail_sync(target: str) -> bytes:
+    req = urllib.request.Request(
+        target,
+        headers={
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/125.0.0.0 Safari/537.36"
+            ),
+            "Referer": "https://www.instagram.com/",
+            "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=12) as resp:  # noqa: S310
+        return resp.read()
+
+
+# ─── Routes ──────────────────────────────────────────────────────────────────
+
 @router.post("/preview", response_model=PreviewResponse)
 async def preview(
     body: AnalyzeRequest,
@@ -90,50 +121,58 @@ async def preview(
     except RuntimeError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
 
+    # Pre-fetch and cache the thumbnail locally so the CDN URL never expires
+    if data.get("thumbnail_url"):
+        _THUMB_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        cache_path = _thumb_cache_path(data["thumbnail_url"])
+        if not cache_path.exists():
+            try:
+                raw = await asyncio.to_thread(_fetch_thumbnail_sync, data["thumbnail_url"])
+                cache_path.write_bytes(raw)
+            except Exception:
+                pass  # leave thumbnail_url as-is; proxy will handle it
+
     return PreviewResponse(**data)
 
 
 @router.get("/thumbnail-proxy")
 async def thumbnail_proxy(url: str = Query(..., description="Instagram CDN URL to proxy")) -> Response:
-    """Proxy an Instagram CDN thumbnail so the browser never hits the CDN directly."""
+    """Proxy an Instagram CDN thumbnail. Caches locally so the URL never expires."""
+    _THUMB_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache_path = _thumb_cache_path(url)
 
-    def _fetch(target: str) -> tuple[bytes, str]:
-        req = urllib.request.Request(
-            target,
-            headers={
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/125.0.0.0 Safari/537.36"
-                ),
-                "Referer": "https://www.instagram.com/",
-                "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
-            },
+    # Serve from local cache if already downloaded
+    if cache_path.exists():
+        return FileResponse(
+            path=cache_path,
+            media_type="image/jpeg",
+            headers={"Cache-Control": "public, max-age=86400"},
         )
-        with urllib.request.urlopen(req, timeout=12) as resp:  # noqa: S310
-            data = resp.read()
-            ct = resp.headers.get("Content-Type", "image/jpeg").split(";")[0].strip()
-            return data, ct
 
+    # Fetch from Instagram CDN and cache
     try:
-        data, content_type = await asyncio.to_thread(_fetch, url)
+        data = await asyncio.to_thread(_fetch_thumbnail_sync, url)
+        cache_path.write_bytes(data)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Could not fetch thumbnail: {exc}") from exc
 
     return Response(
         content=data,
-        media_type=content_type,
-        headers={
-            "Cache-Control": "public, max-age=600",
-            "X-Content-Type-Options": "nosniff",
-        },
+        media_type="image/jpeg",
+        headers={"Cache-Control": "public, max-age=86400"},
     )
 
 
-async def _run_download(job_id: str, url: str, db: AsyncSession) -> None:
+async def _run_download(job_id: str, url: str, preview_thumbnail_url: str | None, db: AsyncSession) -> None:
     await update_job(job_id, status="processing", progress=30)
     try:
         result = await asyncio.to_thread(download_media, url, job_id)
+
+        # Store the preview thumbnail URL as a fallback so the frontend can
+        # always show *something* even if yt-dlp/gallery-dl didn't write a thumb.
+        if preview_thumbnail_url and not result.get("thumbnail_path"):
+            result["preview_thumbnail_url"] = preview_thumbnail_url
+
         await update_job(job_id, status="completed", progress=100, result=result)
 
         async with db as session:
@@ -169,7 +208,6 @@ async def analyze(
         raise HTTPException(status_code=400, detail=str(exc))
 
     from app.services import settings_store as _ss
-    # Allow admin to override limit and toggle rate limiting via DB settings
     _rl_enabled = _ss.get("rate_limit_enabled", "true").lower() != "false"
     _rl_limit_str = _ss.get("rate_limit_daily", "")
     _daily_limit = int(_rl_limit_str) if _rl_limit_str.isdigit() and int(_rl_limit_str) > 0 else settings.GUEST_DAILY_LIMIT
@@ -202,7 +240,9 @@ async def analyze(
 
     from app.database import AsyncSessionLocal
     session_factory = AsyncSessionLocal()
-    background_tasks.add_task(_run_download, job_id, body.url, session_factory)
+    background_tasks.add_task(
+        _run_download, job_id, body.url, body.preview_thumbnail_url, session_factory
+    )
 
     return AnalyzeResponse(
         job_id=job_id,
@@ -219,10 +259,13 @@ async def status(job_id: str) -> StatusResponse:
         raise HTTPException(status_code=404, detail="Job not found")
     result = job.result or {}
 
-    # Point thumbnail to our own endpoint so the browser doesn't hit Instagram CDN
+    # Prefer the yt-dlp/gallery-dl downloaded thumbnail (served from our server)
     thumbnail_url: str | None = None
     if result.get("thumbnail_path") and job.status == "completed":
         thumbnail_url = f"/api/v1/download/{job_id}/thumbnail"
+    elif result.get("preview_thumbnail_url"):
+        # Fallback: the pre-cached preview thumbnail the frontend sent us
+        thumbnail_url = result["preview_thumbnail_url"]
 
     # Build carousel_files list if available
     carousel_files: list[CarouselFile] | None = None
