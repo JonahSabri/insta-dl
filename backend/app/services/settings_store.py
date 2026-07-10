@@ -41,6 +41,12 @@ async def save(key: str, value: str, db: AsyncSession) -> None:
 GALLERY_DL_CFG_PATH = Path("downloads/.gallery_dl_config.json")
 
 
+_IG_MOBILE_UA = (
+    "Instagram 269.0.0.18.75 Android (26/8.0.0; 480dpi; 1080x1920; "
+    "OnePlus; ONEPLUS A3010; OnePlus3T; qcom; en_US; 314665256)"
+)
+
+
 def _write_gallery_dl_config() -> None:
     """Write/update gallery-dl config file with current Instagram credentials."""
     username = _cache.get("instagram_username", "")
@@ -51,6 +57,8 @@ def _write_gallery_dl_config() -> None:
     config: dict = {
         "extractor": {
             "instagram": {
+                # Mobile app UA bypasses the redirect-to-home-page issue
+                "user-agent": _IG_MOBILE_UA,
                 "sleep-request": [2, 5],
             }
         }

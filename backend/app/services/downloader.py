@@ -1,4 +1,4 @@
-"""yt-dlp (primary) + gallery-dl (fallback) downloader for Instagram media."""
+"""yt-dlp (primary) + instaloader + gallery-dl downloader for Instagram media."""
 from __future__ import annotations
 
 import re
@@ -19,9 +19,19 @@ from app.services import settings_store
 ALLOWED_HOSTS = {"instagram.com", "www.instagram.com", "m.instagram.com"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".webp", ".png"}
 VIDEO_EXTS = {".mp4", ".mkv", ".mov", ".webm", ".m4v"}
-# Formats we want to deliver to the user (no webp/mkv/etc.)
 PREFERRED_IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
 PREFERRED_VIDEO_EXT = ".mp4"
+
+# Instagram mobile app user agent — works better than a browser UA for anonymous requests
+_IG_MOBILE_UA = (
+    "Instagram 269.0.0.18.75 Android (26/8.0.0; 480dpi; 1080x1920; "
+    "OnePlus; ONEPLUS A3010; OnePlus3T; qcom; en_US; 314665256)"
+)
+_BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/125.0.0.0 Safari/537.36"
+)
 
 
 # ─── URL helpers ─────────────────────────────────────────────────────────────
@@ -64,7 +74,6 @@ def _story_username(url: str) -> str:
 # ─── Format conversion helpers ────────────────────────────────────────────────
 
 def _convert_image_to_jpg(src: Path) -> Path:
-    """Convert any image to JPG using FFmpeg. Returns new path (or original on failure)."""
     if src.suffix.lower() in PREFERRED_IMAGE_EXTS:
         return src
     dst = src.with_suffix(".jpg")
@@ -82,7 +91,6 @@ def _convert_image_to_jpg(src: Path) -> Path:
 
 
 def _convert_video_to_mp4(src: Path) -> Path:
-    """Convert any video to MP4 using FFmpeg. Returns new path (or original on failure)."""
     if src.suffix.lower() == PREFERRED_VIDEO_EXT:
         return src
     dst = src.with_suffix(".mp4")
@@ -100,7 +108,6 @@ def _convert_video_to_mp4(src: Path) -> Path:
 
 
 def _ensure_formats(files: list[Path]) -> list[Path]:
-    """Convert all images to JPG and all videos to MP4."""
     converted: list[Path] = []
     for f in files:
         ext = f.suffix.lower()
@@ -116,7 +123,6 @@ def _ensure_formats(files: list[Path]) -> list[Path]:
 # ─── File helpers ─────────────────────────────────────────────────────────────
 
 def _find_video_and_thumb(target_dir: Path) -> tuple[Path | None, Path | None]:
-    """Search recursively for newest video and image files."""
     video: Path | None = None
     thumb: Path | None = None
     all_files = sorted(
@@ -133,13 +139,6 @@ def _find_video_and_thumb(target_dir: Path) -> tuple[Path | None, Path | None]:
         if video and thumb:
             break
     return video, thumb
-
-
-def _collect_images(target_dir: Path) -> list[Path]:
-    return sorted(
-        [f for f in target_dir.rglob("*") if f.is_file() and f.suffix.lower() in IMAGE_EXTS],
-        key=lambda p: p.name,
-    )
 
 
 def _collect_all_media(target_dir: Path) -> list[Path]:
@@ -184,7 +183,6 @@ def _has_auth() -> bool:
 
 def _ydl_opts(target_dir: Path, *, for_story: bool = False) -> dict[str, Any]:
     opts: dict[str, Any] = {
-        # Always request MP4 video
         "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
         "merge_output_format": "mp4",
         "outtmpl": str(target_dir / "%(title).80B-%(id)s.%(ext)s"),
@@ -194,13 +192,7 @@ def _ydl_opts(target_dir: Path, *, for_story: bool = False) -> dict[str, Any]:
         "restrictfilenames": True,
         "writethumbnail": True,
         "convert_thumbnails": "jpg",
-        "http_headers": {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/125.0.0.0 Safari/537.36"
-            )
-        },
+        "http_headers": {"User-Agent": _BROWSER_UA},
     }
 
     if not for_story:
@@ -234,14 +226,12 @@ def _try_ytdlp(url: str, target_dir: Path, *, for_story: bool = False) -> dict[s
 
     video_path, thumb_path = _find_video_and_thumb(target_dir)
 
-    # If we only found an image (no video — e.g. image post via yt-dlp), treat it as the file
     if not video_path:
         if thumb_path:
             video_path, thumb_path = thumb_path, None
         else:
             raise RuntimeError("yt-dlp: هیچ فایلی دانلود نشد.")
 
-    # Convert video to MP4 and thumbnail to JPG
     video_path = _convert_video_to_mp4(video_path)
     if thumb_path:
         thumb_path = _convert_image_to_jpg(thumb_path)
@@ -250,6 +240,77 @@ def _try_ytdlp(url: str, target_dir: Path, *, for_story: bool = False) -> dict[s
         "file_path": str(video_path),
         "thumbnail_path": str(thumb_path) if thumb_path else None,
         "title": (info or {}).get("title") or "Instagram Media",
+        "media_type": detect_media_type(url),
+        "file_count": 1,
+    }
+
+
+# ─── instaloader (fallback for reels / posts without auth) ───────────────────
+
+def _try_instaloader(url: str, target_dir: Path) -> dict[str, Any]:
+    """Download via instaloader — works for public reels/posts without authentication."""
+    try:
+        import instaloader
+    except ImportError as exc:
+        raise RuntimeError("instaloader not installed") from exc
+
+    sc = _shortcode(url)
+    if not sc or sc == "media":
+        raise RuntimeError("instaloader: cannot extract shortcode from URL")
+
+    L = instaloader.Instaloader(
+        download_videos=True,
+        download_video_thumbnails=True,
+        download_geotags=False,
+        download_comments=False,
+        save_metadata=False,
+        post_metadata_txt_pattern="",
+        dirname_pattern=str(target_dir.resolve()),
+        filename_pattern=sc,
+        quiet=True,
+        request_timeout=60,
+    )
+
+    # Apply cookies or credentials if available
+    cookies = _cookies_file()
+    if cookies:
+        try:
+            L.load_session_from_file(
+                username="",
+                filename=cookies,
+            )
+        except Exception:
+            pass  # cookies might not be in instaloader format; proceed anonymously
+    else:
+        username, password = _ig_credentials()
+        if username and password:
+            try:
+                L.login(username, password)
+            except Exception:
+                pass
+
+    try:
+        post = instaloader.Post.from_shortcode(L.context, sc)
+        L.download_post(post, target=str(target_dir.resolve()))
+    except Exception as exc:
+        raise RuntimeError(f"instaloader: {str(exc)[:200]}") from exc
+
+    video_path, thumb_path = _find_video_and_thumb(target_dir)
+
+    if not video_path:
+        if thumb_path:
+            video_path, thumb_path = thumb_path, None
+        else:
+            raise RuntimeError("instaloader: هیچ فایلی دانلود نشد.")
+
+    video_path = _convert_video_to_mp4(video_path)
+    if thumb_path:
+        thumb_path = _convert_image_to_jpg(thumb_path)
+
+    return {
+        "file_path": str(video_path),
+        "thumbnail_path": str(thumb_path) if thumb_path else None,
+        "title": "Instagram Reel",
         "media_type": detect_media_type(url),
         "file_count": 1,
     }
@@ -266,6 +327,8 @@ def _try_gallery_dl(url: str, target_dir: Path) -> dict[str, Any]:
         sys.executable, "-m", "gallery_dl",
         "-D", str(abs_dir),
         "--no-skip",
+        # Use Instagram mobile UA so gallery-dl doesn't get redirected to login
+        "--user-agent", _IG_MOBILE_UA,
         url,
     ]
 
@@ -295,9 +358,8 @@ def _try_gallery_dl(url: str, target_dir: Path) -> dict[str, Any]:
         clean_err = re.sub(r"\x1b\[[0-9;]*m", "", raw_err)
         raise RuntimeError(clean_err[:400] if clean_err else "gallery-dl: هیچ فایلی دانلود نشد.")
 
-    # Convert all files to preferred formats (JPG for images, MP4 for videos)
+    # Convert all files to preferred formats
     all_media = _ensure_formats(all_media)
-    # Re-sort after potential rename
     all_media = sorted([f for f in all_media if f.exists()], key=lambda p: p.name)
 
     images = [f for f in all_media if f.suffix.lower() in PREFERRED_IMAGE_EXTS | {".webp"}]
@@ -343,10 +405,9 @@ def _try_gallery_dl(url: str, target_dir: Path) -> dict[str, Any]:
 
 # ─── Fast preview (metadata only) ────────────────────────────────────────────
 
-def _generic_preview(url: str, reason: str = "") -> dict[str, Any]:
-    """Return a minimal preview placeholder when yt-dlp cannot fetch metadata."""
+def _generic_preview(url: str) -> dict[str, Any]:
+    """Return a minimal preview placeholder when metadata extraction fails."""
     media_type = detect_media_type(url)
-    # Try to extract username from the URL for any media type
     m = re.search(r"instagram\.com/(?:stories/|reel/|p/|tv/)?([A-Za-z0-9_.]+)", url)
     uploader = f"@{m.group(1)}" if m else "Instagram"
     titles = {
@@ -372,15 +433,8 @@ def get_preview(url: str) -> dict[str, Any]:
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
-        # Pass extractor args so Instagram feed reels are also recognised
         "extractor_args": {"instagram": {"include_feed_video": True}},
-        "http_headers": {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/125.0.0.0 Safari/537.36"
-            )
-        },
+        "http_headers": {"User-Agent": _BROWSER_UA},
     }
 
     proxy = settings_store.get("proxy") or settings.proxy
@@ -399,13 +453,11 @@ def get_preview(url: str) -> dict[str, Any]:
     try:
         with YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False) or {}
-    except DownloadError as exc:
-        # Instagram often requires auth for preview metadata — return a generic
-        # placeholder so the user can still proceed to the download step
-        # (which has gallery-dl as a fallback and may succeed without auth).
-        return _generic_preview(url, reason=str(exc)[:200])
+    except DownloadError:
+        # Instagram requires auth for metadata — return a placeholder so the
+        # user can still proceed to the download step.
+        return _generic_preview(url)
 
-    # Pick highest-resolution thumbnail
     thumbnails = info.get("thumbnails") or []
     thumbnail_url: str | None = None
     if thumbnails:
@@ -444,9 +496,10 @@ def download_media(url: str, job_id: str) -> dict[str, Any]:
     is_story = "/stories/" in url
 
     ytdlp_err: str | None = None
+    il_err:    str | None = None
     gdl_err:   str | None = None
 
-    # ── Image / carousel posts: gallery-dl first (images), yt-dlp fallback ───
+    # ── Image / carousel posts: gallery-dl first, yt-dlp fallback ────────────
     if is_post:
         try:
             return _try_gallery_dl(url, target_dir)
@@ -456,11 +509,17 @@ def download_media(url: str, job_id: str) -> dict[str, Any]:
             return _try_ytdlp(url, target_dir)
         except RuntimeError as exc:
             ytdlp_err = str(exc)
+        # instaloader as last resort for posts
+        try:
+            return _try_instaloader(url, target_dir)
+        except RuntimeError as exc:
+            il_err = str(exc)
         shutil.rmtree(target_dir, ignore_errors=True)
         raise RuntimeError(
             f"دانلود ناموفق بود.\n"
             f"• gallery-dl: {gdl_err}\n"
-            f"• yt-dlp: {ytdlp_err}"
+            f"• yt-dlp: {ytdlp_err}\n"
+            f"• instaloader: {il_err}"
         )
 
     # ── Stories: yt-dlp first, gallery-dl fallback ────────────────────────────
@@ -469,12 +528,10 @@ def download_media(url: str, job_id: str) -> dict[str, Any]:
             return _try_ytdlp(url, target_dir, for_story=True)
         except RuntimeError as exc:
             ytdlp_err = str(exc)
-
         try:
             return _try_gallery_dl(url, target_dir)
         except RuntimeError as exc:
             gdl_err = str(exc)
-
         shutil.rmtree(target_dir, ignore_errors=True)
         auth_hint = (
             "" if _has_auth()
@@ -486,11 +543,17 @@ def download_media(url: str, job_id: str) -> dict[str, Any]:
             f"• gallery-dl: {gdl_err}"
         )
 
-    # ── Reels / videos: yt-dlp first, gallery-dl fallback ────────────────────
+    # ── Reels / videos: yt-dlp → instaloader → gallery-dl ───────────────────
     try:
         return _try_ytdlp(url, target_dir)
     except RuntimeError as exc:
         ytdlp_err = str(exc)
+
+    # instaloader works well for public reels without authentication
+    try:
+        return _try_instaloader(url, target_dir)
+    except RuntimeError as exc:
+        il_err = str(exc)
 
     if is_reel:
         try:
@@ -501,8 +564,13 @@ def download_media(url: str, job_id: str) -> dict[str, Any]:
             raise RuntimeError(
                 f"دانلود ناموفق بود.\n"
                 f"• yt-dlp: {ytdlp_err}\n"
+                f"• instaloader: {il_err}\n"
                 f"• gallery-dl: {gdl_err}"
             ) from exc
 
     shutil.rmtree(target_dir, ignore_errors=True)
-    raise RuntimeError(ytdlp_err or "دانلود ناموفق بود.")
+    raise RuntimeError(
+        f"دانلود ناموفق بود.\n"
+        f"• yt-dlp: {ytdlp_err}\n"
+        f"• instaloader: {il_err}"
+    )
