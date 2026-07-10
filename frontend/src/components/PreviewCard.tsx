@@ -105,18 +105,27 @@ export default function PreviewCard({ result, onReset }: Props) {
             src={result.thumbnail_url}
             alt={result.title}
             className="preview-thumb-img"
-            loading="lazy"
+            loading="eager"
+            onError={(e) => {
+              // If thumbnail fails to load, hide the img and show placeholder
+              const img = e.currentTarget;
+              img.style.display = "none";
+              const placeholder = img.nextElementSibling as HTMLElement | null;
+              if (placeholder) placeholder.style.display = "flex";
+            }}
           />
-        ) : (
-          <div className="preview-thumb-placeholder">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" className="opacity-30">
-              {isImage
-                ? <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
-                : <path d="M8 5v14l11-7z" />
-              }
-            </svg>
-          </div>
-        )}
+        ) : null}
+        <div
+          className="preview-thumb-placeholder"
+          style={{ display: result.thumbnail_url ? "none" : "flex" }}
+        >
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" className="opacity-30">
+            {isImage
+              ? <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+              : <path d="M8 5v14l11-7z" />
+            }
+          </svg>
+        </div>
 
         {/* Gradient */}
         <div className="preview-thumb-overlay" />

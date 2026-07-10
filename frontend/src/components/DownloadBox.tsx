@@ -138,15 +138,23 @@ function PreviewStageCard({ preview, onDownload, onReset, t }: PreviewStageCardP
             src={preview.thumbnail_url}
             alt={preview.title}
             className="preview-thumb-img"
-            loading="lazy"
+            loading="eager"
+            onError={(e) => {
+              const img = e.currentTarget;
+              img.style.display = "none";
+              const placeholder = img.nextElementSibling as HTMLElement | null;
+              if (placeholder) placeholder.style.display = "flex";
+            }}
           />
-        ) : (
-          <div className="preview-thumb-placeholder">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" className="opacity-30">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </div>
-        )}
+        ) : null}
+        <div
+          className="preview-thumb-placeholder"
+          style={{ display: preview.thumbnail_url ? "none" : "flex" }}
+        >
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" className="opacity-30">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </div>
 
         {/* Gradient overlay */}
         <div className="preview-thumb-overlay" />
@@ -347,15 +355,17 @@ export default function DownloadBox({ onResult }: Props) {
           setStep("ready");
           onResult?.(res);
 
-          // Auto-trigger browser download immediately
-          const a = document.createElement("a");
-          a.href = getDownloadUrl(jobId);
-          a.download = "";
-          a.style.display = "none";
-          document.body.appendChild(a);
-          a.click();
-          // Clean up after a tick so the click is processed
-          setTimeout(() => document.body.removeChild(a), 500);
+          // Auto-trigger browser download after the result card has rendered
+          // (small delay so the thumbnail has a chance to start loading first)
+          setTimeout(() => {
+            const a = document.createElement("a");
+            a.href = getDownloadUrl(jobId);
+            a.download = "";
+            a.style.display = "none";
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => document.body.removeChild(a), 500);
+          }, 300);
         } else if (status.status === "failed") {
           clearInterval(pollRef.current!);
           setError(status.error ?? t.download.errorServer);

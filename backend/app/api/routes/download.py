@@ -168,9 +168,9 @@ async def _run_download(job_id: str, url: str, preview_thumbnail_url: str | None
     try:
         result = await asyncio.to_thread(download_media, url, job_id)
 
-        # Store the preview thumbnail URL as a fallback so the frontend can
-        # always show *something* even if yt-dlp/gallery-dl didn't write a thumb.
-        if preview_thumbnail_url and not result.get("thumbnail_path"):
+        # Always store the preview thumbnail URL so we can fall back to it if
+        # the downloaded thumbnail file is unavailable for any reason.
+        if preview_thumbnail_url:
             result["preview_thumbnail_url"] = preview_thumbnail_url
 
         await update_job(job_id, status="completed", progress=100, result=result)
@@ -259,12 +259,16 @@ async def status(job_id: str) -> StatusResponse:
         raise HTTPException(status_code=404, detail="Job not found")
     result = job.result or {}
 
-    # Prefer the yt-dlp/gallery-dl downloaded thumbnail (served from our server)
+    # Choose the best thumbnail URL available
     thumbnail_url: str | None = None
-    if result.get("thumbnail_path") and job.status == "completed":
-        thumbnail_url = f"/api/v1/download/{job_id}/thumbnail"
-    elif result.get("preview_thumbnail_url"):
-        # Fallback: the pre-cached preview thumbnail the frontend sent us
+    thumb_path_str = result.get("thumbnail_path")
+    if thumb_path_str and job.status == "completed":
+        # Verify the file actually exists before advertising the URL
+        if Path(thumb_path_str).exists():
+            thumbnail_url = f"/api/v1/download/{job_id}/thumbnail"
+
+    # Fall back to the pre-cached preview thumbnail (always reliable)
+    if not thumbnail_url and result.get("preview_thumbnail_url"):
         thumbnail_url = result["preview_thumbnail_url"]
 
     # Build carousel_files list if available
