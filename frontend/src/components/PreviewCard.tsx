@@ -41,9 +41,9 @@ function SlideRow({ file, index, imageLabel, videoLabel }: {
         style={{ background: isVideo ? "rgba(168,85,247,0.15)" : "rgba(6,182,212,0.12)" }}
       >
         {isVideo
-        ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-        : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-      }
+          ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        }
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs font-medium text-slate-300">
@@ -95,80 +95,67 @@ export default function PreviewCard({ result, onReset }: Props) {
       : preview.downloadVideo;
 
   return (
-    <div className="anim-bounce-in result-card overflow-hidden">
+    <div className="anim-bounce-in preview-stage-card overflow-hidden">
 
-      {/* ── Thumbnail + info ── */}
-      <div className="flex flex-col sm:flex-row items-start gap-4 p-4 sm:p-5">
-        <div className="relative h-44 w-full sm:h-28 sm:w-28 shrink-0 overflow-hidden rounded-2xl bg-slate-800/80">
-          {result.thumbnail_url ? (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={result.thumbnail_url}
-                alt={result.title}
-                className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-              />
-              <div className="absolute inset-0"
-                style={{ background: "linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 65%)" }} />
-            </>
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-white/20">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-            </div>
-          )}
+      {/* ── Thumbnail — full-width 16:9, same style as PreviewStageCard ── */}
+      <div className="preview-thumb-wrap">
+        {result.thumbnail_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={result.thumbnail_url}
+            alt={result.title}
+            className="preview-thumb-img"
+            loading="lazy"
+          />
+        ) : (
+          <div className="preview-thumb-placeholder">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" className="opacity-30">
+              {isImage
+                ? <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                : <path d="M8 5v14l11-7z" />
+              }
+            </svg>
+          </div>
+        )}
 
-            <span className="absolute bottom-1.5 right-1.5 rounded-md px-1.5 py-0.5
-            text-[10px] font-semibold text-white backdrop-blur-md"
-            style={{ background: "rgba(0,0,0,0.7)", border: "1px solid rgba(255,255,255,0.12)" }}>
-            {meta.label}
+        {/* Gradient */}
+        <div className="preview-thumb-overlay" />
+
+        {/* Type badge top-left */}
+        <span className="preview-type-badge">{meta.label}</span>
+
+        {/* Ready badge top-right */}
+        <span
+          className="absolute top-3 right-3 flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-md"
+          style={{ background: "rgba(34,197,94,0.25)", border: "1px solid rgba(34,197,94,0.35)" }}
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-60" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
           </span>
+          {preview.readyToDownload}
+        </span>
 
-          {isCarousel && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-2xl"
-              style={{ background: "rgba(0,0,0,0.45)" }}>
-              <div className="flex flex-col items-center gap-1">
-                <svg className="h-6 w-6 text-white/80" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" strokeWidth={1.5}>
-                  <rect x="2" y="6" width="14" height="14" rx="2" />
-                  <path strokeLinecap="round" d="M6 2h14a2 2 0 012 2v14" />
-                </svg>
-                <span className="text-sm font-bold text-white">{result.file_count}</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex min-w-0 flex-1 flex-col gap-2.5 pt-1">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-50" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-400" />
-            </span>
-            <span className="text-xs font-medium text-green-400">{preview.readyToDownload}</span>
-          </div>
-
-          <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-100">
-            {result.title || "Instagram Media"}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="badge rounded-lg px-2.5 py-1 text-xs font-medium"
-              style={{ background: `${meta.color}18`, border: `1px solid ${meta.color}35`, color: meta.color }}>
-              {meta.label}
-            </span>
-            {isCarousel && (
-              <span className="badge flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-400">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M18 8h2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>
-                {result.file_count} files
-              </span>
-            )}
-          </div>
-        </div>
+        {/* Carousel count badge bottom-right */}
+        {isCarousel && (
+          <span
+            className="absolute bottom-3 right-3 flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-white backdrop-blur-md"
+            style={{ background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.12)" }}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M18 8h2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>
+            {result.file_count}
+          </span>
+        )}
       </div>
 
-      {/* ── Carousel actions ── */}
-      {isCarousel && (
-        <div className="mx-4 mb-3 space-y-2">
+      {/* ── Info ── */}
+      <div className="preview-info">
+        <p className="line-clamp-2 text-sm font-semibold leading-snug text-slate-100">
+          {result.title || "Instagram Media"}
+        </p>
+
+        {/* Actions */}
+        {isCarousel ? (
           <div className="flex gap-2">
             <a href={downloadUrl} download
               className="btn-primary flex flex-1 items-center justify-center gap-2 text-sm">
@@ -188,35 +175,13 @@ export default function PreviewCard({ result, onReset }: Props) {
               </button>
             )}
           </div>
-
-          {showSlides && slides.length > 0 && (
-            <div className="space-y-1.5 rounded-2xl border border-white/[0.07] bg-black/20 p-3">
-              <p className="mb-2 px-1 text-xs text-slate-500">{preview.downloadIndividual}:</p>
-              {slides.map((file, i) => (
-                <SlideRow
-                  key={file.index}
-                  file={file}
-                  index={i}
-                  imageLabel={preview.image}
-                  videoLabel={preview.video}
-                  slideLabel={preview.slideLabel(i)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Non-carousel actions ── */}
-      {!isCarousel && (
-        <>
-          <div className="mx-5 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
-          <div className="flex gap-2.5 p-4">
-            <a href={downloadUrl} download className="btn-primary flex-1 gap-2 text-sm">
+        ) : (
+          <div className="flex gap-2">
+            <a href={downloadUrl} download className="btn-primary flex flex-1 items-center justify-center gap-2 text-sm">
               <DownloadIcon />
               {downloadLabel}
             </a>
-            <button onClick={handleCopy} className="btn-secondary gap-2 text-sm" title={preview.copyLink}>
+            <button onClick={handleCopy} className="btn-secondary flex items-center gap-2 text-sm" title={preview.copyLink}>
               {copied ? (
                 <>
                   <svg className="h-4 w-4 text-green-400" viewBox="0 0 24 24" fill="none"
@@ -237,8 +202,25 @@ export default function PreviewCard({ result, onReset }: Props) {
               )}
             </button>
           </div>
-        </>
-      )}
+        )}
+
+        {/* Carousel individual slides */}
+        {isCarousel && showSlides && slides.length > 0 && (
+          <div className="space-y-1.5 rounded-2xl border border-white/[0.07] bg-black/20 p-3">
+            <p className="mb-2 px-1 text-xs text-slate-500">{preview.downloadIndividual}:</p>
+            {slides.map((file, i) => (
+              <SlideRow
+                key={file.index}
+                file={file}
+                index={i}
+                imageLabel={preview.image}
+                videoLabel={preview.video}
+                slideLabel={preview.slideLabel(i)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ── Another link ── */}
       <button

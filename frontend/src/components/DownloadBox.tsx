@@ -262,6 +262,8 @@ export default function DownloadBox({ onResult }: Props) {
 
   const inputRef = useRef<HTMLInputElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Ref keeps previewData accessible inside setInterval closure without stale capture
+  const previewDataRef = useRef<PreviewData | null>(null);
 
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
@@ -288,6 +290,7 @@ export default function DownloadBox({ onResult }: Props) {
     try {
       const data = await previewUrl(trimmed);
       setPreviewData(data);
+      previewDataRef.current = data;
       setStep("preview_ready");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t.download.errorServer);
@@ -325,11 +328,13 @@ export default function DownloadBox({ onResult }: Props) {
 
         if (status.status === "completed") {
           clearInterval(pollRef.current!);
+          const cached = previewDataRef.current;
           const res: DownloadResult = {
             job_id: jobId,
             title: status.title ?? "Instagram Media",
-            thumbnail_url: status.thumbnail_url ?? previewData?.thumbnail_url ?? "",
-            media_type: status.media_type ?? previewData?.media_type ?? "unknown",
+            // Prefer the proxied preview thumbnail (always works); fall back to local job thumbnail
+            thumbnail_url: cached?.thumbnail_url ?? status.thumbnail_url ?? "",
+            media_type: status.media_type ?? cached?.media_type ?? "unknown",
             file_count: status.file_count ?? 1,
             carousel_files: status.carousel_files ?? null,
           };
@@ -363,6 +368,7 @@ export default function DownloadBox({ onResult }: Props) {
     if (pollRef.current) clearInterval(pollRef.current);
     setUrl(""); setStep("idle"); setProgress(0);
     setResult(null); setPreviewData(null); setError(null);
+    previewDataRef.current = null;
     setTimeout(() => inputRef.current?.focus(), 60);
   }
 
