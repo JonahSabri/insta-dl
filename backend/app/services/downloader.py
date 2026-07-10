@@ -44,8 +44,20 @@ def detect_media_type(url: str) -> str:
 
 
 def _shortcode(url: str) -> str:
+    # Post / reel shortcode
     m = re.search(r"/(?:p|reel)/([A-Za-z0-9_-]+)", url)
-    return m.group(1) if m else "media"
+    if m:
+        return m.group(1)
+    # Story: /stories/username/story_id/
+    m = re.search(r"/stories/[^/]+/(\d+)", url)
+    if m:
+        return m.group(1)
+    return "media"
+
+
+def _story_username(url: str) -> str:
+    m = re.search(r"/stories/([^/?#]+)", url)
+    return m.group(1) if m else "instagram"
 
 
 # ─── File helpers ─────────────────────────────────────────────────────────────
@@ -106,9 +118,17 @@ def _ig_credentials() -> tuple[str | None, str | None]:
     return username, password
 
 
+def _has_auth() -> bool:
+    """Return True if any form of Instagram auth is configured."""
+    if _cookies_file():
+        return True
+    u, p = _ig_credentials()
+    return bool(u and p)
+
+
 # ─── yt-dlp ──────────────────────────────────────────────────────────────────
 
-def _ydl_opts(target_dir: Path) -> dict[str, Any]:
+def _ydl_opts(target_dir: Path, *, for_story: bool = False) -> dict[str, Any]:
     opts: dict[str, Any] = {
         "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
         "merge_output_format": "mp4",
@@ -119,8 +139,6 @@ def _ydl_opts(target_dir: Path) -> dict[str, Any]:
         "restrictfilenames": True,
         "writethumbnail": True,
         "convert_thumbnails": "jpg",
-        # Instagram-specific tweaks
-        "extractor_args": {"instagram": {"include_feed_video": True}},
         "http_headers": {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -129,6 +147,10 @@ def _ydl_opts(target_dir: Path) -> dict[str, Any]:
             )
         },
     }
+
+    if not for_story:
+        # Stories don't need include_feed_video; it can confuse the extractor
+        opts["extractor_args"] = {"instagram": {"include_feed_video": True}}
 
     # Cookies file takes priority over username/password
     cookies = _cookies_file()
@@ -148,9 +170,9 @@ def _ydl_opts(target_dir: Path) -> dict[str, Any]:
     return opts
 
 
-def _try_ytdlp(url: str, target_dir: Path) -> dict[str, Any]:
+def _try_ytdlp(url: str, target_dir: Path, *, for_story: bool = False) -> dict[str, Any]:
     try:
-        with YoutubeDL(_ydl_opts(target_dir)) as ydl:
+        with YoutubeDL(_ydl_opts(target_dir, for_story=for_story)) as ydl:
             info = ydl.extract_info(url, download=True)
     except DownloadError as exc:
         msg = str(exc)
@@ -175,7 +197,7 @@ def _try_ytdlp(url: str, target_dir: Path) -> dict[str, Any]:
     }
 
 
-# ─── gallery-dl (fallback for /p/ image & carousel posts) ────────────────────
+# ─── gallery-dl (fallback for /p/ image & carousel posts, also stories) ──────
 
 def _try_gallery_dl(url: str, target_dir: Path) -> dict[str, Any]:
     # Use absolute path so the subprocess finds files correctly
@@ -234,7 +256,7 @@ def _try_gallery_dl(url: str, target_dir: Path) -> dict[str, Any]:
             "carousel_files": None,
         }
 
-    # Carousel (mixed images & videos) → ZIP + individual file list
+    # Multiple files → ZIP + individual file list
     sc = _shortcode(url)
     zip_path = target_dir / f"{sc}_carousel.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -266,6 +288,8 @@ def get_preview(url: str) -> dict[str, Any]:
     """Extract title + thumbnail without downloading the media file."""
     validate_url(url)
 
+    is_story = "/stories/" in url
+
     opts: dict[str, Any] = {
         "quiet": True,
         "no_warnings": True,
@@ -296,7 +320,19 @@ def get_preview(url: str) -> dict[str, Any]:
         with YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False) or {}
     except DownloadError as exc:
-        raise RuntimeError(str(exc)[:300]) from exc
+        msg = str(exc)
+        if is_story:
+            # Stories almost always need auth — return a generic placeholder
+            # so the user can still proceed to download (which will also try auth)
+            uname = _story_username(url)
+            return {
+                "title": f"Instagram Story",
+                "thumbnail_url": None,
+                "duration": None,
+                "uploader": f"@{uname}",
+                "media_type": "story",
+            }
+        raise RuntimeError(msg[:300]) from exc
 
     # Best thumbnail — pick highest resolution
     thumbnails = info.get("thumbnails") or []
@@ -310,7 +346,7 @@ def get_preview(url: str) -> dict[str, Any]:
     thumbnail_url = thumbnail_url or info.get("thumbnail")
 
     return {
-        "title": info.get("title") or "Instagram Media",
+        "title": info.get("title") or "Instagram Story" if is_story else info.get("title") or "Instagram Media",
         "thumbnail_url": thumbnail_url,
         "duration": info.get("duration"),
         "uploader": info.get("uploader") or info.get("channel"),
@@ -327,19 +363,19 @@ def download_media(url: str, job_id: str) -> dict[str, Any]:
     target_dir = Path(settings.DOWNLOADS_DIR) / job_id
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    is_post = "/p/" in url          # image / carousel post
-    is_reel = "/reel/" in url       # reel / video
+    is_post  = "/p/" in url
+    is_reel  = "/reel/" in url
+    is_story = "/stories/" in url
 
     ytdlp_err: str | None = None
-    gdl_err: str | None = None
+    gdl_err:   str | None = None
 
-    # ── For image posts: start with gallery-dl directly (yt-dlp can't handle images)
+    # ── Image / carousel posts: gallery-dl first, yt-dlp fallback ────────────
     if is_post:
         try:
             return _try_gallery_dl(url, target_dir)
         except RuntimeError as exc:
             gdl_err = str(exc)
-        # gallery-dl failed → try yt-dlp as last resort (maybe it's a video post)
         try:
             return _try_ytdlp(url, target_dir)
         except RuntimeError as exc:
@@ -351,7 +387,31 @@ def download_media(url: str, job_id: str) -> dict[str, Any]:
             f"• yt-dlp: {ytdlp_err}"
         )
 
-    # ── For reels / videos: yt-dlp first, gallery-dl fallback
+    # ── Stories: yt-dlp first (better story support), gallery-dl fallback ────
+    if is_story:
+        try:
+            return _try_ytdlp(url, target_dir, for_story=True)
+        except RuntimeError as exc:
+            ytdlp_err = str(exc)
+
+        try:
+            return _try_gallery_dl(url, target_dir)
+        except RuntimeError as exc:
+            gdl_err = str(exc)
+
+        shutil.rmtree(target_dir, ignore_errors=True)
+
+        auth_hint = (
+            "" if _has_auth()
+            else "\n\n💡 استوری‌ها نیاز به لاگین دارند. در پنل ادمین کوکی یا اطلاعات ورود اینستاگرام را تنظیم کنید."
+        )
+        raise RuntimeError(
+            f"دانلود استوری ناموفق بود.{auth_hint}\n"
+            f"• yt-dlp: {ytdlp_err}\n"
+            f"• gallery-dl: {gdl_err}"
+        )
+
+    # ── Reels / videos: yt-dlp first, gallery-dl fallback ────────────────────
     try:
         return _try_ytdlp(url, target_dir)
     except RuntimeError as exc:
