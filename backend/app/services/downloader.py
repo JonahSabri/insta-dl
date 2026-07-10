@@ -343,16 +343,37 @@ def _try_gallery_dl(url: str, target_dir: Path) -> dict[str, Any]:
 
 # ─── Fast preview (metadata only) ────────────────────────────────────────────
 
+def _generic_preview(url: str, reason: str = "") -> dict[str, Any]:
+    """Return a minimal preview placeholder when yt-dlp cannot fetch metadata."""
+    media_type = detect_media_type(url)
+    # Try to extract username from the URL for any media type
+    m = re.search(r"instagram\.com/(?:stories/|reel/|p/|tv/)?([A-Za-z0-9_.]+)", url)
+    uploader = f"@{m.group(1)}" if m else "Instagram"
+    titles = {
+        "reel": "Instagram Reel",
+        "post": "Instagram Post",
+        "story": "Instagram Story",
+        "igtv": "Instagram TV",
+    }
+    return {
+        "title": titles.get(media_type, "Instagram Media"),
+        "thumbnail_url": None,
+        "duration": None,
+        "uploader": uploader,
+        "media_type": media_type,
+    }
+
+
 def get_preview(url: str) -> dict[str, Any]:
     """Extract title + thumbnail without downloading the media file."""
     validate_url(url)
-
-    is_story = "/stories/" in url
 
     opts: dict[str, Any] = {
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
+        # Pass extractor args so Instagram feed reels are also recognised
+        "extractor_args": {"instagram": {"include_feed_video": True}},
         "http_headers": {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -379,17 +400,10 @@ def get_preview(url: str) -> dict[str, Any]:
         with YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False) or {}
     except DownloadError as exc:
-        if is_story:
-            # Stories need auth — return a generic placeholder so the UI can still proceed
-            uname = _story_username(url)
-            return {
-                "title": "Instagram Story",
-                "thumbnail_url": None,
-                "duration": None,
-                "uploader": f"@{uname}",
-                "media_type": "story",
-            }
-        raise RuntimeError(str(exc)[:300]) from exc
+        # Instagram often requires auth for preview metadata — return a generic
+        # placeholder so the user can still proceed to the download step
+        # (which has gallery-dl as a fallback and may succeed without auth).
+        return _generic_preview(url, reason=str(exc)[:200])
 
     # Pick highest-resolution thumbnail
     thumbnails = info.get("thumbnails") or []
@@ -402,14 +416,17 @@ def get_preview(url: str) -> dict[str, Any]:
         thumbnail_url = best.get("url")
     thumbnail_url = thumbnail_url or info.get("thumbnail")
 
-    title = info.get("title") or ("Instagram Story" if is_story else "Instagram Media")
+    media_type = detect_media_type(url)
+    titles = {"reel": "Instagram Reel", "post": "Instagram Post",
+              "story": "Instagram Story", "igtv": "Instagram TV"}
+    title = info.get("title") or titles.get(media_type, "Instagram Media")
 
     return {
         "title": title,
         "thumbnail_url": thumbnail_url,
         "duration": info.get("duration"),
         "uploader": info.get("uploader") or info.get("channel"),
-        "media_type": detect_media_type(url),
+        "media_type": media_type,
     }
 
 
