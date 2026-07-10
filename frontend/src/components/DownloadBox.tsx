@@ -332,8 +332,9 @@ export default function DownloadBox({ onResult }: Props) {
           const res: DownloadResult = {
             job_id: jobId,
             title: status.title ?? "Instagram Media",
-            // Prefer the proxied preview thumbnail (always works); fall back to local job thumbnail
-            thumbnail_url: cached?.thumbnail_url ?? status.thumbnail_url ?? "",
+            // Prefer the downloaded job thumbnail (high quality, saved by yt-dlp);
+            // fall back to the proxied preview thumbnail from Instagram CDN
+            thumbnail_url: status.thumbnail_url ?? cached?.thumbnail_url ?? "",
             media_type: status.media_type ?? cached?.media_type ?? "unknown",
             file_count: status.file_count ?? 1,
             carousel_files: status.carousel_files ?? null,
