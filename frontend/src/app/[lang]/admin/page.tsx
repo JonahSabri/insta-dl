@@ -736,23 +736,6 @@ function CredentialsManager({ token }: { token: string }) {
       </form>
 
       {/* How it works */}
-      <div className="border-t border-white/5 px-5 py-4">
-        <p className="mb-2 text-xs font-medium text-slate-500">این اطلاعات کجا استفاده می‌شود؟</p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {[
-            { icon: "🎬", name: "yt-dlp", desc: "ریلز، IGTV، ویدیوها" },
-            { icon: "🖼", name: "gallery-dl", desc: "پست، تصویر، کاروسل" },
-          ].map((t) => (
-            <div key={t.name} className="flex items-center gap-2.5 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2">
-              <span className="text-lg">{t.icon}</span>
-              <div>
-                <p className="text-xs font-medium text-slate-300">{t.name}</p>
-                <p className="text-xs text-slate-600">{t.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
