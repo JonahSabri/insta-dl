@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.article import Article
@@ -584,12 +584,14 @@ SEED_ARTICLES: list[dict] = [
 
 
 async def seed_articles_if_empty(db: AsyncSession) -> int:
-    """Insert default articles when the table is empty. Returns inserted count."""
-    count = await db.scalar(select(func.count(Article.id))) or 0
-    if count > 0:
-        return 0
+    """Insert any missing default articles. Returns inserted count."""
+    result = await db.execute(select(Article.slug))
+    existing = set(result.scalars().all())
+    added = 0
 
     for item in SEED_ARTICLES:
+        if item["slug"] in existing:
+            continue
         db.add(
             Article(
                 slug=item["slug"],
@@ -598,5 +600,8 @@ async def seed_articles_if_empty(db: AsyncSession) -> int:
                 is_published=True,
             )
         )
-    await db.commit()
-    return len(SEED_ARTICLES)
+        added += 1
+
+    if added:
+        await db.commit()
+    return added

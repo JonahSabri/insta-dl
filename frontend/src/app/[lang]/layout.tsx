@@ -31,15 +31,16 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   };
 
   const m = meta[lang] ?? meta.en;
+  const languages: Record<string, string> = { "x-default": "/en" };
+  for (const l of LANGS) {
+    languages[l.code === "pt" ? "pt-BR" : l.code] = `/${l.code}`;
+  }
   return {
     title: m.title,
     description: m.description,
     alternates: {
-      languages: {
-        en: "/en",
-        "pt-BR": "/pt",
-        fa: "/fa",
-      },
+      canonical: `/${lang}`,
+      languages,
     },
   };
 }

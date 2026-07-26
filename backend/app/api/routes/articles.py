@@ -77,6 +77,28 @@ def _admin_item(article: Article) -> dict:
 
 # ─── Public ──────────────────────────────────────────────────────────────────
 
+@router.get("/v1/sitemap")
+async def sitemap_data(db: AsyncSession = Depends(get_db)) -> dict:
+    """Lightweight payload for Next.js sitemap generation."""
+    result = await db.execute(
+        select(Article)
+        .where(Article.is_published.is_(True))
+        .order_by(Article.updated_at.desc())
+    )
+    articles = result.scalars().all()
+    return {
+        "langs": sorted(SUPPORTED_LANGS),
+        "articles": [
+            {
+                "slug": a.slug,
+                "updated_at": a.updated_at.isoformat() if a.updated_at else None,
+                "created_at": a.created_at.isoformat() if a.created_at else None,
+            }
+            for a in articles
+        ],
+    }
+
+
 @router.get("/v1/articles")
 async def list_public_articles(
     lang: str = Query("en"),
