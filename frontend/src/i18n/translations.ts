@@ -24,6 +24,18 @@ export interface Translations {
   header: {
     admin: string;
   };
+  nav: {
+    home: string;
+    articles: string;
+  };
+  articles: {
+    heading: string;
+    subheading: string;
+    readMore: string;
+    backToList: string;
+    empty: string;
+    publishedAt: string;
+  };
   hero: {
     badge: string;
     titleLine1: string;
@@ -93,6 +105,15 @@ export interface Translations {
 const en: Translations = {
   dir: "ltr",
   header: { admin: "Admin Panel" },
+  nav: { home: "Home", articles: "Articles" },
+  articles: {
+    heading: "Articles & Guides",
+    subheading: "Tips for downloading Instagram Reels, posts, stories, and more.",
+    readMore: "Read more",
+    backToList: "← All articles",
+    empty: "No articles yet.",
+    publishedAt: "Published",
+  },
   hero: {
     badge: "Free · No sign-up · Instant",
     titleLine1: "Download",
@@ -186,6 +207,15 @@ const en: Translations = {
 const pt: Translations = {
   dir: "ltr",
   header: { admin: "Painel Admin" },
+  nav: { home: "Início", articles: "Artigos" },
+  articles: {
+    heading: "Artigos e Guias",
+    subheading: "Dicas para baixar Reels, posts, stories e mais do Instagram.",
+    readMore: "Ler mais",
+    backToList: "← Todos os artigos",
+    empty: "Nenhum artigo ainda.",
+    publishedAt: "Publicado",
+  },
   hero: {
     badge: "Grátis · Sem cadastro · Instantâneo",
     titleLine1: "Baixe",
@@ -279,6 +309,15 @@ const pt: Translations = {
 const fa: Translations = {
   dir: "rtl",
   header: { admin: "پنل مدیریت" },
+  nav: { home: "خانه", articles: "مقالات" },
+  articles: {
+    heading: "مقالات و راهنماها",
+    subheading: "نکات دانلود ریلز، پست، استوری و بیشتر از اینستاگرام.",
+    readMore: "ادامه مطلب",
+    backToList: "← همه مقالات",
+    empty: "هنوز مقاله‌ای نیست.",
+    publishedAt: "منتشر شده",
+  },
   hero: {
     badge: "رایگان · بدون ثبت‌نام · فوری",
     titleLine1: "دانلود",
@@ -372,6 +411,15 @@ const fa: Translations = {
 const de: Translations = {
   dir: "ltr",
   header: { admin: "Adminbereich" },
+  nav: { home: "Start", articles: "Artikel" },
+  articles: {
+    heading: "Artikel & Guides",
+    subheading: "Tipps zum Herunterladen von Instagram Reels, Posts, Stories und mehr.",
+    readMore: "Weiterlesen",
+    backToList: "← Alle Artikel",
+    empty: "Noch keine Artikel.",
+    publishedAt: "Veröffentlicht",
+  },
   hero: {
     badge: "Kostenlos · Keine Anmeldung · Sofort",
     titleLine1: "Lade",
@@ -465,6 +513,15 @@ const de: Translations = {
 const fr: Translations = {
   dir: "ltr",
   header: { admin: "Panneau Admin" },
+  nav: { home: "Accueil", articles: "Articles" },
+  articles: {
+    heading: "Articles et guides",
+    subheading: "Conseils pour télécharger des Reels, posts, stories Instagram et plus.",
+    readMore: "Lire la suite",
+    backToList: "← Tous les articles",
+    empty: "Aucun article pour le moment.",
+    publishedAt: "Publié",
+  },
   hero: {
     badge: "Gratuit · Sans inscription · Instantané",
     titleLine1: "Téléchargez",
@@ -558,6 +615,15 @@ const fr: Translations = {
 const ja: Translations = {
   dir: "ltr",
   header: { admin: "管理パネル" },
+  nav: { home: "ホーム", articles: "記事" },
+  articles: {
+    heading: "記事とガイド",
+    subheading: "Instagramのリール、投稿、ストーリーなどのダウンロードのヒント。",
+    readMore: "続きを読む",
+    backToList: "← すべての記事",
+    empty: "まだ記事がありません。",
+    publishedAt: "公開日",
+  },
   hero: {
     badge: "無料 · 登録不要 · 即時",
     titleLine1: "ダウンロード",
@@ -651,6 +717,15 @@ const ja: Translations = {
 const nl: Translations = {
   dir: "ltr",
   header: { admin: "Beheerpaneel" },
+  nav: { home: "Home", articles: "Artikelen" },
+  articles: {
+    heading: "Artikelen & gidsen",
+    subheading: "Tips voor het downloaden van Instagram Reels, posts, stories en meer.",
+    readMore: "Meer lezen",
+    backToList: "← Alle artikelen",
+    empty: "Nog geen artikelen.",
+    publishedAt: "Gepubliceerd",
+  },
   hero: {
     badge: "Gratis · Geen aanmelding · Direct",
     titleLine1: "Download",
@@ -744,6 +819,15 @@ const nl: Translations = {
 const sv: Translations = {
   dir: "ltr",
   header: { admin: "Adminpanel" },
+  nav: { home: "Hem", articles: "Artiklar" },
+  articles: {
+    heading: "Artiklar och guider",
+    subheading: "Tips för att ladda ner Instagram Reels, inlägg, stories och mer.",
+    readMore: "Läs mer",
+    backToList: "← Alla artiklar",
+    empty: "Inga artiklar ännu.",
+    publishedAt: "Publicerad",
+  },
   hero: {
     badge: "Gratis · Ingen registrering · Omedelbart",
     titleLine1: "Ladda ner",
@@ -837,6 +921,15 @@ const sv: Translations = {
 const no: Translations = {
   dir: "ltr",
   header: { admin: "Adminpanel" },
+  nav: { home: "Hjem", articles: "Artikler" },
+  articles: {
+    heading: "Artikler og guider",
+    subheading: "Tips for å laste ned Instagram Reels, innlegg, stories og mer.",
+    readMore: "Les mer",
+    backToList: "← Alle artikler",
+    empty: "Ingen artikler ennå.",
+    publishedAt: "Publisert",
+  },
   hero: {
     badge: "Gratis · Ingen registrering · Umiddelbart",
     titleLine1: "Last ned",
@@ -930,6 +1023,15 @@ const no: Translations = {
 const da: Translations = {
   dir: "ltr",
   header: { admin: "Adminpanel" },
+  nav: { home: "Hjem", articles: "Artikler" },
+  articles: {
+    heading: "Artikler og guides",
+    subheading: "Tips til at downloade Instagram Reels, opslag, stories og mere.",
+    readMore: "Læs mere",
+    backToList: "← Alle artikler",
+    empty: "Ingen artikler endnu.",
+    publishedAt: "Udgivet",
+  },
   hero: {
     badge: "Gratis · Ingen tilmelding · Øjeblikkeligt",
     titleLine1: "Download",
@@ -1023,6 +1125,15 @@ const da: Translations = {
 const it: Translations = {
   dir: "ltr",
   header: { admin: "Pannello Admin" },
+  nav: { home: "Home", articles: "Articoli" },
+  articles: {
+    heading: "Articoli e guide",
+    subheading: "Consigli per scaricare Reels, post, storie Instagram e altro.",
+    readMore: "Leggi di più",
+    backToList: "← Tutti gli articoli",
+    empty: "Nessun articolo ancora.",
+    publishedAt: "Pubblicato",
+  },
   hero: {
     badge: "Gratuito · Senza registrazione · Istantaneo",
     titleLine1: "Scarica",
@@ -1116,6 +1227,15 @@ const it: Translations = {
 const es: Translations = {
   dir: "ltr",
   header: { admin: "Panel de Administración" },
+  nav: { home: "Inicio", articles: "Artículos" },
+  articles: {
+    heading: "Artículos y guías",
+    subheading: "Consejos para descargar Reels, posts, stories de Instagram y más.",
+    readMore: "Leer más",
+    backToList: "← Todos los artículos",
+    empty: "Aún no hay artículos.",
+    publishedAt: "Publicado",
+  },
   hero: {
     badge: "Gratis · Sin registro · Instantáneo",
     titleLine1: "Descarga",
@@ -1209,6 +1329,15 @@ const es: Translations = {
 const tr: Translations = {
   dir: "ltr",
   header: { admin: "Yönetici Paneli" },
+  nav: { home: "Ana sayfa", articles: "Makaleler" },
+  articles: {
+    heading: "Makaleler ve rehberler",
+    subheading: "Instagram Reels, gönderi, hikâye indirme ipuçları ve daha fazlası.",
+    readMore: "Devamını oku",
+    backToList: "← Tüm makaleler",
+    empty: "Henüz makale yok.",
+    publishedAt: "Yayınlandı",
+  },
   hero: {
     badge: "Ücretsiz · Kayıt gerektirmez · Anında",
     titleLine1: "İndir",
@@ -1302,6 +1431,15 @@ const tr: Translations = {
 const ar: Translations = {
   dir: "rtl",
   header: { admin: "لوحة الإدارة" },
+  nav: { home: "الرئيسية", articles: "المقالات" },
+  articles: {
+    heading: "مقالات وأدلة",
+    subheading: "نصائح لتنزيل ريلز ومنشورات وقصص إنستغرام والمزيد.",
+    readMore: "اقرأ المزيد",
+    backToList: "← كل المقالات",
+    empty: "لا توجد مقالات بعد.",
+    publishedAt: "نُشر",
+  },
   hero: {
     badge: "مجاني · بدون تسجيل · فوري",
     titleLine1: "تحميل",

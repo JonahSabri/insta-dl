@@ -23,7 +23,8 @@ function isInstagramUrl(url: string): boolean {
 function matchesType(url: string, type: ExtendedMediaTypeFilter): boolean {
   if (type === "all") return true;
   const path = url.toLowerCase();
-  if (type === "reel")     return path.includes("/reel/");
+  // Instagram uses both /reel/ and /reels/ URL formats
+  if (type === "reel")     return path.includes("/reel/") || path.includes("/reels/");
   if (type === "post")     return path.includes("/p/");
   if (type === "carousel") return path.includes("/p/");
   if (type === "story")    return path.includes("/stories/");
@@ -76,7 +77,7 @@ interface TypeOption {
 }
 
 const TYPE_OPTIONS: TypeOption[] = [
-  { id: "reel",     icon: <IcoReel />,     labelKey: "reel",     placeholder: "https://www.instagram.com/reel/..." },
+  { id: "reel",     icon: <IcoReel />,     labelKey: "reel",     placeholder: "https://www.instagram.com/reel/... or /reels/..." },
   { id: "post",     icon: <IcoPost />,     labelKey: "post",     placeholder: "https://www.instagram.com/p/..." },
   { id: "carousel", icon: <IcoCarousel />, labelKey: "carousel", placeholder: "https://www.instagram.com/p/..." },
   { id: "story",    icon: <IcoStory />,    labelKey: "story",    placeholder: "https://www.instagram.com/stories/..." },

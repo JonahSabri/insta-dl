@@ -1,4 +1,15 @@
-import type { AnalyzeResponse, PreviewData, StatusResponse, AdminStats, DownloadRecord, Banner } from "@/types";
+import type {
+  AnalyzeResponse,
+  PreviewData,
+  StatusResponse,
+  AdminStats,
+  DownloadRecord,
+  Banner,
+  ArticleListItem,
+  ArticleDetail,
+  AdminArticle,
+  ArticleTranslation,
+} from "@/types";
 
 const BASE = "/api";
 
@@ -64,6 +75,15 @@ export function getDownloadUrl(jobId: string): string {
 export async function fetchPublicBanners(position?: string): Promise<Banner[]> {
   const q = position ? `?position=${position}` : "";
   return request<Banner[]>(`/admin/banners/public${q}`);
+}
+
+export async function fetchArticles(lang: string): Promise<ArticleListItem[]> {
+  const data = await request<{ items: ArticleListItem[] }>(`/v1/articles?lang=${lang}`);
+  return data.items;
+}
+
+export async function fetchArticle(slug: string, lang: string): Promise<ArticleDetail> {
+  return request<ArticleDetail>(`/v1/articles/${encodeURIComponent(slug)}?lang=${lang}`);
 }
 
 // ─── Admin ───────────────────────────────────────────────────────────────────
@@ -204,5 +224,69 @@ export async function saveRateLimit(
     method: "POST",
     headers: authHeader(token),
     body: JSON.stringify({ enabled, daily_limit }),
+  });
+}
+
+// ─── Articles (admin) ─────────────────────────────────────────────────────────
+
+export async function fetchAdminArticles(token: string): Promise<AdminArticle[]> {
+  const data = await request<{ items: AdminArticle[] }>("/admin/articles", {
+    headers: authHeader(token),
+  });
+  return data.items;
+}
+
+export async function createArticle(
+  token: string,
+  data: {
+    slug?: string;
+    keywords?: string;
+    is_published?: boolean;
+    lang: string;
+    title: string;
+    excerpt?: string;
+    content?: string;
+    translations?: Record<string, ArticleTranslation>;
+  }
+): Promise<AdminArticle> {
+  return request<AdminArticle>("/admin/articles", {
+    method: "POST",
+    headers: authHeader(token),
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateArticle(
+  token: string,
+  id: string,
+  data: {
+    slug?: string;
+    keywords?: string;
+    is_published?: boolean;
+    lang?: string;
+    title?: string;
+    excerpt?: string;
+    content?: string;
+    translations?: Record<string, ArticleTranslation>;
+  }
+): Promise<AdminArticle> {
+  return request<AdminArticle>(`/admin/articles/${id}`, {
+    method: "PUT",
+    headers: authHeader(token),
+    body: JSON.stringify(data),
+  });
+}
+
+export async function toggleArticle(token: string, id: string): Promise<void> {
+  await request(`/admin/articles/${id}/toggle`, {
+    method: "PATCH",
+    headers: authHeader(token),
+  });
+}
+
+export async function deleteArticle(token: string, id: string): Promise<void> {
+  await request(`/admin/articles/${id}`, {
+    method: "DELETE",
+    headers: authHeader(token),
   });
 }

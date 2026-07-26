@@ -4,6 +4,7 @@ import DownloadBox from "@/components/DownloadBox";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import PwaInstallBanner from "@/components/PwaInstallBanner";
 import { useT } from "@/i18n/context";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 
 /* ── Inline SVG icon atoms ─────────────────────────────────────────────── */
@@ -38,11 +39,11 @@ export default function HomePage() {
           borderColor: "rgba(131,58,180,0.15)",
         }}
       >
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 gap-3">
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
+          <Link href={`/${lang}`} className="flex items-center gap-2.5 min-w-0">
             <div
-              className="flex h-8 w-8 items-center justify-center rounded-xl text-white"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white"
               style={{
                 background: "linear-gradient(135deg,#833ab4,#e1306c,#fcb045)",
                 boxShadow: "0 0 16px rgba(131,58,180,0.5), 0 0 32px rgba(225,48,108,0.2)",
@@ -54,14 +55,20 @@ export default function HomePage() {
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
             </div>
-            <span className="ig-gradient-text text-lg font-extrabold tracking-tight">
+            <span className="ig-gradient-text text-lg font-extrabold tracking-tight truncate">
               {siteName}
             </span>
-          </div>
+          </Link>
 
-          <div className="flex items-center gap-2">
+          <nav className="flex items-center gap-1 sm:gap-2">
+            <Link
+              href={`/${lang}/articles`}
+              className="rounded-lg px-2.5 py-1.5 text-xs sm:text-sm text-slate-400 hover:text-white transition-colors"
+            >
+              {t.nav.articles}
+            </Link>
             <LanguageSwitcher />
-          </div>
+          </nav>
         </div>
       </header>
 

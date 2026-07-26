@@ -19,9 +19,15 @@ import {
   saveProxy,
   fetchRateLimit,
   saveRateLimit,
+  fetchAdminArticles,
+  createArticle,
+  updateArticle,
+  toggleArticle,
+  deleteArticle,
 } from "@/lib/api";
-import type { AdminStats, DownloadRecord, Banner } from "@/types";
+import type { AdminStats, DownloadRecord, Banner, AdminArticle } from "@/types";
 import Link from "next/link";
+import { LANGS } from "@/i18n/translations";
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -864,12 +870,278 @@ function RateLimitManager({ token }: { token: string }) {
   );
 }
 
+// ─── Article Manager ──────────────────────────────────────────────────────────
+
+function ArticleManager({ token }: { token: string }) {
+  const [items, setItems] = useState<AdminArticle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formLang, setFormLang] = useState("fa");
+  const [form, setForm] = useState({
+    slug: "",
+    keywords: "",
+    is_published: true,
+    title: "",
+    excerpt: "",
+    content: "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setItems(await fetchAdminArticles(token));
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  function resetForm() {
+    setForm({ slug: "", keywords: "", is_published: true, title: "", excerpt: "", content: "" });
+    setEditingId(null);
+    setFormLang("fa");
+    setShowForm(false);
+    setMsg(null);
+  }
+
+  function openCreate() {
+    resetForm();
+    setShowForm(true);
+  }
+
+  function openEdit(a: AdminArticle) {
+    const lang = a.translations.fa ? "fa" : a.translations.en ? "en" : Object.keys(a.translations)[0] || "en";
+    const tr = a.translations[lang] || { title: "", excerpt: "", content: "" };
+    setEditingId(a.id);
+    setFormLang(lang);
+    setForm({
+      slug: a.slug,
+      keywords: a.keywords,
+      is_published: a.is_published,
+      title: tr.title || "",
+      excerpt: tr.excerpt || "",
+      content: tr.content || "",
+    });
+    setShowForm(true);
+    setMsg(null);
+  }
+
+  function switchLang(nextLang: string, article?: AdminArticle | null) {
+    const current = editingId ? items.find((x) => x.id === editingId) : null;
+    const source = article || current;
+    setFormLang(nextLang);
+    if (source?.translations?.[nextLang]) {
+      const tr = source.translations[nextLang];
+      setForm((f) => ({
+        ...f,
+        title: tr.title || "",
+        excerpt: tr.excerpt || "",
+        content: tr.content || "",
+      }));
+    } else {
+      setForm((f) => ({ ...f, title: "", excerpt: "", content: "" }));
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setMsg(null);
+    try {
+      if (editingId) {
+        await updateArticle(token, editingId, {
+          slug: form.slug,
+          keywords: form.keywords,
+          is_published: form.is_published,
+          lang: formLang,
+          title: form.title,
+          excerpt: form.excerpt,
+          content: form.content,
+        });
+        setMsg({ type: "ok", text: "مقاله به‌روز شد ✓" });
+      } else {
+        await createArticle(token, {
+          slug: form.slug,
+          keywords: form.keywords,
+          is_published: form.is_published,
+          lang: formLang,
+          title: form.title,
+          excerpt: form.excerpt,
+          content: form.content,
+        });
+        setMsg({ type: "ok", text: "مقاله ایجاد شد ✓" });
+      }
+      await load();
+      if (!editingId) resetForm();
+      else {
+        const refreshed = await fetchAdminArticles(token);
+        setItems(refreshed);
+        const updated = refreshed.find((x) => x.id === editingId);
+        if (updated) openEdit(updated);
+      }
+    } catch (err: unknown) {
+      setMsg({ type: "err", text: err instanceof Error ? err.message : "خطا" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleToggle(id: string) {
+    await toggleArticle(token, id);
+    load();
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("مقاله حذف شود؟")) return;
+    await deleteArticle(token, id);
+    if (editingId === id) resetForm();
+    load();
+  }
+
+  return (
+    <div className="glass-card overflow-hidden">
+      <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
+        <div>
+          <h3 className="font-semibold text-slate-200">مدیریت مقالات</h3>
+          <p className="text-xs text-slate-500">{items.length} مقاله · چندزبانه</p>
+        </div>
+        <button onClick={showForm && !editingId ? resetForm : openCreate} className="btn-primary text-xs py-1.5 px-3">
+          {showForm && !editingId ? "بستن" : "+ مقاله جدید"}
+        </button>
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="border-b border-white/5 p-4 space-y-3">
+          <div className="flex flex-wrap gap-1">
+            {LANGS.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => switchLang(l.code)}
+                className={`rounded-lg px-2 py-1 text-xs transition-colors ${
+                  formLang === l.code ? "bg-brand-600 text-white" : "bg-white/5 text-slate-400 hover:text-white"
+                }`}
+              >
+                {l.flag} {l.code}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <input
+              className="input-field text-sm sm:col-span-2"
+              placeholder="عنوان مقاله"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              required
+            />
+            <input
+              className="input-field text-sm font-mono"
+              placeholder="slug (مثلاً how-to-download-reels)"
+              value={form.slug}
+              onChange={(e) => setForm({ ...form, slug: e.target.value })}
+              dir="ltr"
+            />
+            <input
+              className="input-field text-sm"
+              placeholder="کلمات کلیدی (با کاما)"
+              value={form.keywords}
+              onChange={(e) => setForm({ ...form, keywords: e.target.value })}
+            />
+            <textarea
+              className="input-field text-sm sm:col-span-2 min-h-[70px]"
+              placeholder="خلاصه کوتاه"
+              value={form.excerpt}
+              onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+            />
+            <textarea
+              className="input-field text-sm sm:col-span-2 min-h-[160px]"
+              placeholder="متن کامل مقاله"
+              value={form.content}
+              onChange={(e) => setForm({ ...form, content: e.target.value })}
+              required
+            />
+            <label className="flex items-center gap-2 text-sm text-slate-400 sm:col-span-2">
+              <input
+                type="checkbox"
+                checked={form.is_published}
+                onChange={(e) => setForm({ ...form, is_published: e.target.checked })}
+              />
+              منتشر شده
+            </label>
+          </div>
+
+          {msg && (
+            <div className={`rounded-xl border px-4 py-2 text-sm ${
+              msg.type === "ok"
+                ? "border-green-500/20 bg-green-500/10 text-green-400"
+                : "border-red-500/20 bg-red-500/10 text-red-400"
+            }`}>
+              {msg.text}
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <button type="submit" disabled={saving} className="btn-primary text-sm py-2 disabled:opacity-50">
+              {saving ? "در حال ذخیره..." : editingId ? "به‌روزرسانی" : "ذخیره"}
+            </button>
+            <button type="button" onClick={resetForm} className="btn-secondary text-sm py-2">انصراف</button>
+          </div>
+        </form>
+      )}
+
+      {loading ? (
+        <div className="p-8 text-center text-slate-600">در حال بارگذاری...</div>
+      ) : items.length === 0 ? (
+        <div className="p-8 text-center text-slate-600">هیچ مقاله‌ای ثبت نشده.</div>
+      ) : (
+        <div className="divide-y divide-white/5">
+          {items.map((a) => {
+            const title =
+              a.translations.fa?.title ||
+              a.translations.en?.title ||
+              Object.values(a.translations)[0]?.title ||
+              a.slug;
+            const langs = Object.keys(a.translations).filter((k) => a.translations[k]?.title);
+            return (
+              <div key={a.id} className="flex items-center gap-3 px-4 py-3">
+                <div className="flex-1 min-w-0">
+                  <p className="truncate text-sm font-medium text-slate-200">{title}</p>
+                  <p className="text-xs text-slate-600 font-mono truncate">{a.slug}</p>
+                  <p className="text-[10px] text-slate-700 mt-0.5">{langs.join(" · ") || "—"}</p>
+                </div>
+                <span className={`badge ${a.is_published ? "bg-green-500/15 text-green-400" : "bg-slate-500/15 text-slate-500"}`}>
+                  {a.is_published ? "منتشر" : "پیش‌نویس"}
+                </span>
+                <button onClick={() => openEdit(a)} className="btn-secondary text-xs py-1 px-2">ویرایش</button>
+                <button onClick={() => handleToggle(a.id)} className="btn-secondary text-xs py-1 px-2">
+                  {a.is_published ? "غیرفعال" : "فعال"}
+                </button>
+                <button
+                  onClick={() => handleDelete(a.id)}
+                  className="rounded-lg p-1.5 text-slate-600 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+                >
+                  🗑
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function AdminPage() {
   const [token, setToken] = useState<string | null>(null);
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [tab, setTab] = useState<"downloads" | "banners" | "proxy" | "cookies" | "credentials" | "ratelimit">("downloads");
+  const [tab, setTab] = useState<"downloads" | "banners" | "articles" | "proxy" | "cookies" | "credentials" | "ratelimit">("downloads");
 
   useEffect(() => {
     const saved = localStorage.getItem("admin_token");
@@ -915,7 +1187,7 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-1 rounded-xl bg-white/5 p-1 w-fit">
-          {(["downloads", "banners", "ratelimit", "proxy", "cookies", "credentials"] as const).map((t) => (
+          {(["downloads", "articles", "banners", "ratelimit", "proxy", "cookies", "credentials"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -924,6 +1196,7 @@ export default function AdminPage() {
               }`}
             >
               {t === "downloads" ? "📥 دانلودها"
+                : t === "articles" ? "📝 مقالات"
                 : t === "banners" ? "🖼 بنرها"
                 : t === "ratelimit" ? "🚦 محدودیت"
                 : t === "proxy" ? "🌐 پراکسی"
@@ -935,6 +1208,7 @@ export default function AdminPage() {
 
         {/* Content */}
         {tab === "downloads" && <DownloadsTable token={token} />}
+        {tab === "articles" && <ArticleManager token={token} />}
         {tab === "banners" && <BannerManager token={token} />}
         {tab === "ratelimit" && <RateLimitManager token={token} />}
         {tab === "proxy" && <ProxyManager token={token} />}

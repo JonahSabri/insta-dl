@@ -14,6 +14,7 @@ from app.database import init_db
 import app.models  # noqa: F401
 from app.api.routes.download import router as download_router
 from app.api.routes.admin import router as admin_router
+from app.api.routes.articles import router as articles_router
 
 
 @asynccontextmanager
@@ -22,8 +23,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Load site settings (Instagram credentials etc.) into memory cache
     from app.database import AsyncSessionLocal
     from app.services import settings_store
+    from app.services.article_seed import seed_articles_if_empty
     async with AsyncSessionLocal() as db:
         await settings_store.load_from_db(db)
+        await seed_articles_if_empty(db)
     yield
 
 
@@ -39,7 +42,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -57,6 +60,7 @@ app.add_middleware(ForwardedForMiddleware)
 
 app.include_router(download_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api")
+app.include_router(articles_router, prefix="/api")
 
 
 @app.get("/api/health")

@@ -71,3 +71,36 @@ export interface DownloadRecord {
   device?: string;
   os?: string;
 }
+
+export interface ArticleTranslation {
+  title: string;
+  excerpt: string;
+  content: string;
+}
+
+export interface ArticleListItem {
+  id: string;
+  slug: string;
+  keywords: string;
+  title: string;
+  excerpt: string;
+  content?: string;
+  created_at: string | null;
+}
+
+export interface ArticleDetail extends ArticleListItem {
+  lang: string;
+  content: string;
+  available_langs: string[];
+  updated_at: string | null;
+}
+
+export interface AdminArticle {
+  id: string;
+  slug: string;
+  keywords: string;
+  is_published: boolean;
+  translations: Record<string, ArticleTranslation>;
+  created_at: string | null;
+  updated_at: string | null;
+}
