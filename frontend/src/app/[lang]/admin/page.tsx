@@ -24,10 +24,21 @@ import {
   updateArticle,
   toggleArticle,
   deleteArticle,
+  uploadAdminImage,
 } from "@/lib/api";
 import type { AdminStats, DownloadRecord, Banner, AdminArticle } from "@/types";
 import Link from "next/link";
 import { LANGS } from "@/i18n/translations";
+import RichTextEditor from "@/components/RichTextEditor";
+
+const ARTICLE_CATEGORIES = [
+  { id: "guide", label: "راهنما (Guide)" },
+  { id: "tips", label: "نکات (Tips)" },
+  { id: "tutorial", label: "آموزش (Tutorial)" },
+  { id: "news", label: "اخبار (News)" },
+  { id: "faq", label: "سوالات متداول (FAQ)" },
+  { id: "seo", label: "سئو (SEO)" },
+] as const;
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -880,6 +891,8 @@ function ArticleManager({ token }: { token: string }) {
   const [formLang, setFormLang] = useState("fa");
   const [form, setForm] = useState({
     slug: "",
+    category: "guide",
+    cover_image: "",
     keywords: "",
     is_published: true,
     title: "",
@@ -900,8 +913,19 @@ function ArticleManager({ token }: { token: string }) {
 
   useEffect(() => { load(); }, [load]);
 
+  const editorDir = (LANGS.find((l) => l.code === formLang)?.dir ?? "rtl") as "ltr" | "rtl";
+
   function resetForm() {
-    setForm({ slug: "", keywords: "", is_published: true, title: "", excerpt: "", content: "" });
+    setForm({
+      slug: "",
+      category: "guide",
+      cover_image: "",
+      keywords: "",
+      is_published: true,
+      title: "",
+      excerpt: "",
+      content: "",
+    });
     setEditingId(null);
     setFormLang("fa");
     setShowForm(false);
@@ -920,6 +944,8 @@ function ArticleManager({ token }: { token: string }) {
     setFormLang(lang);
     setForm({
       slug: a.slug,
+      category: a.category || "guide",
+      cover_image: a.cover_image || "",
       keywords: a.keywords,
       is_published: a.is_published,
       title: tr.title || "",
@@ -930,12 +956,11 @@ function ArticleManager({ token }: { token: string }) {
     setMsg(null);
   }
 
-  function switchLang(nextLang: string, article?: AdminArticle | null) {
+  function switchLang(nextLang: string) {
     const current = editingId ? items.find((x) => x.id === editingId) : null;
-    const source = article || current;
     setFormLang(nextLang);
-    if (source?.translations?.[nextLang]) {
-      const tr = source.translations[nextLang];
+    if (current?.translations?.[nextLang]) {
+      const tr = current.translations[nextLang];
       setForm((f) => ({
         ...f,
         title: tr.title || "",
@@ -949,30 +974,30 @@ function ArticleManager({ token }: { token: string }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const plain = form.content.replace(/<[^>]+>/g, "").trim();
+    if (!form.title.trim() || !plain) {
+      setMsg({ type: "err", text: "عنوان و متن مقاله الزامی است." });
+      return;
+    }
     setSaving(true);
     setMsg(null);
+    const payload = {
+      slug: form.slug,
+      category: form.category,
+      cover_image: form.cover_image,
+      keywords: form.keywords,
+      is_published: form.is_published,
+      lang: formLang,
+      title: form.title,
+      excerpt: form.excerpt,
+      content: form.content,
+    };
     try {
       if (editingId) {
-        await updateArticle(token, editingId, {
-          slug: form.slug,
-          keywords: form.keywords,
-          is_published: form.is_published,
-          lang: formLang,
-          title: form.title,
-          excerpt: form.excerpt,
-          content: form.content,
-        });
+        await updateArticle(token, editingId, payload);
         setMsg({ type: "ok", text: "مقاله به‌روز شد ✓" });
       } else {
-        await createArticle(token, {
-          slug: form.slug,
-          keywords: form.keywords,
-          is_published: form.is_published,
-          lang: formLang,
-          title: form.title,
-          excerpt: form.excerpt,
-          content: form.content,
-        });
+        await createArticle(token, payload);
         setMsg({ type: "ok", text: "مقاله ایجاد شد ✓" });
       }
       await load();
@@ -1002,12 +1027,28 @@ function ArticleManager({ token }: { token: string }) {
     load();
   }
 
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await uploadAdminImage(token, file);
+      setForm((f) => ({ ...f, cover_image: url }));
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "آپلود کاور ناموفق بود");
+    } finally {
+      e.target.value = "";
+    }
+  }
+
+  const catLabel = (id: string) =>
+    ARTICLE_CATEGORIES.find((c) => c.id === id)?.label ?? id;
+
   return (
     <div className="glass-card overflow-hidden">
       <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
         <div>
-          <h3 className="font-semibold text-slate-200">مدیریت مقالات</h3>
-          <p className="text-xs text-slate-500">{items.length} مقاله · چندزبانه</p>
+          <h3 className="font-semibold text-slate-200">مدیریت بلاگ / مقالات</h3>
+          <p className="text-xs text-slate-500">{items.length} مقاله · ادیتور غنی · چندزبانه</p>
         </div>
         <button onClick={showForm && !editingId ? resetForm : openCreate} className="btn-primary text-xs py-1.5 px-3">
           {showForm && !editingId ? "بستن" : "+ مقاله جدید"}
@@ -1015,56 +1056,113 @@ function ArticleManager({ token }: { token: string }) {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="border-b border-white/5 p-4 space-y-3">
-          <div className="flex flex-wrap gap-1">
-            {LANGS.map((l) => (
-              <button
-                key={l.code}
-                type="button"
-                onClick={() => switchLang(l.code)}
-                className={`rounded-lg px-2 py-1 text-xs transition-colors ${
-                  formLang === l.code ? "bg-brand-600 text-white" : "bg-white/5 text-slate-400 hover:text-white"
-                }`}
-              >
-                {l.flag} {l.code}
-              </button>
-            ))}
+        <form onSubmit={handleSubmit} className="border-b border-white/5 p-4 space-y-4">
+          <div>
+            <p className="mb-1.5 text-xs text-slate-500">زبان محتوا</p>
+            <div className="flex flex-wrap gap-1">
+              {LANGS.map((l) => (
+                <button
+                  key={l.code}
+                  type="button"
+                  onClick={() => switchLang(l.code)}
+                  className={`rounded-lg px-2 py-1 text-xs transition-colors ${
+                    formLang === l.code ? "bg-brand-600 text-white" : "bg-white/5 text-slate-400 hover:text-white"
+                  }`}
+                >
+                  {l.flag} {l.code}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <input
-              className="input-field text-sm sm:col-span-2"
-              placeholder="عنوان مقاله"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              required
-            />
-            <input
-              className="input-field text-sm font-mono"
-              placeholder="slug (مثلاً how-to-download-reels)"
-              value={form.slug}
-              onChange={(e) => setForm({ ...form, slug: e.target.value })}
-              dir="ltr"
-            />
-            <input
-              className="input-field text-sm"
-              placeholder="کلمات کلیدی (با کاما)"
-              value={form.keywords}
-              onChange={(e) => setForm({ ...form, keywords: e.target.value })}
-            />
-            <textarea
-              className="input-field text-sm sm:col-span-2 min-h-[70px]"
-              placeholder="خلاصه کوتاه"
-              value={form.excerpt}
-              onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
-            />
-            <textarea
-              className="input-field text-sm sm:col-span-2 min-h-[160px]"
-              placeholder="متن کامل مقاله"
-              value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
-              required
-            />
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs text-slate-500">عنوان</label>
+              <input
+                className="input-field text-sm"
+                placeholder="عنوان مقاله"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs text-slate-500">نوع / سکشن</label>
+              <select
+                className="input-field text-sm"
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+              >
+                {ARTICLE_CATEGORIES.map((c) => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs text-slate-500">Slug</label>
+              <input
+                className="input-field text-sm font-mono"
+                placeholder="how-to-download-reels"
+                value={form.slug}
+                onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                dir="ltr"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs text-slate-500">کلمات کلیدی (با کاما)</label>
+              <input
+                className="input-field text-sm"
+                placeholder="instagram reels, download, ..."
+                value={form.keywords}
+                onChange={(e) => setForm({ ...form, keywords: e.target.value })}
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs text-slate-500">تصویر کاور</label>
+              <div className="flex flex-wrap gap-2">
+                <input
+                  className="input-field text-sm flex-1 font-mono"
+                  placeholder="/api/v1/uploads/... یا URL"
+                  value={form.cover_image}
+                  onChange={(e) => setForm({ ...form, cover_image: e.target.value })}
+                  dir="ltr"
+                />
+                <label className="btn-secondary cursor-pointer text-xs py-2 px-3">
+                  آپلود کاور
+                  <input type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+                </label>
+              </div>
+              {form.cover_image && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={form.cover_image} alt="" className="mt-2 h-28 rounded-xl object-cover border border-white/10" />
+              )}
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs text-slate-500">خلاصه کوتاه</label>
+              <textarea
+                className="input-field text-sm min-h-[70px]"
+                placeholder="خلاصه برای کارت‌ها و سئو"
+                value={form.excerpt}
+                onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs text-slate-500">متن کامل (ادیتور غنی)</label>
+              <RichTextEditor
+                value={form.content}
+                onChange={(html) => setForm((f) => ({ ...f, content: html }))}
+                dir={editorDir}
+                uploadImage={(file) => uploadAdminImage(token, file)}
+                placeholder="متن مقاله را با فرمت‌بندی بنویسید…"
+              />
+            </div>
+
             <label className="flex items-center gap-2 text-sm text-slate-400 sm:col-span-2">
               <input
                 type="checkbox"
@@ -1112,7 +1210,9 @@ function ArticleManager({ token }: { token: string }) {
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-sm font-medium text-slate-200">{title}</p>
                   <p className="text-xs text-slate-600 font-mono truncate">{a.slug}</p>
-                  <p className="text-[10px] text-slate-700 mt-0.5">{langs.join(" · ") || "—"}</p>
+                  <p className="text-[10px] text-slate-700 mt-0.5">
+                    {catLabel(a.category || "guide")} · {langs.join(" · ") || "—"}
+                  </p>
                 </div>
                 <span className={`badge ${a.is_published ? "bg-green-500/15 text-green-400" : "bg-slate-500/15 text-slate-500"}`}>
                   {a.is_published ? "منتشر" : "پیش‌نویس"}

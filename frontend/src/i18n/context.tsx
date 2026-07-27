@@ -56,6 +56,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     segments[1] = l;
     const newPath = segments.join("/") || `/${l}`;
     setLangState(l);
+    // Manual choice locks language (geo won't override until cookie cleared)
+    document.cookie = `lang=${l};path=/;max-age=31536000;SameSite=Lax`;
+    document.cookie = `lang_manual=1;path=/;max-age=31536000;SameSite=Lax`;
     router.push(newPath);
   }
 

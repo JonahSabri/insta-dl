@@ -15,6 +15,8 @@ import app.models  # noqa: F401
 from app.api.routes.download import router as download_router
 from app.api.routes.admin import router as admin_router
 from app.api.routes.articles import router as articles_router
+from app.api.routes.geo import router as geo_router
+from app.api.routes.uploads import router as uploads_router
 
 
 @asynccontextmanager
@@ -61,6 +63,8 @@ app.add_middleware(ForwardedForMiddleware)
 app.include_router(download_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api")
 app.include_router(articles_router, prefix="/api")
+app.include_router(geo_router, prefix="/api")
+app.include_router(uploads_router, prefix="/api")
 
 
 @app.get("/api/health")

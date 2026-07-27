@@ -44,7 +44,12 @@ export default function LanguageSwitcher() {
           {LANGS.map((l) => (
             <button
               key={l.code}
-              onClick={() => { setLang(l.code); setOpen(false); }}
+              onClick={() => {
+                document.cookie = `lang=${l.code};path=/;max-age=31536000;SameSite=Lax`;
+                document.cookie = `lang_manual=1;path=/;max-age=31536000;SameSite=Lax`;
+                setLang(l.code);
+                setOpen(false);
+              }}
               className={`flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors
                 hover:bg-white/5
                 ${lang === l.code ? "text-brand-300 bg-white/[0.03]" : "text-slate-400 hover:text-white"}`}

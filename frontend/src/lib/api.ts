@@ -240,6 +240,8 @@ export async function createArticle(
   token: string,
   data: {
     slug?: string;
+    category?: string;
+    cover_image?: string;
     keywords?: string;
     is_published?: boolean;
     lang: string;
@@ -261,6 +263,8 @@ export async function updateArticle(
   id: string,
   data: {
     slug?: string;
+    category?: string;
+    cover_image?: string;
     keywords?: string;
     is_published?: boolean;
     lang?: string;
@@ -275,6 +279,22 @@ export async function updateArticle(
     headers: authHeader(token),
     body: JSON.stringify(data),
   });
+}
+
+export async function uploadAdminImage(token: string, file: File): Promise<string> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`/api/admin/upload`, {
+    method: "POST",
+    headers: authHeader(token),
+    body: form,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { detail?: string }).detail ?? `HTTP ${res.status}`);
+  }
+  const data = (await res.json()) as { url: string };
+  return data.url;
 }
 
 export async function toggleArticle(token: string, id: string): Promise<void> {

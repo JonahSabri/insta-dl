@@ -1160,3 +1160,39 @@
   .magic-border-inner .flex { flex-direction: row; }
   .type-pill-label { display: inline; }
 }
+
+/* ── Rich text editor + article body ─────────────────────────────────────── */
+.rich-editor h1,
+.article-body h1 { font-size: 1.6rem; font-weight: 800; margin: 0.75rem 0; color: #fff; }
+.rich-editor h2,
+.article-body h2 { font-size: 1.35rem; font-weight: 700; margin: 0.65rem 0; color: #f1f5f9; }
+.rich-editor h3,
+.article-body h3 { font-size: 1.15rem; font-weight: 700; margin: 0.55rem 0; color: #e2e8f0; }
+.rich-editor p,
+.article-body p { margin: 0.4rem 0; }
+.rich-editor ul,
+.article-body ul { list-style: disc; padding-inline-start: 1.4rem; margin: 0.5rem 0; }
+.rich-editor ol,
+.article-body ol { list-style: decimal; padding-inline-start: 1.4rem; margin: 0.5rem 0; }
+.rich-editor blockquote,
+.article-body blockquote {
+  border-inline-start: 3px solid rgba(168, 85, 247, 0.6);
+  padding-inline-start: 0.85rem;
+  color: #94a3b8;
+  margin: 0.75rem 0;
+}
+.rich-editor a,
+.article-body a { color: #c084fc; text-decoration: underline; }
+.rich-editor img,
+.article-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  margin: 0.75rem 0;
+  display: block;
+}
+.article-body {
+  font-size: 15px;
+  line-height: 1.75;
+  color: #cbd5e1;
+}

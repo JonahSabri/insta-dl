@@ -16,9 +16,12 @@ class Article(Base):
         String(36), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     slug: Mapped[str] = mapped_column(String(200), unique=True, index=True)
+    # guide | tips | tutorial | news | faq | seo
+    category: Mapped[str] = mapped_column(String(50), default="guide")
     # JSON: { "en": {"title","excerpt","content"}, "fa": {...}, ... }
     translations: Mapped[str] = mapped_column(Text, default="{}")
     keywords: Mapped[str] = mapped_column(Text, default="")
+    cover_image: Mapped[str] = mapped_column(Text, default="")
     is_published: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC)

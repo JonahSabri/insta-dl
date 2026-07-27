@@ -87,14 +87,27 @@ export default function ArticleDetailPage() {
                   {t.articles.publishedAt} · {new Date(article.created_at).toLocaleDateString(lang)}
                 </p>
               )}
+              {article.cover_image && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={article.cover_image}
+                  alt={article.title}
+                  className="mb-8 w-full rounded-2xl border border-white/10 object-cover max-h-80"
+                />
+              )}
               {article.excerpt && (
                 <p className="mb-8 text-base leading-relaxed text-slate-400 border-l-2 border-purple-500/40 pl-4">
                   {article.excerpt}
                 </p>
               )}
-              <div className="space-y-4 text-[15px] leading-7 text-slate-300 whitespace-pre-wrap">
-                {article.content}
-              </div>
+              {article.content?.includes("<") ? (
+                <div
+                  className="article-body"
+                  dangerouslySetInnerHTML={{ __html: article.content }}
+                />
+              ) : (
+                <div className="article-body whitespace-pre-wrap">{article.content}</div>
+              )}
               {article.keywords && (
                 <div className="mt-10 flex flex-wrap gap-2">
                   {article.keywords.split(",").map((k) => (

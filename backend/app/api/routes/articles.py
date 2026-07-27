@@ -52,6 +52,8 @@ def _public_item(article: Article, lang: str) -> dict:
     return {
         "id": article.id,
         "slug": article.slug,
+        "category": article.category or "guide",
+        "cover_image": article.cover_image or "",
         "keywords": article.keywords,
         "lang": lang if lang in tr else ("en" if "en" in tr else next(iter(tr), lang)),
         "title": picked["title"],
@@ -67,6 +69,8 @@ def _admin_item(article: Article) -> dict:
     return {
         "id": article.id,
         "slug": article.slug,
+        "category": article.category or "guide",
+        "cover_image": article.cover_image or "",
         "keywords": article.keywords,
         "is_published": article.is_published,
         "translations": _parse_translations(article.translations),
@@ -116,6 +120,8 @@ async def list_public_articles(
             {
                 "id": a.id,
                 "slug": a.slug,
+                "category": a.category or "guide",
+                "cover_image": a.cover_image or "",
                 "keywords": a.keywords,
                 **_pick_lang(_parse_translations(a.translations), lang),
                 "created_at": a.created_at.isoformat() if a.created_at else None,
@@ -150,8 +156,13 @@ class ArticleTranslation(BaseModel):
     content: str = ""
 
 
+ARTICLE_CATEGORIES = {"guide", "tips", "tutorial", "news", "faq", "seo"}
+
+
 class ArticleCreate(BaseModel):
     slug: str = ""
+    category: str = "guide"
+    cover_image: str = ""
     keywords: str = ""
     is_published: bool = True
     lang: str = "en"
@@ -163,6 +174,8 @@ class ArticleCreate(BaseModel):
 
 class ArticleUpdate(BaseModel):
     slug: str | None = None
+    category: str | None = None
+    cover_image: str | None = None
     keywords: str | None = None
     is_published: bool | None = None
     translations: dict[str, ArticleTranslation] | None = None
@@ -208,8 +221,11 @@ async def admin_create_article(
         "content": body.content,
     }
 
+    category = body.category if body.category in ARTICLE_CATEGORIES else "guide"
     article = Article(
         slug=slug,
+        category=category,
+        cover_image=body.cover_image or "",
         keywords=body.keywords,
         translations=json.dumps(translations, ensure_ascii=False),
         is_published=body.is_published,
@@ -241,6 +257,10 @@ async def admin_update_article(
 
     if body.keywords is not None:
         article.keywords = body.keywords
+    if body.category is not None:
+        article.category = body.category if body.category in ARTICLE_CATEGORIES else "guide"
+    if body.cover_image is not None:
+        article.cover_image = body.cover_image
     if body.is_published is not None:
         article.is_published = body.is_published
 

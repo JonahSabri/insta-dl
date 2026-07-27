@@ -4,32 +4,94 @@ import type { NextRequest } from "next/server";
 const SUPPORTED_LANGS = ["en", "pt", "fa", "de", "fr", "ja", "nl", "sv", "no", "da", "it", "es", "tr", "ar"];
 const DEFAULT_LANG = "en";
 
-function detectLang(request: NextRequest): string {
-  // Check if user has a saved preference in cookie
-  const saved = request.cookies.get("lang")?.value;
-  if (saved && SUPPORTED_LANGS.includes(saved)) return saved;
+const COUNTRY_TO_LANG: Record<string, string> = {
+  IR: "fa", AF: "fa",
+  SA: "ar", AE: "ar", EG: "ar", IQ: "ar", JO: "ar", KW: "ar", LB: "ar",
+  OM: "ar", QA: "ar", BH: "ar", SY: "ar", YE: "ar", MA: "ar", DZ: "ar",
+  TN: "ar", LY: "ar", SD: "ar", PS: "ar",
+  BR: "pt", PT: "pt", AO: "pt", MZ: "pt",
+  DE: "de", AT: "de", LI: "de",
+  FR: "fr", MC: "fr",
+  JP: "ja",
+  NL: "nl",
+  SE: "sv",
+  NO: "no",
+  DK: "da",
+  IT: "it", SM: "it", VA: "it",
+  ES: "es", MX: "es", AR: "es", CO: "es", CL: "es", PE: "es", VE: "es",
+  EC: "es", GT: "es", CU: "es", BO: "es", DO: "es", HN: "es", PY: "es",
+  SV: "es", NI: "es", CR: "es", PA: "es", UY: "es", PR: "es",
+  TR: "tr",
+  US: "en", GB: "en", AU: "en", CA: "en", NZ: "en", IE: "en",
+};
 
-  // Detect from Accept-Language header
-  const accept = request.headers.get("accept-language") ?? "";
+function langFromCountry(country: string | null | undefined): string | null {
+  if (!country) return null;
+  const mapped = COUNTRY_TO_LANG[country.toUpperCase()];
+  if (mapped && SUPPORTED_LANGS.includes(mapped)) return mapped;
+  return null;
+}
 
-  if (accept.includes("fa") || accept.includes("ir")) return "fa";
-  if (accept.includes("ar")) return "ar";
-  if (accept.includes("de")) return "de";
-  if (accept.includes("fr")) return "fr";
-  if (accept.includes("ja")) return "ja";
-  if (accept.includes("nl")) return "nl";
-  if (accept.includes("sv")) return "sv";
-  if (accept.includes("no")) return "no";
-  if (accept.includes("da")) return "da";
-  if (accept.includes("it")) return "it";
-  if (accept.includes("es")) return "es";
-  if (accept.includes("tr")) return "tr";
-  if (accept.includes("pt")) return "pt";
+function getCountryFromHeaders(request: NextRequest): string | null {
+  const geo = (request as NextRequest & { geo?: { country?: string } }).geo;
+  return (
+    request.headers.get("x-vercel-ip-country") ||
+    request.headers.get("cf-ip-country") ||
+    request.headers.get("x-country-code") ||
+    request.headers.get("cloudfront-viewer-country") ||
+    geo?.country ||
+    null
+  );
+}
+
+async function detectLangFromGeo(request: NextRequest): Promise<string> {
+  const headerCountry = getCountryFromHeaders(request);
+  const fromHeader = langFromCountry(headerCountry);
+  if (fromHeader) return fromHeader;
+
+  // If CDN already gave a country not in our map → English
+  if (headerCountry) return DEFAULT_LANG;
+
+  try {
+    const api = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "";
+    const url = ip
+      ? `${api}/api/v1/geo?ip=${encodeURIComponent(ip)}`
+      : `${api}/api/v1/geo`;
+
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(2000),
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const data = (await res.json()) as { lang?: string; country?: string };
+      if (data.lang && SUPPORTED_LANGS.includes(data.lang)) return data.lang;
+      // country known but not mapped → English
+      if (data.country) return DEFAULT_LANG;
+    }
+  } catch {
+    /* ignore geo failures */
+  }
 
   return DEFAULT_LANG;
 }
 
-export function middleware(request: NextRequest) {
+async function detectLang(request: NextRequest): Promise<string> {
+  // Manual language choice always wins
+  const manual = request.cookies.get("lang_manual")?.value;
+  const saved = request.cookies.get("lang")?.value;
+  if (manual === "1" && saved && SUPPORTED_LANGS.includes(saved)) {
+    return saved;
+  }
+
+  return detectLangFromGeo(request);
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip: already has a lang prefix
@@ -48,11 +110,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirect root (and any other paths) to /{lang}/path
-  const lang = detectLang(request);
+  const lang = await detectLang(request);
   const url = request.nextUrl.clone();
   url.pathname = `/${lang}${pathname === "/" ? "" : pathname}`;
-  return NextResponse.redirect(url);
+
+  const res = NextResponse.redirect(url);
+  // Persist geo/manual lang for subsequent visits (manual flag unchanged)
+  res.cookies.set("lang", lang, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+  return res;
 }
 
 export const config = {

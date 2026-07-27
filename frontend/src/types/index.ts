@@ -78,9 +78,13 @@ export interface ArticleTranslation {
   content: string;
 }
 
+export type ArticleCategory = "guide" | "tips" | "tutorial" | "news" | "faq" | "seo";
+
 export interface ArticleListItem {
   id: string;
   slug: string;
+  category?: ArticleCategory | string;
+  cover_image?: string;
   keywords: string;
   title: string;
   excerpt: string;
@@ -98,6 +102,8 @@ export interface ArticleDetail extends ArticleListItem {
 export interface AdminArticle {
   id: string;
   slug: string;
+  category: ArticleCategory | string;
+  cover_image: string;
   keywords: string;
   is_published: boolean;
   translations: Record<string, ArticleTranslation>;

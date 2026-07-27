@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useT } from "@/i18n/context";
@@ -10,6 +10,12 @@ import type { ArticleListItem } from "@/types";
 
 const MAX_ITEMS = 6;
 const AUTOPLAY_MS = 5000;
+
+function chunk<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
 
 export default function LatestArticlesSlider() {
   const t = useT();
@@ -43,7 +49,6 @@ export default function LatestArticlesSlider() {
     };
   }, [lang]);
 
-  // 3 cards on desktop, 2 on tablet, 1 on mobile
   useEffect(() => {
     const update = () => {
       const w = window.innerWidth;
@@ -54,7 +59,8 @@ export default function LatestArticlesSlider() {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  const pageCount = Math.max(1, Math.ceil(items.length / perView));
+  const pages = useMemo(() => chunk(items, perView), [items, perView]);
+  const pageCount = Math.max(1, pages.length);
   const maxPage = pageCount - 1;
 
   useEffect(() => {
@@ -69,14 +75,13 @@ export default function LatestArticlesSlider() {
     setPage((p) => (p >= maxPage ? 0 : p + 1));
   }, [maxPage]);
 
-  // Autoplay — advance by one "page" of cards (3→3)
   useEffect(() => {
-    if (loading || items.length <= perView || paused) return;
+    if (loading || pages.length <= 1 || paused) return;
     const id = window.setInterval(() => {
       setPage((p) => (p >= maxPage ? 0 : p + 1));
     }, AUTOPLAY_MS);
     return () => window.clearInterval(id);
-  }, [loading, items.length, perView, paused, maxPage]);
+  }, [loading, pages.length, paused, maxPage]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -95,20 +100,16 @@ export default function LatestArticlesSlider() {
     touchDeltaX.current = 0;
     setPaused(false);
     if (Math.abs(delta) < 40) return;
-    // In RTL, swipe direction feels mirrored
-    const goForward = isRtl ? delta > 0 : delta < 0;
-    if (goForward) goNext();
+    // Track is always LTR mechanically
+    if (delta < 0) goNext();
     else goPrev();
   };
 
   if (!loading && items.length === 0) return null;
 
-  const slidePct = 100 / perView;
-  const trackOffset = page * perView * slidePct;
-  // translate in reading direction
-  const transform = isRtl
-    ? `translateX(${trackOffset}%)`
-    : `translateX(-${trackOffset}%)`;
+  // Track always slides LTR mechanically; card text keeps page language direction.
+  const transform = `translateX(-${page * 100}%)`;
+  const textDir = isRtl ? "rtl" : "ltr";
 
   return (
     <section className="section-glow relative px-4 py-12 sm:py-16">
@@ -176,6 +177,7 @@ export default function LatestArticlesSlider() {
           <>
             <div
               className="overflow-hidden"
+              dir="ltr"
               onMouseEnter={() => setPaused(true)}
               onMouseLeave={() => setPaused(false)}
               onTouchStart={onTouchStart}
@@ -184,50 +186,55 @@ export default function LatestArticlesSlider() {
             >
               <div
                 className="flex transition-transform duration-500 ease-out"
-                style={{
-                  transform,
-                  gap: "1rem",
-                }}
+                style={{ transform }}
               >
-                {items.map((a) => (
-                  <Link
-                    key={a.id}
-                    href={`/${lang}/articles/${a.slug}`}
-                    className="glass-card group flex shrink-0 flex-col p-5 transition-colors hover:border-purple-500/30"
+                {pages.map((group, gi) => (
+                  <div
+                    key={gi}
+                    className="grid w-full shrink-0 gap-4"
                     style={{
-                      width: `calc((100% - ${(perView - 1) * 1}rem) / ${perView})`,
+                      gridTemplateColumns: `repeat(${perView}, minmax(0, 1fr))`,
                     }}
                   >
-                    <div
-                      className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, rgba(131,58,180,0.25), rgba(225,48,108,0.2))",
-                        color: "#e9d5ff",
-                      }}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                      </svg>
-                    </div>
-                    <h3 className="mb-2 line-clamp-2 text-base font-bold text-slate-100 group-hover:text-white">
-                      {a.title}
-                    </h3>
-                    <p className="mb-4 flex-1 text-sm leading-relaxed text-slate-500 line-clamp-3">
-                      {a.excerpt}
-                    </p>
-                    <div className="mt-auto flex items-center justify-between text-xs text-slate-600">
-                      <span>
-                        {a.created_at
-                          ? new Date(a.created_at).toLocaleDateString(lang)
-                          : ""}
-                      </span>
-                      <span className="text-purple-400 group-hover:text-pink-400">
-                        {t.articles.readMore} →
-                      </span>
-                    </div>
-                  </Link>
+                    {group.map((a) => (
+                      <Link
+                        key={a.id}
+                        href={`/${lang}/articles/${a.slug}`}
+                        dir={textDir}
+                        className="glass-card group flex h-full flex-col p-5 transition-colors hover:border-purple-500/30"
+                      >
+                        <div
+                          className="mb-4 flex h-9 w-9 items-center justify-center rounded-xl"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, rgba(131,58,180,0.25), rgba(225,48,108,0.2))",
+                            color: "#e9d5ff",
+                          }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                          </svg>
+                        </div>
+                        <h3 className="mb-2 line-clamp-2 text-base font-bold text-slate-100 group-hover:text-white">
+                          {a.title}
+                        </h3>
+                        <p className="mb-4 flex-1 text-sm leading-relaxed text-slate-500 line-clamp-3">
+                          {a.excerpt}
+                        </p>
+                        <div className="mt-auto flex items-center justify-between text-xs text-slate-600">
+                          <span>
+                            {a.created_at
+                              ? new Date(a.created_at).toLocaleDateString(lang)
+                              : ""}
+                          </span>
+                          <span className="text-purple-400 group-hover:text-pink-400">
+                            {t.articles.readMore} →
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 ))}
               </div>
             </div>

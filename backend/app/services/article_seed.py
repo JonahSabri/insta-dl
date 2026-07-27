@@ -40,6 +40,7 @@ def _body(*paragraphs: str) -> str:
 SEED_ARTICLES: list[dict] = [
     {
         "slug": "how-to-download-instagram-reels",
+        "category": "guide",
         "keywords": "download instagram reels, instagram reels downloader, save reels, jazzghost",
         "translations": _t(
             (
@@ -595,6 +596,7 @@ async def seed_articles_if_empty(db: AsyncSession) -> int:
         db.add(
             Article(
                 slug=item["slug"],
+                category=item.get("category", "guide"),
                 keywords=item["keywords"],
                 translations=json.dumps(item["translations"], ensure_ascii=False),
                 is_published=True,
