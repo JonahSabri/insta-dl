@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const SUPPORTED_LANGS = ["en", "pt", "fa", "de", "fr", "ja", "nl", "sv", "no", "da", "it", "es", "tr", "ar"];
+const SUPPORTED_LANGS = ["en", "pt", "de", "fr", "ja", "nl", "sv", "no", "da", "it", "es", "tr", "ar"];
 const DEFAULT_LANG = "en";
 
 const COUNTRY_TO_LANG: Record<string, string> = {
-  IR: "fa", AF: "fa",
+  // Persian removed — IR/AF fall through to English
   SA: "ar", AE: "ar", EG: "ar", IQ: "ar", JO: "ar", KW: "ar", LB: "ar",
   OM: "ar", QA: "ar", BH: "ar", SY: "ar", YE: "ar", MA: "ar", DZ: "ar",
   TN: "ar", LY: "ar", SD: "ar", PS: "ar",
@@ -23,6 +23,7 @@ const COUNTRY_TO_LANG: Record<string, string> = {
   SV: "es", NI: "es", CR: "es", PA: "es", UY: "es", PR: "es",
   TR: "tr",
   US: "en", GB: "en", AU: "en", CA: "en", NZ: "en", IE: "en",
+  IR: "en", AF: "en",
 };
 
 function langFromCountry(country: string | null | undefined): string | null {
@@ -93,6 +94,16 @@ async function detectLang(request: NextRequest): Promise<string> {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Persian removed — redirect old /fa paths to English
+  if (pathname === "/fa" || pathname.startsWith("/fa/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/fa/, "/en") || "/en";
+    const res = NextResponse.redirect(url);
+    res.cookies.set("lang", "en", { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+    res.cookies.delete("lang_manual");
+    return res;
+  }
 
   // Skip: already has a lang prefix
   const hasLangPrefix = SUPPORTED_LANGS.some(

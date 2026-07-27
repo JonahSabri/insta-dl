@@ -11,23 +11,22 @@ interface Props {
 }
 
 const FONTS = [
-  { label: "پیش‌فرض", value: "inherit" },
+  { label: "Default", value: "inherit" },
   { label: "Arial", value: "Arial, sans-serif" },
   { label: "Georgia", value: "Georgia, serif" },
   { label: "Times New Roman", value: "'Times New Roman', serif" },
   { label: "Courier New", value: "'Courier New', monospace" },
   { label: "Tahoma", value: "Tahoma, sans-serif" },
-  { label: "Vazirmatn", value: "Vazirmatn, Tahoma, sans-serif" },
   { label: "Verdana", value: "Verdana, sans-serif" },
 ];
 
 const SIZES = [
-  { label: "کوچک", value: "2" },
-  { label: "عادی", value: "3" },
-  { label: "متوسط", value: "4" },
-  { label: "بزرگ", value: "5" },
-  { label: "خیلی بزرگ", value: "6" },
-  { label: "عنوان", value: "7" },
+  { label: "Small", value: "2" },
+  { label: "Normal", value: "3" },
+  { label: "Medium", value: "4" },
+  { label: "Large", value: "5" },
+  { label: "X-Large", value: "6" },
+  { label: "Huge", value: "7" },
 ];
 
 function ToolbarBtn({
@@ -55,9 +54,9 @@ function ToolbarBtn({
 export default function RichTextEditor({
   value,
   onChange,
-  placeholder = "متن مقاله را بنویسید…",
+  placeholder = "Write your article…",
   uploadImage,
-  dir = "rtl",
+  dir = "ltr",
 }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -89,13 +88,13 @@ export default function RichTextEditor({
   };
 
   const insertLink = () => {
-    const url = window.prompt("آدرس لینک:", "https://");
+    const url = window.prompt("Link URL:", "https://");
     if (!url) return;
     run("createLink", url);
   };
 
   const insertImageUrl = () => {
-    const url = window.prompt("آدرس تصویر (URL):", "https://");
+    const url = window.prompt("Image URL:", "https://");
     if (!url) return;
     run("insertImage", url);
   };
@@ -117,7 +116,7 @@ export default function RichTextEditor({
       const url = await uploadImage(file);
       run("insertImage", url);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "آپلود تصویر ناموفق بود");
+      alert(err instanceof Error ? err.message : "Image upload failed");
     } finally {
       setUploading(false);
     }
@@ -126,19 +125,19 @@ export default function RichTextEditor({
   const isEmpty = !value || value === "<br>" || value === "<div><br></div>";
 
   return (
-    <div className="overflow-hidden rounded-xl border border-white/10 bg-slate-950/60">
+    <div className="overflow-hidden rounded-xl border border-white/10 bg-slate-950/60" dir="rtl">
       <div className="flex flex-wrap items-center gap-1 border-b border-white/10 bg-white/[0.03] p-2">
-        <ToolbarBtn title="پررنگ" onClick={() => run("bold")}><b>B</b></ToolbarBtn>
-        <ToolbarBtn title="ایتالیک" onClick={() => run("italic")}><i>I</i></ToolbarBtn>
-        <ToolbarBtn title="زیرخط" onClick={() => run("underline")}><u>U</u></ToolbarBtn>
-        <ToolbarBtn title="خط‌خورده" onClick={() => run("strikeThrough")}><s>S</s></ToolbarBtn>
+        <ToolbarBtn title="Bold" onClick={() => run("bold")}><b>B</b></ToolbarBtn>
+        <ToolbarBtn title="Italic" onClick={() => run("italic")}><i>I</i></ToolbarBtn>
+        <ToolbarBtn title="Underline" onClick={() => run("underline")}><u>U</u></ToolbarBtn>
+        <ToolbarBtn title="Strikethrough" onClick={() => run("strikeThrough")}><s>S</s></ToolbarBtn>
 
         <span className="mx-1 h-5 w-px bg-white/10" />
 
-        <ToolbarBtn title="عنوان ۱" onClick={() => run("formatBlock", "h1")}>H1</ToolbarBtn>
-        <ToolbarBtn title="عنوان ۲" onClick={() => run("formatBlock", "h2")}>H2</ToolbarBtn>
-        <ToolbarBtn title="عنوان ۳" onClick={() => run("formatBlock", "h3")}>H3</ToolbarBtn>
-        <ToolbarBtn title="پاراگراف" onClick={() => run("formatBlock", "p")}>P</ToolbarBtn>
+        <ToolbarBtn title="Heading 1" onClick={() => run("formatBlock", "h1")}>H1</ToolbarBtn>
+        <ToolbarBtn title="Heading 2" onClick={() => run("formatBlock", "h2")}>H2</ToolbarBtn>
+        <ToolbarBtn title="Heading 3" onClick={() => run("formatBlock", "h3")}>H3</ToolbarBtn>
+        <ToolbarBtn title="Paragraph" onClick={() => run("formatBlock", "p")}>P</ToolbarBtn>
 
         <span className="mx-1 h-5 w-px bg-white/10" />
 
@@ -146,7 +145,7 @@ export default function RichTextEditor({
           className="h-8 rounded-md border border-white/10 bg-slate-900 px-2 text-xs text-slate-300"
           defaultValue="inherit"
           onChange={(e) => run("fontName", e.target.value)}
-          title="فونت"
+          title="Font"
         >
           {FONTS.map((f) => (
             <option key={f.value} value={f.value}>{f.label}</option>
@@ -157,49 +156,49 @@ export default function RichTextEditor({
           className="h-8 rounded-md border border-white/10 bg-slate-900 px-2 text-xs text-slate-300"
           defaultValue="3"
           onChange={(e) => run("fontSize", e.target.value)}
-          title="اندازه فونت"
+          title="Font size"
         >
           {SIZES.map((s) => (
             <option key={s.value} value={s.value}>{s.label}</option>
           ))}
         </select>
 
-        <label className="flex h-8 items-center gap-1 rounded-md px-2 text-xs text-slate-300 hover:bg-white/10" title="رنگ متن">
-          رنگ
+        <label className="flex h-8 items-center gap-1 rounded-md px-2 text-xs text-slate-300 hover:bg-white/10" title="Text color">
+          Color
           <input type="color" className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent" onChange={(e) => run("foreColor", e.target.value)} />
         </label>
 
-        <label className="flex h-8 items-center gap-1 rounded-md px-2 text-xs text-slate-300 hover:bg-white/10" title="رنگ پس‌زمینه">
-          هایلایت
+        <label className="flex h-8 items-center gap-1 rounded-md px-2 text-xs text-slate-300 hover:bg-white/10" title="Highlight">
+          Highlight
           <input type="color" className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent" defaultValue="#fbbf24" onChange={(e) => run("hiliteColor", e.target.value)} />
         </label>
 
         <span className="mx-1 h-5 w-px bg-white/10" />
 
-        <ToolbarBtn title="راست‌چین" onClick={() => run("justifyRight")}>☰→</ToolbarBtn>
-        <ToolbarBtn title="وسط" onClick={() => run("justifyCenter")}>☰</ToolbarBtn>
-        <ToolbarBtn title="چپ‌چین" onClick={() => run("justifyLeft")}>←☰</ToolbarBtn>
+        <ToolbarBtn title="Align right" onClick={() => run("justifyRight")}>☰→</ToolbarBtn>
+        <ToolbarBtn title="Align center" onClick={() => run("justifyCenter")}>☰</ToolbarBtn>
+        <ToolbarBtn title="Align left" onClick={() => run("justifyLeft")}>←☰</ToolbarBtn>
 
         <span className="mx-1 h-5 w-px bg-white/10" />
 
-        <ToolbarBtn title="لیست نقطه‌ای" onClick={() => run("insertUnorderedList")}>• ≡</ToolbarBtn>
-        <ToolbarBtn title="لیست عددی" onClick={() => run("insertOrderedList")}>1. ≡</ToolbarBtn>
-        <ToolbarBtn title="نقل‌قول" onClick={() => run("formatBlock", "blockquote")}>❝</ToolbarBtn>
+        <ToolbarBtn title="Bullet list" onClick={() => run("insertUnorderedList")}>• ≡</ToolbarBtn>
+        <ToolbarBtn title="Numbered list" onClick={() => run("insertOrderedList")}>1. ≡</ToolbarBtn>
+        <ToolbarBtn title="Quote" onClick={() => run("formatBlock", "blockquote")}>❝</ToolbarBtn>
 
         <span className="mx-1 h-5 w-px bg-white/10" />
 
-        <ToolbarBtn title="لینک" onClick={insertLink}>🔗</ToolbarBtn>
-        <ToolbarBtn title="تصویر با URL" onClick={insertImageUrl}>🖼️</ToolbarBtn>
-        <ToolbarBtn title="آپلود تصویر" onClick={() => fileRef.current?.click()}>
-          {uploading ? "…" : "⬆ تصویر"}
+        <ToolbarBtn title="Link" onClick={insertLink}>🔗</ToolbarBtn>
+        <ToolbarBtn title="Image from URL" onClick={insertImageUrl}>🖼️</ToolbarBtn>
+        <ToolbarBtn title="Upload image" onClick={() => fileRef.current?.click()}>
+          {uploading ? "…" : "⬆ Image"}
         </ToolbarBtn>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
 
         <span className="mx-1 h-5 w-px bg-white/10" />
 
-        <ToolbarBtn title="بازگردانی" onClick={() => run("undo")}>↶</ToolbarBtn>
-        <ToolbarBtn title="ازنو" onClick={() => run("redo")}>↷</ToolbarBtn>
-        <ToolbarBtn title="پاک کردن فرمت" onClick={() => run("removeFormat")}>Tx</ToolbarBtn>
+        <ToolbarBtn title="Undo" onClick={() => run("undo")}>↶</ToolbarBtn>
+        <ToolbarBtn title="Redo" onClick={() => run("redo")}>↷</ToolbarBtn>
+        <ToolbarBtn title="Clear formatting" onClick={() => run("removeFormat")}>Tx</ToolbarBtn>
       </div>
 
       <div className="relative">

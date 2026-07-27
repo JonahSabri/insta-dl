@@ -16,7 +16,7 @@ from app.models.article import Article
 router = APIRouter(tags=["articles"])
 
 SUPPORTED_LANGS = {
-    "en", "pt", "fa", "de", "fr", "ja", "nl", "sv", "no", "da", "it", "es", "tr", "ar",
+    "en", "pt", "de", "fr", "ja", "nl", "sv", "no", "da", "it", "es", "tr", "ar",
 }
 
 
@@ -207,7 +207,7 @@ async def admin_create_article(
     slug = _slugify(body.slug or body.title)
     existing = await db.execute(select(Article).where(Article.slug == slug))
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="این slug قبلاً استفاده شده است.")
+        raise HTTPException(status_code=400, detail="This slug is already in use.")
 
     translations: dict = {}
     if body.translations:
@@ -245,14 +245,14 @@ async def admin_update_article(
 ) -> dict:
     article = await db.get(Article, article_id)
     if not article:
-        raise HTTPException(status_code=404, detail="مقاله یافت نشد.")
+        raise HTTPException(status_code=404, detail="Article not found.")
 
     if body.slug is not None:
         new_slug = _slugify(body.slug)
         if new_slug != article.slug:
             clash = await db.execute(select(Article).where(Article.slug == new_slug))
             if clash.scalar_one_or_none():
-                raise HTTPException(status_code=400, detail="این slug قبلاً استفاده شده است.")
+                raise HTTPException(status_code=400, detail="This slug is already in use.")
             article.slug = new_slug
 
     if body.keywords is not None:
@@ -296,7 +296,7 @@ async def admin_toggle_article(
 ) -> dict:
     article = await db.get(Article, article_id)
     if not article:
-        raise HTTPException(status_code=404, detail="مقاله یافت نشد.")
+        raise HTTPException(status_code=404, detail="Article not found.")
     article.is_published = not article.is_published
     article.updated_at = datetime.now(UTC)
     await db.commit()
@@ -311,7 +311,7 @@ async def admin_delete_article(
 ) -> dict:
     article = await db.get(Article, article_id)
     if not article:
-        raise HTTPException(status_code=404, detail="مقاله یافت نشد.")
+        raise HTTPException(status_code=404, detail="Article not found.")
     await db.delete(article)
     await db.commit()
     return {"deleted": True}

@@ -32,12 +32,12 @@ import { LANGS } from "@/i18n/translations";
 import RichTextEditor from "@/components/RichTextEditor";
 
 const ARTICLE_CATEGORIES = [
-  { id: "guide", label: "راهنما (Guide)" },
-  { id: "tips", label: "نکات (Tips)" },
-  { id: "tutorial", label: "آموزش (Tutorial)" },
-  { id: "news", label: "اخبار (News)" },
-  { id: "faq", label: "سوالات متداول (FAQ)" },
-  { id: "seo", label: "سئو (SEO)" },
+  { id: "guide", label: "Guide" },
+  { id: "tips", label: "Tips" },
+  { id: "tutorial", label: "Tutorial" },
+  { id: "news", label: "News" },
+  { id: "faq", label: "FAQ" },
+  { id: "seo", label: "SEO" },
 ] as const;
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
@@ -57,7 +57,7 @@ function LoginForm({ onLogin }: { onLogin: (t: string) => void }) {
       localStorage.setItem("admin_token", token);
       onLogin(token);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "خطا در ورود");
+      setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }
@@ -66,13 +66,13 @@ function LoginForm({ onLogin }: { onLogin: (t: string) => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950 bg-mesh-dark px-4">
       <div className="glass-card w-full max-w-sm p-8">
-        <h1 className="mb-6 text-center text-xl font-bold text-white">پنل مدیریت</h1>
+        <h1 className="mb-6 text-center text-xl font-bold text-white">Admin Panel</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="نام کاربری"
+            placeholder="Username"
             className="input-field"
             required
           />
@@ -80,17 +80,17 @@ function LoginForm({ onLogin }: { onLogin: (t: string) => void }) {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="رمز عبور"
+            placeholder="Password"
             className="input-field"
             required
           />
           {error && <p className="text-sm text-red-400">{error}</p>}
           <button type="submit" className="btn-primary w-full justify-center" disabled={loading}>
-            {loading ? "در حال ورود..." : "ورود"}
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
         <div className="mt-4 text-center">
-          <Link href="/" className="text-xs text-slate-600 hover:text-slate-400">← بازگشت به سایت</Link>
+          <Link href="/" className="text-xs text-slate-600 hover:text-slate-400">← Back to site</Link>
         </div>
       </div>
     </div>
@@ -101,10 +101,10 @@ function LoginForm({ onLogin }: { onLogin: (t: string) => void }) {
 
 function StatsCards({ stats }: { stats: AdminStats }) {
   const cards = [
-    { label: "کل دانلودها", value: stats.total.toLocaleString("fa"), icon: "📥", color: "text-brand-400" },
-    { label: "امروز", value: stats.today.toLocaleString("fa"), icon: "📅", color: "text-cyan-400" },
-    { label: "موفق", value: stats.completed.toLocaleString("fa"), icon: "✅", color: "text-green-400" },
-    { label: "نرخ موفقیت", value: `٪${stats.success_rate}`, icon: "📊", color: "text-purple-400" },
+    { label: "Total downloads", value: stats.total.toLocaleString("en"), icon: "📥", color: "text-brand-400" },
+    { label: "Today", value: stats.today.toLocaleString("en"), icon: "📅", color: "text-cyan-400" },
+    { label: "Completed", value: stats.completed.toLocaleString("en"), icon: "✅", color: "text-green-400" },
+    { label: "Success rate", value: `${stats.success_rate}%`, icon: "📊", color: "text-purple-400" },
   ];
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -158,11 +158,11 @@ function DownloadsTable({ token }: { token: string }) {
   return (
     <div className="glass-card overflow-hidden">
       <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
-        <h3 className="font-semibold text-slate-200">آخرین دانلودها</h3>
-        <button onClick={() => load(page)} className="text-xs text-slate-500 hover:text-slate-300">↻ بروزرسانی</button>
+        <h3 className="font-semibold text-slate-200">Recent downloads</h3>
+        <button onClick={() => load(page)} className="text-xs text-slate-500 hover:text-slate-300">↻ Refresh</button>
       </div>
       {loading ? (
-        <div className="p-8 text-center text-slate-600">در حال بارگذاری...</div>
+        <div className="p-8 text-center text-slate-600">Loading...</div>
       ) : (
         <>
           <div className="overflow-x-auto">
@@ -171,11 +171,11 @@ function DownloadsTable({ token }: { token: string }) {
                 <tr className="border-b border-white/5 text-right text-xs text-slate-600">
                   <th className="px-4 py-2">Job ID</th>
                   <th className="px-4 py-2">IP</th>
-                  <th className="px-4 py-2">مرورگر / دستگاه</th>
-                  <th className="px-4 py-2">سیستم‌عامل</th>
-                  <th className="px-4 py-2">نوع</th>
-                  <th className="px-4 py-2">وضعیت</th>
-                  <th className="px-4 py-2">زمان</th>
+                  <th className="px-4 py-2">Browser / Device</th>
+                  <th className="px-4 py-2">OS</th>
+                  <th className="px-4 py-2">Type</th>
+                  <th className="px-4 py-2">Status</th>
+                  <th className="px-4 py-2">Time</th>
                 </tr>
               </thead>
               <tbody>
@@ -195,7 +195,7 @@ function DownloadsTable({ token }: { token: string }) {
                       <span className={`badge ${statusBadge(d.status)}`}>{d.status}</span>
                     </td>
                     <td className="px-4 py-2 text-xs text-slate-600">
-                      {new Date(d.created_at).toLocaleString("fa-IR")}
+                      {new Date(d.created_at).toLocaleString("en-US")}
                     </td>
                   </tr>
                 ))}
@@ -245,7 +245,7 @@ function BannerManager({ token }: { token: string }) {
       setForm({ name: "", position: "result", image_url: "", link_url: "", priority: 0 });
       load();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "خطا");
+      alert(err instanceof Error ? err.message : "Error");
     }
   }
 
@@ -255,7 +255,7 @@ function BannerManager({ token }: { token: string }) {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("حذف شود؟")) return;
+    if (!confirm("Delete this item?")) return;
     await deleteBanner(token, id);
     load();
   }
@@ -265,34 +265,34 @@ function BannerManager({ token }: { token: string }) {
   return (
     <div className="glass-card overflow-hidden">
       <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
-        <h3 className="font-semibold text-slate-200">مدیریت بنرها</h3>
+        <h3 className="font-semibold text-slate-200">Banner manager</h3>
         <button onClick={() => setShowForm(!showForm)} className="btn-primary text-xs py-1.5 px-3">
-          {showForm ? "بستن" : "+ بنر جدید"}
+          {showForm ? "Close" : "+ New banner"}
         </button>
       </div>
 
       {showForm && (
         <form onSubmit={handleCreate} className="border-b border-white/5 p-4 space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
-            <input className="input-field text-sm" placeholder="نام بنر" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+            <input className="input-field text-sm" placeholder="Banner name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
             <select className="input-field text-sm" value={form.position} onChange={e => setForm({ ...form, position: e.target.value })}>
               {POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
-            <input className="input-field text-sm sm:col-span-2" placeholder="آدرس تصویر (URL)" value={form.image_url} onChange={e => setForm({ ...form, image_url: e.target.value })} required />
-            <input className="input-field text-sm sm:col-span-2" placeholder="لینک مقصد (URL)" value={form.link_url} onChange={e => setForm({ ...form, link_url: e.target.value })} required />
-            <input type="number" className="input-field text-sm" placeholder="اولویت (عدد)" value={form.priority} onChange={e => setForm({ ...form, priority: Number(e.target.value) })} />
+            <input className="input-field text-sm sm:col-span-2" placeholder="Image URL" value={form.image_url} onChange={e => setForm({ ...form, image_url: e.target.value })} required />
+            <input className="input-field text-sm sm:col-span-2" placeholder="Destination URL" value={form.link_url} onChange={e => setForm({ ...form, link_url: e.target.value })} required />
+            <input type="number" className="input-field text-sm" placeholder="Priority" value={form.priority} onChange={e => setForm({ ...form, priority: Number(e.target.value) })} />
           </div>
           <div className="flex gap-2">
-            <button type="submit" className="btn-primary text-sm py-2">ذخیره</button>
-            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary text-sm py-2">انصراف</button>
+            <button type="submit" className="btn-primary text-sm py-2">Save</button>
+            <button type="button" onClick={() => setShowForm(false)} className="btn-secondary text-sm py-2">Cancel</button>
           </div>
         </form>
       )}
 
       {loading ? (
-        <div className="p-8 text-center text-slate-600">در حال بارگذاری...</div>
+        <div className="p-8 text-center text-slate-600">Loading...</div>
       ) : banners.length === 0 ? (
-        <div className="p-8 text-center text-slate-600">هیچ بنری ثبت نشده.</div>
+        <div className="p-8 text-center text-slate-600">No banners yet.</div>
       ) : (
         <div className="divide-y divide-white/5">
           {banners.map((b: Banner & { name?: string; position?: string; is_active?: boolean; priority?: number }) => (
@@ -302,10 +302,10 @@ function BannerManager({ token }: { token: string }) {
                 <p className="text-xs text-slate-600">{b.position} · priority: {b.priority}</p>
               </div>
               <span className={`badge ${b.is_active ? "bg-green-500/15 text-green-400" : "bg-slate-500/15 text-slate-500"}`}>
-                {b.is_active ? "فعال" : "غیرفعال"}
+                {b.is_active ? "Active" : "Inactive"}
               </span>
               <button onClick={() => handleToggle(b.id)} className="btn-secondary text-xs py-1 px-2">
-                {b.is_active ? "غیرفعال" : "فعال"}
+                {b.is_active ? "Disable" : "Enable"}
               </button>
               <button onClick={() => handleDelete(b.id)} className="rounded-lg p-1.5 text-slate-600 hover:bg-red-500/10 hover:text-red-400 transition-colors">
                 🗑
@@ -337,9 +337,9 @@ function ProxyManager({ token }: { token: string }) {
     setMsg(null);
     try {
       await saveProxy(token, proxy);
-      setMsg({ type: "ok", text: proxy ? `پراکسی ذخیره شد ✓` : "پراکسی غیرفعال شد." });
+      setMsg({ type: "ok", text: proxy ? `Proxy saved ✓` : "Proxy disabled." });
     } catch (err: unknown) {
-      setMsg({ type: "err", text: err instanceof Error ? err.message : "خطا" });
+      setMsg({ type: "err", text: err instanceof Error ? err.message : "Error" });
     } finally {
       setSaving(false);
     }
@@ -355,8 +355,8 @@ function ProxyManager({ token }: { token: string }) {
           🌐
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-slate-200">پراکسی</h3>
-          <p className="text-xs text-slate-500">برای عبور از محدودیت‌های شبکه</p>
+          <h3 className="font-semibold text-slate-200">Proxy</h3>
+          <p className="text-xs text-slate-500">Bypass network restrictions</p>
         </div>
         <span className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${
           isActive
@@ -364,13 +364,13 @@ function ProxyManager({ token }: { token: string }) {
             : "border-white/10 bg-white/5 text-slate-500"
         }`}>
           <span className={`h-1.5 w-1.5 rounded-full ${isActive ? "bg-green-400" : "bg-slate-600"}`} />
-          {isActive ? "فعال" : "غیرفعال"}
+          {isActive ? "Active" : "Inactive"}
         </span>
       </div>
 
       <form onSubmit={handleSave} className="space-y-4 p-5">
         <div>
-          <label className="mb-1.5 block text-xs text-slate-500">آدرس پراکسی</label>
+          <label className="mb-1.5 block text-xs text-slate-500">Proxy URL</label>
           <input
             type="text"
             value={proxy}
@@ -383,11 +383,11 @@ function ProxyManager({ token }: { token: string }) {
 
         {/* Examples */}
         <div className="space-y-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-          <p className="mb-2 text-xs text-slate-600">نمونه فرمت‌ها:</p>
+          <p className="mb-2 text-xs text-slate-600">Examples:</p>
           {[
             ["HTTP/HTTPS", "http://127.0.0.1:10809"],
             ["SOCKS5", "socks5://127.0.0.1:1080"],
-            ["با پسورد", "http://user:pass@host:port"],
+            ["With auth", "http://user:pass@host:port"],
           ].map(([label, example]) => (
             <button
               key={label}
@@ -418,7 +418,7 @@ function ProxyManager({ token }: { token: string }) {
                 <path d="M21 12a9 9 0 11-6.219-8.56" strokeLinecap="round" />
               </svg>
             ) : "💾"}{" "}
-            ذخیره
+            Save
           </button>
           {isActive && (
             <button
@@ -426,7 +426,7 @@ function ProxyManager({ token }: { token: string }) {
               onClick={() => { setProxy(""); setMsg(null); }}
               className="btn-secondary text-sm text-slate-400"
             >
-              پاک‌کردن
+              Clear
             </button>
           )}
         </div>
@@ -456,10 +456,10 @@ function CookiesManager({ token }: { token: string }) {
     setMsg(null);
     try {
       await uploadCookies(token, file);
-      setMsg({ type: "ok", text: `فایل کوکی آپلود شد ✓ (${file.name})` });
+      setMsg({ type: "ok", text: `Cookie file uploaded ✓ (${file.name})` });
       load();
     } catch (err: unknown) {
-      setMsg({ type: "err", text: err instanceof Error ? err.message : "خطا در آپلود" });
+      setMsg({ type: "err", text: err instanceof Error ? err.message : "Upload failed" });
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -467,13 +467,13 @@ function CookiesManager({ token }: { token: string }) {
   }
 
   async function handleDelete() {
-    if (!confirm("فایل کوکی حذف شود؟")) return;
+    if (!confirm("Delete cookie file?")) return;
     try {
       await deleteCookies(token);
-      setMsg({ type: "ok", text: "فایل کوکی حذف شد." });
+      setMsg({ type: "ok", text: "Cookie file deleted." });
       load();
     } catch (err: unknown) {
-      setMsg({ type: "err", text: err instanceof Error ? err.message : "خطا" });
+      setMsg({ type: "err", text: err instanceof Error ? err.message : "Error" });
     }
   }
 
@@ -487,13 +487,13 @@ function CookiesManager({ token }: { token: string }) {
           🍪
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-slate-200">فایل کوکی اینستاگرام</h3>
-          <p className="text-xs text-slate-500">مطمئن‌ترین روش برای احراز هویت</p>
+          <h3 className="font-semibold text-slate-200">Instagram cookie file</h3>
+          <p className="text-xs text-slate-500">Most reliable authentication method</p>
         </div>
         {status?.has_cookies && (
           <span className="flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs text-green-400">
             <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-            فعال · {sizeKb} KB
+            Active · {sizeKb} KB
           </span>
         )}
       </div>
@@ -501,29 +501,29 @@ function CookiesManager({ token }: { token: string }) {
       <div className="p-5 space-y-4">
         {/* How to get cookies - step by step */}
         <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 space-y-3">
-          <p className="text-xs font-semibold text-slate-400">چطور فایل کوکی بگیریم؟</p>
+          <p className="text-xs font-semibold text-slate-400">How to export cookies?</p>
           <ol className="space-y-2 text-xs text-slate-500">
             <li className="flex items-start gap-2">
-              <span className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-600/30 text-[10px] font-bold text-brand-400">۱</span>
-              <span>مرورگر Chrome یا Firefox را باز کن و به <span className="text-slate-300">instagram.com</span> لاگین کن.</span>
+              <span className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-600/30 text-[10px] font-bold text-brand-400">1</span>
+              <span>Open Chrome or Firefox and sign in to <span className="text-slate-300">instagram.com</span>.</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-600/30 text-[10px] font-bold text-brand-400">۲</span>
+              <span className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-600/30 text-[10px] font-bold text-brand-400">2</span>
               <span>
-                افزونه{" "}
+                Install the{" "}
                 <a href="https://chrome.google.com/webstore/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc" target="_blank" rel="noopener noreferrer" className="text-cyan-400 underline underline-offset-2 hover:text-cyan-300">
                   Get cookies.txt LOCALLY
                 </a>{" "}
-                را نصب کن.
+                extension.
               </span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-600/30 text-[10px] font-bold text-brand-400">۳</span>
-              <span>روی آیکون افزونه کلیک کن و گزینه <span className="text-slate-300">Export</span> را بزن — فایل <span className="font-mono text-slate-300">instagram.com_cookies.txt</span> دانلود می‌شه.</span>
+              <span className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-600/30 text-[10px] font-bold text-brand-400">3</span>
+              <span>Click the extension icon and choose <span className="text-slate-300">Export</span> — download <span className="font-mono text-slate-300">instagram.com_cookies.txt</span>.</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-600/30 text-[10px] font-bold text-brand-400">۴</span>
-              <span>همان فایل را اینجا آپلود کن.</span>
+              <span className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-600/30 text-[10px] font-bold text-brand-400">4</span>
+              <span>Upload that file here.</span>
             </li>
           </ol>
         </div>
@@ -549,9 +549,9 @@ function CookiesManager({ token }: { token: string }) {
           </div>
           <div className="text-center">
             <p className="text-sm font-medium text-slate-300">
-              {uploading ? "در حال آپلود..." : "کلیک کن یا فایل را اینجا بکش"}
+              {uploading ? "Uploading..." : "Click or drop the file here"}
             </p>
-            <p className="mt-0.5 text-xs text-slate-600">فرمت Netscape cookies.txt</p>
+            <p className="mt-0.5 text-xs text-slate-600">Netscape cookies.txt format</p>
           </div>
         </div>
 
@@ -572,15 +572,15 @@ function CookiesManager({ token }: { token: string }) {
             <div className="flex items-center gap-2.5">
               <span className="text-lg">✅</span>
               <div>
-                <p className="text-sm font-medium text-slate-200">کوکی فعال</p>
-                <p className="text-xs text-slate-600">اندازه: {sizeKb} KB</p>
+                <p className="text-sm font-medium text-slate-200">Cookies active</p>
+                <p className="text-xs text-slate-600">Size: {sizeKb} KB</p>
               </div>
             </div>
             <button
               onClick={handleDelete}
               className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs text-red-400 transition-colors hover:bg-red-500/20"
             >
-              🗑 حذف
+              🗑 Delete
             </button>
           </div>
         )}
@@ -617,26 +617,26 @@ function CredentialsManager({ token }: { token: string }) {
     setMsg(null);
     try {
       await saveCredentials(token, username, password);
-      setMsg({ type: "ok", text: "اطلاعات ورود ذخیره شد ✓" });
+      setMsg({ type: "ok", text: "Credentials saved ✓" });
       setPassword("");
       load();
     } catch (err: unknown) {
-      setMsg({ type: "err", text: err instanceof Error ? err.message : "خطا در ذخیره‌سازی" });
+      setMsg({ type: "err", text: err instanceof Error ? err.message : "Save failed" });
     } finally {
       setSaving(false);
     }
   }
 
   async function handleClear() {
-    if (!confirm("اطلاعات ورود اینستاگرام حذف شود؟")) return;
+    if (!confirm("Clear Instagram credentials?")) return;
     try {
       await clearCredentials(token);
       setUsername("");
       setPassword("");
       setHasPassword(false);
-      setMsg({ type: "ok", text: "اطلاعات پاک شد." });
+      setMsg({ type: "ok", text: "Credentials cleared." });
     } catch (err: unknown) {
-      setMsg({ type: "err", text: err instanceof Error ? err.message : "خطا" });
+      setMsg({ type: "err", text: err instanceof Error ? err.message : "Error" });
     }
   }
 
@@ -648,15 +648,15 @@ function CredentialsManager({ token }: { token: string }) {
           🔑
         </div>
         <div>
-          <h3 className="font-semibold text-slate-200">اکانت اینستاگرام</h3>
+          <h3 className="font-semibold text-slate-200">Instagram account</h3>
           <p className="text-xs text-slate-500">
-            برای دانلود محتوای خصوصی یا عبور از محدودیت لاگین
+            For private content or login walls
           </p>
         </div>
         {username && (
           <span className="mr-auto flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-xs text-green-400">
             <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-            متصل: {username}
+            Connected: {username}
           </span>
         )}
       </div>
@@ -666,11 +666,11 @@ function CredentialsManager({ token }: { token: string }) {
         style={{ background: "rgba(245,158,11,0.07)" }}>
         <span className="mt-px text-base">⚠️</span>
         <div className="space-y-1">
-          <p className="font-medium">توصیه‌های امنیتی:</p>
+          <p className="font-medium">Security tips:</p>
           <ul className="list-inside list-disc space-y-0.5 text-amber-300/80">
-            <li>از یک حساب کاربری ثانویه یا دمی اینستاگرام استفاده کنید.</li>
-            <li>اینستاگرام ممکن است حساب را به خاطر ورود خودکار محدود کند.</li>
-            <li>رمز عبور به صورت رمزنگاری نشده در دیتابیس ذخیره می‌شود.</li>
+            <li>Use a secondary / throwaway Instagram account.</li>
+            <li>Instagram may restrict accounts used for automated login.</li>
+            <li>Password is stored without encryption in the database.</li>
           </ul>
         </div>
       </div>
@@ -678,7 +678,7 @@ function CredentialsManager({ token }: { token: string }) {
       {/* Form */}
       <form onSubmit={handleSave} className="space-y-3 p-5">
         <div>
-          <label className="mb-1.5 block text-xs text-slate-500">نام کاربری اینستاگرام</label>
+          <label className="mb-1.5 block text-xs text-slate-500">Instagram username</label>
           <input
             type="text"
             value={username}
@@ -690,9 +690,9 @@ function CredentialsManager({ token }: { token: string }) {
         </div>
         <div>
           <label className="mb-1.5 block text-xs text-slate-500">
-            رمز عبور
+            Password
             {hasPassword && !password && (
-              <span className="mr-2 text-green-400">● رمز ذخیره شده موجود است</span>
+              <span className="mr-2 text-green-400">● Saved password on file</span>
             )}
           </label>
           <div className="relative">
@@ -700,7 +700,7 @@ function CredentialsManager({ token }: { token: string }) {
               type={showPass ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={hasPassword ? "برای تغییر، رمز جدید وارد کنید" : "رمز عبور"}
+              placeholder={hasPassword ? "Enter a new password to change" : "Password"}
               className="input-field pr-10 text-sm"
               dir="ltr"
             />
@@ -738,7 +738,7 @@ function CredentialsManager({ token }: { token: string }) {
                 <path d="M21 12a9 9 0 11-6.219-8.56" strokeLinecap="round" />
               </svg>
             ) : "💾"}{" "}
-            ذخیره اطلاعات ورود
+            Save credentials
           </button>
           {(username || hasPassword) && (
             <button
@@ -746,7 +746,7 @@ function CredentialsManager({ token }: { token: string }) {
               onClick={handleClear}
               className="btn-secondary text-sm text-red-400 hover:border-red-500/30 hover:bg-red-500/10"
             >
-              🗑 پاک‌کردن
+              🗑 Clear
             </button>
           )}
         </div>
@@ -777,9 +777,9 @@ function RateLimitManager({ token }: { token: string }) {
     setMsg(null);
     try {
       await saveRateLimit(token, enabled, dailyLimit);
-      setMsg({ type: "ok", text: "تنظیمات ذخیره شد ✓" });
+      setMsg({ type: "ok", text: "Settings saved ✓" });
     } catch (err: unknown) {
-      setMsg({ type: "err", text: err instanceof Error ? err.message : "خطا" });
+      setMsg({ type: "err", text: err instanceof Error ? err.message : "Error" });
     } finally {
       setSaving(false);
     }
@@ -792,8 +792,8 @@ function RateLimitManager({ token }: { token: string }) {
           🚦
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-slate-200">محدودیت دانلود روزانه</h3>
-          <p className="text-xs text-slate-500">تعداد دانلود مجاز هر IP در روز</p>
+          <h3 className="font-semibold text-slate-200">Daily download limit</h3>
+          <p className="text-xs text-slate-500">Allowed downloads per IP per day</p>
         </div>
         <span className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${
           enabled
@@ -801,7 +801,7 @@ function RateLimitManager({ token }: { token: string }) {
             : "border-white/10 bg-white/5 text-slate-500"
         }`}>
           <span className={`h-1.5 w-1.5 rounded-full ${enabled ? "bg-orange-400" : "bg-slate-600"}`} />
-          {enabled ? "فعال" : "غیرفعال"}
+          {enabled ? "Enabled" : "Disabled"}
         </span>
       </div>
 
@@ -809,8 +809,8 @@ function RateLimitManager({ token }: { token: string }) {
         {/* Toggle */}
         <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
           <div>
-            <p className="text-sm font-medium text-slate-200">فعال‌بودن محدودیت</p>
-            <p className="text-xs text-slate-500">در صورت غیرفعال‌بودن، همه می‌توانند بدون محدودیت دانلود کنند</p>
+            <p className="text-sm font-medium text-slate-200">Enable rate limit</p>
+            <p className="text-xs text-slate-500">When disabled, everyone can download without limits</p>
           </div>
           <button
             type="button"
@@ -824,7 +824,7 @@ function RateLimitManager({ token }: { token: string }) {
         {/* Daily limit */}
         <div>
           <label className="mb-1.5 block text-xs text-slate-500">
-            تعداد دانلود مجاز در روز (به ازای هر IP)
+            Daily downloads allowed (per IP)
           </label>
           <div className="flex items-center gap-2">
             <input
@@ -837,7 +837,7 @@ function RateLimitManager({ token }: { token: string }) {
               dir="ltr"
               disabled={!enabled}
             />
-            <span className="text-xs text-slate-500">دانلود در روز</span>
+            <span className="text-xs text-slate-500">downloads / day</span>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             {[1, 3, 5, 10, 20, 50].map((n) => (
@@ -874,7 +874,7 @@ function RateLimitManager({ token }: { token: string }) {
               <path d="M21 12a9 9 0 11-6.219-8.56" strokeLinecap="round" />
             </svg>
           ) : "💾"}{" "}
-          ذخیره تنظیمات
+          Save settings
         </button>
       </form>
     </div>
@@ -888,7 +888,7 @@ function ArticleManager({ token }: { token: string }) {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formLang, setFormLang] = useState("fa");
+  const [formLang, setFormLang] = useState("en");
   const [form, setForm] = useState({
     slug: "",
     category: "guide",
@@ -913,7 +913,7 @@ function ArticleManager({ token }: { token: string }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const editorDir = (LANGS.find((l) => l.code === formLang)?.dir ?? "rtl") as "ltr" | "rtl";
+  const editorDir = (LANGS.find((l) => l.code === formLang)?.dir ?? "ltr") as "ltr" | "rtl";
 
   function resetForm() {
     setForm({
@@ -927,7 +927,7 @@ function ArticleManager({ token }: { token: string }) {
       content: "",
     });
     setEditingId(null);
-    setFormLang("fa");
+    setFormLang("en");
     setShowForm(false);
     setMsg(null);
   }
@@ -938,7 +938,7 @@ function ArticleManager({ token }: { token: string }) {
   }
 
   function openEdit(a: AdminArticle) {
-    const lang = a.translations.fa ? "fa" : a.translations.en ? "en" : Object.keys(a.translations)[0] || "en";
+    const lang = a.translations.en ? "en" : Object.keys(a.translations)[0] || "en";
     const tr = a.translations[lang] || { title: "", excerpt: "", content: "" };
     setEditingId(a.id);
     setFormLang(lang);
@@ -976,7 +976,7 @@ function ArticleManager({ token }: { token: string }) {
     e.preventDefault();
     const plain = form.content.replace(/<[^>]+>/g, "").trim();
     if (!form.title.trim() || !plain) {
-      setMsg({ type: "err", text: "عنوان و متن مقاله الزامی است." });
+      setMsg({ type: "err", text: "Title and content are required." });
       return;
     }
     setSaving(true);
@@ -995,10 +995,10 @@ function ArticleManager({ token }: { token: string }) {
     try {
       if (editingId) {
         await updateArticle(token, editingId, payload);
-        setMsg({ type: "ok", text: "مقاله به‌روز شد ✓" });
+        setMsg({ type: "ok", text: "Article updated ✓" });
       } else {
         await createArticle(token, payload);
-        setMsg({ type: "ok", text: "مقاله ایجاد شد ✓" });
+        setMsg({ type: "ok", text: "Article created ✓" });
       }
       await load();
       if (!editingId) resetForm();
@@ -1009,7 +1009,7 @@ function ArticleManager({ token }: { token: string }) {
         if (updated) openEdit(updated);
       }
     } catch (err: unknown) {
-      setMsg({ type: "err", text: err instanceof Error ? err.message : "خطا" });
+      setMsg({ type: "err", text: err instanceof Error ? err.message : "Error" });
     } finally {
       setSaving(false);
     }
@@ -1021,7 +1021,7 @@ function ArticleManager({ token }: { token: string }) {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("مقاله حذف شود؟")) return;
+    if (!confirm("Delete this article?")) return;
     await deleteArticle(token, id);
     if (editingId === id) resetForm();
     load();
@@ -1034,7 +1034,7 @@ function ArticleManager({ token }: { token: string }) {
       const url = await uploadAdminImage(token, file);
       setForm((f) => ({ ...f, cover_image: url }));
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "آپلود کاور ناموفق بود");
+      alert(err instanceof Error ? err.message : "Cover upload failed");
     } finally {
       e.target.value = "";
     }
@@ -1047,18 +1047,18 @@ function ArticleManager({ token }: { token: string }) {
     <div className="glass-card overflow-hidden">
       <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
         <div>
-          <h3 className="font-semibold text-slate-200">مدیریت بلاگ / مقالات</h3>
-          <p className="text-xs text-slate-500">{items.length} مقاله · ادیتور غنی · چندزبانه</p>
+          <h3 className="font-semibold text-slate-200">Blog / Articles</h3>
+          <p className="text-xs text-slate-500">{items.length} articles · rich editor · multilingual</p>
         </div>
         <button onClick={showForm && !editingId ? resetForm : openCreate} className="btn-primary text-xs py-1.5 px-3">
-          {showForm && !editingId ? "بستن" : "+ مقاله جدید"}
+          {showForm && !editingId ? "Close" : "+ New article"}
         </button>
       </div>
 
       {showForm && (
         <form onSubmit={handleSubmit} className="border-b border-white/5 p-4 space-y-4">
           <div>
-            <p className="mb-1.5 text-xs text-slate-500">زبان محتوا</p>
+            <p className="mb-1.5 text-xs text-slate-500">Content language</p>
             <div className="flex flex-wrap gap-1">
               {LANGS.map((l) => (
                 <button
@@ -1077,10 +1077,10 @@ function ArticleManager({ token }: { token: string }) {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs text-slate-500">عنوان</label>
+              <label className="mb-1 block text-xs text-slate-500">Title</label>
               <input
                 className="input-field text-sm"
-                placeholder="عنوان مقاله"
+                placeholder="Article title"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 required
@@ -1088,7 +1088,7 @@ function ArticleManager({ token }: { token: string }) {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs text-slate-500">نوع / سکشن</label>
+              <label className="mb-1 block text-xs text-slate-500">Type / Section</label>
               <select
                 className="input-field text-sm"
                 value={form.category}
@@ -1112,7 +1112,7 @@ function ArticleManager({ token }: { token: string }) {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs text-slate-500">کلمات کلیدی (با کاما)</label>
+              <label className="mb-1 block text-xs text-slate-500">Keywords (comma-separated)</label>
               <input
                 className="input-field text-sm"
                 placeholder="instagram reels, download, ..."
@@ -1122,17 +1122,17 @@ function ArticleManager({ token }: { token: string }) {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs text-slate-500">تصویر کاور</label>
+              <label className="mb-1 block text-xs text-slate-500">Cover image</label>
               <div className="flex flex-wrap gap-2">
                 <input
                   className="input-field text-sm flex-1 font-mono"
-                  placeholder="/api/v1/uploads/... یا URL"
+                  placeholder="/api/v1/uploads/... or URL"
                   value={form.cover_image}
                   onChange={(e) => setForm({ ...form, cover_image: e.target.value })}
                   dir="ltr"
                 />
                 <label className="btn-secondary cursor-pointer text-xs py-2 px-3">
-                  آپلود کاور
+                  Upload cover
                   <input type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
                 </label>
               </div>
@@ -1143,23 +1143,23 @@ function ArticleManager({ token }: { token: string }) {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs text-slate-500">خلاصه کوتاه</label>
+              <label className="mb-1 block text-xs text-slate-500">Short excerpt</label>
               <textarea
                 className="input-field text-sm min-h-[70px]"
-                placeholder="خلاصه برای کارت‌ها و سئو"
+                placeholder="Excerpt for cards and SEO"
                 value={form.excerpt}
                 onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
               />
             </div>
 
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs text-slate-500">متن کامل (ادیتور غنی)</label>
+              <label className="mb-1 block text-xs text-slate-500">Full content (rich editor)</label>
               <RichTextEditor
                 value={form.content}
                 onChange={(html) => setForm((f) => ({ ...f, content: html }))}
                 dir={editorDir}
                 uploadImage={(file) => uploadAdminImage(token, file)}
-                placeholder="متن مقاله را با فرمت‌بندی بنویسید…"
+                placeholder="Write the article with formatting…"
               />
             </div>
 
@@ -1169,7 +1169,7 @@ function ArticleManager({ token }: { token: string }) {
                 checked={form.is_published}
                 onChange={(e) => setForm({ ...form, is_published: e.target.checked })}
               />
-              منتشر شده
+              Published
             </label>
           </div>
 
@@ -1185,22 +1185,21 @@ function ArticleManager({ token }: { token: string }) {
 
           <div className="flex gap-2">
             <button type="submit" disabled={saving} className="btn-primary text-sm py-2 disabled:opacity-50">
-              {saving ? "در حال ذخیره..." : editingId ? "به‌روزرسانی" : "ذخیره"}
+              {saving ? "Saving..." : editingId ? "Update" : "Save"}
             </button>
-            <button type="button" onClick={resetForm} className="btn-secondary text-sm py-2">انصراف</button>
+            <button type="button" onClick={resetForm} className="btn-secondary text-sm py-2">Cancel</button>
           </div>
         </form>
       )}
 
       {loading ? (
-        <div className="p-8 text-center text-slate-600">در حال بارگذاری...</div>
+        <div className="p-8 text-center text-slate-600">Loading...</div>
       ) : items.length === 0 ? (
-        <div className="p-8 text-center text-slate-600">هیچ مقاله‌ای ثبت نشده.</div>
+        <div className="p-8 text-center text-slate-600">No articles yet.</div>
       ) : (
         <div className="divide-y divide-white/5">
           {items.map((a) => {
             const title =
-              a.translations.fa?.title ||
               a.translations.en?.title ||
               Object.values(a.translations)[0]?.title ||
               a.slug;
@@ -1215,11 +1214,11 @@ function ArticleManager({ token }: { token: string }) {
                   </p>
                 </div>
                 <span className={`badge ${a.is_published ? "bg-green-500/15 text-green-400" : "bg-slate-500/15 text-slate-500"}`}>
-                  {a.is_published ? "منتشر" : "پیش‌نویس"}
+                  {a.is_published ? "Published" : "Draft"}
                 </span>
-                <button onClick={() => openEdit(a)} className="btn-secondary text-xs py-1 px-2">ویرایش</button>
+                <button onClick={() => openEdit(a)} className="btn-secondary text-xs py-1 px-2">Edit</button>
                 <button onClick={() => handleToggle(a.id)} className="btn-secondary text-xs py-1 px-2">
-                  {a.is_published ? "غیرفعال" : "فعال"}
+                  {a.is_published ? "Unpublish" : "Publish"}
                 </button>
                 <button
                   onClick={() => handleDelete(a.id)}
@@ -1263,20 +1262,26 @@ export default function AdminPage() {
     setStats(null);
   }
 
-  if (!token) return <LoginForm onLogin={setToken} />;
+  if (!token) {
+    return (
+      <div dir="rtl" lang="en">
+        <LoginForm onLogin={setToken} />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-slate-950 bg-mesh-dark">
+    <div dir="rtl" lang="en" className="min-h-screen bg-slate-950 bg-mesh-dark">
       {/* Top bar */}
       <header className="sticky top-0 z-50 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-sm text-slate-500 hover:text-slate-300">← سایت</Link>
+            <Link href="/" className="text-sm text-slate-500 hover:text-slate-300">← Site</Link>
             <span className="text-slate-700">|</span>
-            <span className="font-semibold text-white">پنل مدیریت</span>
+            <span className="font-semibold text-white">Admin Panel</span>
           </div>
           <button onClick={handleLogout} className="text-xs text-slate-600 hover:text-red-400 transition-colors">
-            خروج
+            Log out
           </button>
         </div>
       </header>
@@ -1295,13 +1300,13 @@ export default function AdminPage() {
                 tab === t ? "bg-brand-600 text-white" : "text-slate-500 hover:text-slate-300"
               }`}
             >
-              {t === "downloads" ? "📥 دانلودها"
-                : t === "articles" ? "📝 مقالات"
-                : t === "banners" ? "🖼 بنرها"
-                : t === "ratelimit" ? "🚦 محدودیت"
-                : t === "proxy" ? "🌐 پراکسی"
-                : t === "cookies" ? "🍪 کوکی"
-                : "🔑 یوزر/پسورد"}
+              {t === "downloads" ? "📥 Downloads"
+                : t === "articles" ? "📝 Articles"
+                : t === "banners" ? "🖼 Banners"
+                : t === "ratelimit" ? "🚦 Rate limit"
+                : t === "proxy" ? "🌐 Proxy"
+                : t === "cookies" ? "🍪 Cookies"
+                : "🔑 Credentials"}
             </button>
           ))}
         </div>

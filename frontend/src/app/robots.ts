@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://jazzghost.com").replace(/\/$/, "");
+import { SITE_URL } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -13,7 +12,13 @@ export default function robots(): MetadataRoute.Robots {
           "/*/admin",
           "/api/",
           "/_next/",
+          "/private/",
         ],
+      },
+      {
+        userAgent: "GPTBot",
+        allow: ["/", "/sitemap.xml"],
+        disallow: ["/admin", "/*/admin", "/api/"],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

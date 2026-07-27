@@ -1,11 +1,10 @@
 export type Lang =
-  | "en" | "pt" | "fa"
+  | "en" | "pt"
   | "de" | "fr" | "ja" | "nl" | "sv" | "no" | "da" | "it" | "es" | "tr" | "ar";
 
 export const LANGS: { code: Lang; label: string; flag: string; dir: "ltr" | "rtl" }[] = [
   { code: "en", label: "English",    flag: "🇬🇧", dir: "ltr" },
   { code: "pt", label: "Português",  flag: "🇧🇷", dir: "ltr" },
-  { code: "fa", label: "فارسی",      flag: "🇮🇷", dir: "rtl" },
   { code: "de", label: "Deutsch",    flag: "🇩🇪", dir: "ltr" },
   { code: "fr", label: "Français",   flag: "🇫🇷", dir: "ltr" },
   { code: "ja", label: "日本語",      flag: "🇯🇵", dir: "ltr" },
@@ -305,109 +304,6 @@ const pt: Translations = {
   },
 };
 
-// ─── Persian / Farsi ──────────────────────────────────────────────────────────
-const fa: Translations = {
-  dir: "rtl",
-  header: { admin: "پنل مدیریت" },
-  nav: { home: "خانه", articles: "مقالات" },
-  articles: {
-    heading: "مقالات و راهنماها",
-    subheading: "نکات دانلود ریلز، پست، استوری و بیشتر از اینستاگرام.",
-    readMore: "ادامه مطلب",
-    backToList: "← همه مقالات",
-    empty: "هنوز مقاله‌ای نیست.",
-    publishedAt: "منتشر شده",
-  },
-  hero: {
-    badge: "رایگان · بدون ثبت‌نام · فوری",
-    titleLine1: "دانلود",
-    titleHighlight: "ریلز و پست",
-    titleLine2: "اینستاگرام",
-    subtitle: "نوع محتوا را انتخاب کن، لینک را بذار و در چند ثانیه دانلود کن — رایگان.",
-    supported: [
-      { icon: "🎬", label: "Reel" },
-      { icon: "📸", label: "پست" },
-      { icon: "🖼️", label: "تصویر" },
-      { icon: "🎞️", label: "کاروسل" },
-    ],
-  },
-  howTo: {
-    heading: "در ۳ قدم ساده",
-    subheading: "هیچ نصبی لازم نیست. مستقیم از مرورگر.",
-    steps: [
-      { step: "۱", label: "کپی لینک", desc: "لینک پست یا ریلز مورد نظر را از اینستاگرام کپی کن." },
-      { step: "۲", label: "Paste کن", desc: "لینک را در کادر بالا جای‌گذاری کن و روی «دانلود» بزن." },
-      { step: "۳", label: "دانلود!",  desc: "چند ثانیه صبر کن، فایل آماده دانلود می‌شود." },
-    ],
-  },
-  features: {
-    heading: "چرا JazzGhost؟",
-    items: [
-      { icon: "fast",    title: "فوق‌سریع",      desc: "دانلود مستقیم با بالاترین کیفیت موجود، بدون محدودیت سرعت.", delay: "anim-delay-100" },
-      { icon: "formats", title: "همه فرمت‌ها",   desc: "Reel، پست، تصویر، کاروسل — همه رو پشتیبانی می‌کنیم.",      delay: "anim-delay-200" },
-      { icon: "private", title: "حریم خصوصی",    desc: "فایل‌ها روی سرور ذخیره نمی‌مانند. بعد از دانلود پاک می‌شوند.", delay: "anim-delay-300" },
-      { icon: "free",    title: "کاملاً رایگان", desc: "بدون نیاز به ثبت‌نام یا پرداخت برای دانلودهای روزانه.",   delay: "anim-delay-400" },
-    ],
-  },
-  footer: { madeWith: "ساخته‌شده با ❤️ توسط Jonah Sabri" },
-  download: {
-    placeholder: "لینک ریلز یا پست اینستاگرام را اینجا paste کن...",
-    button: "دانلود",
-    fetchPreview: "پیش‌نمایش",
-    fetchingPreview: "در حال دریافت پیش‌نمایش…",
-    downloadNow: "دانلود کن",
-    tryAnother: "← لینک دیگری",
-    tip: "پشتیبانی از Reel · پست · تصویر · کاروسل",
-    errorInvalidUrl: "لینک باید از اینستاگرام (instagram.com) باشد.",
-    errorTypeMismatch: "این لینک شبیه {type} نیست. نوع صحیح را انتخاب کنید.",
-    errorServer: "خطا در ارسال درخواست.",
-    errorConnection: "خطا در ارتباط با سرور.",
-    errorRateLimit: (limit) => `سهمیه روزانه شما (${limit} دانلود) تمام شده است. فردا دوباره تلاش کنید.`,
-    typeLabels: { reel: "ریلز", post: "پست", carousel: "کاروسل", story: "استوری", all: "همه" },
-  },
-  steps: {
-    step1: "تحلیل لینک",
-    step2: "دانلود محتوا",
-    step3: "آماده‌سازی فایل",
-  },
-  progress: {
-    steps: [
-      { label: "دریافت لینک",   icon: "🔗", desc: "تحلیل لینک" },
-      { label: "پردازش فایل",   icon: "⚙️", desc: "دانلود محتوا" },
-      { label: "آماده دانلود",  icon: "✅", desc: "تحویل فایل" },
-    ],
-    analyzing:   "در حال تحلیل لینک...",
-    downloading: "در حال دانلود فایل...",
-    processing:  "در حال پردازش...",
-    ready:       "🎉 دانلود آماده شد!",
-    preparing:   "در حال آماده‌سازی...",
-  },
-  preview: {
-    readyToDownload: "آماده دانلود",
-    downloadVideo:   "دانلود ویدیو",
-    downloadImage:   "دانلود تصویر",
-    downloadZip:     (n) => `دانلود ZIP (${n} فایل)`,
-    downloadIndividual: "جداگانه",
-    slideLabel:      (i) => `اسلاید ${i + 1}`,
-    image: "تصویر",
-    video: "ویدیو",
-    copyLink: "کپی لینک",
-    copied:   "کپی شد!",
-    anotherLink: "← دانلود لینک دیگری",
-    zipInfo:  (n) => `همه ${n} فایل در یک ZIP دانلود می‌شوند.`,
-    types: {
-      reel:     { label: "Reel",     icon: "🎬", color: "#a855f7" },
-      post:     { label: "پست",     icon: "📸", color: "#06b6d4" },
-      image:    { label: "تصویر",   icon: "🖼️",  color: "#22d3ee" },
-      carousel: { label: "کاروسل", icon: "🎞️",  color: "#8b5cf6" },
-      story:    { label: "استوری", icon: "⭕",   color: "#f472b6" },
-      igtv:     { label: "IGTV",    icon: "📺",  color: "#7c3aed" },
-      unknown:  { label: "ویدیو",   icon: "🎥",  color: "#7c3aed" },
-    },
-  },
-};
-
-// ─── German ───────────────────────────────────────────────────────────────────
 const de: Translations = {
   dir: "ltr",
   header: { admin: "Adminbereich" },
@@ -1530,5 +1426,5 @@ const ar: Translations = {
 };
 
 export const translations: Record<Lang, Translations> = {
-  en, pt, fa, de, fr, ja, nl, sv, no, da, it, es, tr, ar,
+  en, pt, de, fr, ja, nl, sv, no, da, it, es, tr, ar,
 };

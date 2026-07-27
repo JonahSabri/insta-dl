@@ -30,15 +30,15 @@ async def admin_upload(
     _: str = Depends(verify_admin),
 ) -> dict:
     if not file.filename:
-        raise HTTPException(status_code=400, detail="فایل انتخاب نشده.")
+        raise HTTPException(status_code=400, detail="No file selected.")
 
     ext = Path(file.filename).suffix.lower()
     if ext not in ALLOWED_EXT:
-        raise HTTPException(status_code=400, detail="فرمت تصویر مجاز نیست.")
+        raise HTTPException(status_code=400, detail="Image format not allowed.")
 
     content = await file.read()
     if len(content) > MAX_BYTES:
-        raise HTTPException(status_code=400, detail="حداکثر حجم تصویر ۵ مگابایت است.")
+        raise HTTPException(status_code=400, detail="Max image size is 5MB.")
 
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     name = _safe_name(file.filename)
@@ -54,8 +54,8 @@ async def admin_upload(
 @router.get("/v1/uploads/{filename}")
 async def get_upload(filename: str) -> FileResponse:
     if not re.fullmatch(r"[a-f0-9]+\.(jpg|jpeg|png|gif|webp|svg)", filename, re.I):
-        raise HTTPException(status_code=400, detail="نام فایل نامعتبر است.")
+        raise HTTPException(status_code=400, detail="Invalid filename.")
     path = UPLOAD_DIR / filename
     if not path.is_file():
-        raise HTTPException(status_code=404, detail="فایل یافت نشد.")
+        raise HTTPException(status_code=404, detail="File not found.")
     return FileResponse(path)

@@ -122,7 +122,7 @@ class LoginResponse(BaseModel):
 @router.post("/auth/login", response_model=LoginResponse)
 async def login(body: LoginRequest) -> LoginResponse:
     if body.username != settings.ADMIN_USERNAME or body.password != settings.ADMIN_PASSWORD:
-        raise HTTPException(status_code=401, detail="نام کاربری یا رمز عبور اشتباه است.")
+        raise HTTPException(status_code=401, detail="Invalid username or password.")
     expire = datetime.now(UTC) + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
     token = jwt.encode(
         {"sub": body.username, "exp": expire},
@@ -248,7 +248,7 @@ async def toggle_banner(
 ) -> dict:
     banner = await db.get(Banner, banner_id)
     if not banner:
-        raise HTTPException(status_code=404, detail="بنر یافت نشد.")
+        raise HTTPException(status_code=404, detail="Banner not found.")
     banner.is_active = not banner.is_active
     await db.commit()
     return {"id": banner_id, "is_active": banner.is_active}
@@ -262,7 +262,7 @@ async def delete_banner(
 ) -> dict:
     banner = await db.get(Banner, banner_id)
     if not banner:
-        raise HTTPException(status_code=404, detail="بنر یافت نشد.")
+        raise HTTPException(status_code=404, detail="Banner not found.")
     await db.delete(banner)
     await db.commit()
     return {"deleted": True}
@@ -357,18 +357,18 @@ async def upload_cookies(
     _: str = Depends(verify_admin),
 ) -> dict:
     if not file.filename:
-        raise HTTPException(status_code=400, detail="فایل انتخاب نشده.")
+        raise HTTPException(status_code=400, detail="No file selected.")
 
     content = await file.read()
     if len(content) > 5 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="فایل بیش از حد بزرگ است (حداکثر ۵ مگابایت).")
+        raise HTTPException(status_code=400, detail="File too large (max 5MB).")
 
     text = content.decode("utf-8", errors="replace")
     # Basic Netscape cookie file validation
     if "instagram.com" not in text:
         raise HTTPException(
             status_code=422,
-            detail="فایل cookies معتبر به نظر نمی‌رسد. مطمئن شوید از اینستاگرام export شده.",
+            detail="Cookie file does not look valid. Make sure it was exported from Instagram.",
         )
 
     COOKIES_PATH.parent.mkdir(parents=True, exist_ok=True)

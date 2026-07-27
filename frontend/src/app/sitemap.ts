@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { LANGS } from "@/i18n/translations";
+import { SITE_URL } from "@/lib/seo";
 
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://jazzghost.com").replace(/\/$/, "");
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
 
 interface SitemapArticle {

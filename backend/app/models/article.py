@@ -18,7 +18,7 @@ class Article(Base):
     slug: Mapped[str] = mapped_column(String(200), unique=True, index=True)
     # guide | tips | tutorial | news | faq | seo
     category: Mapped[str] = mapped_column(String(50), default="guide")
-    # JSON: { "en": {"title","excerpt","content"}, "fa": {...}, ... }
+    # JSON: { "en": {"title","excerpt","content"}, "pt": {...}, ... }
     translations: Mapped[str] = mapped_column(Text, default="{}")
     keywords: Mapped[str] = mapped_column(Text, default="")
     cover_image: Mapped[str] = mapped_column(Text, default="")

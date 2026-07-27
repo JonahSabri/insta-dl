@@ -10,22 +10,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.article import Article
 
 LANGS = [
-    "en", "pt", "fa", "de", "fr", "ja", "nl", "sv", "no", "da", "it", "es", "tr", "ar",
+    "en", "pt", "de", "fr", "ja", "nl", "sv", "no", "da", "it", "es", "tr", "ar",
 ]
 
 
 def _t(
     en: tuple[str, str, str],
-    fa: tuple[str, str, str],
+    _legacy_fa: tuple[str, str, str] | None = None,
     others: dict[str, tuple[str, str, str]] | None = None,
 ) -> dict[str, dict[str, str]]:
-    """Build translations dict. Missing langs fall back to English."""
+    """Build translations dict. Missing langs fall back to English. Persian removed."""
     out: dict[str, dict[str, str]] = {
         "en": {"title": en[0], "excerpt": en[1], "content": en[2]},
-        "fa": {"title": fa[0], "excerpt": fa[1], "content": fa[2]},
     }
     if others:
         for code, vals in others.items():
+            if code == "fa":
+                continue
             out[code] = {"title": vals[0], "excerpt": vals[1], "content": vals[2]}
     for lang in LANGS:
         if lang not in out:
@@ -537,22 +538,14 @@ SEED_ARTICLES: list[dict] = [
         "translations": _t(
             (
                 "JazzGhost Speaks Your Language",
-                "Use the Instagram downloader UI in English, فارسی, Português, العربية, Türkçe, and more.",
+                "Use the Instagram downloader UI in English, Português, العربية, Türkçe, and more.",
                 _body(
                     "Switch language from the header — the whole interface updates instantly.",
                     "Articles and guides are also available per language so SEO and UX stay local.",
-                    "Supported locales include EN, PT, FA, DE, FR, JA, NL, SV, NO, DA, IT, ES, TR, and AR.",
+                    "Supported locales include EN, PT, DE, FR, JA, NL, SV, NO, DA, IT, ES, TR, and AR.",
                 ),
             ),
-            (
-                "JazzGhost به زبان شما صحبت می‌کند",
-                "رابط دانلودر اینستاگرام را به فارسی، انگلیسی، پرتغالی، عربی، ترکی و بیشتر استفاده کنید.",
-                _body(
-                    "از هدر زبان را عوض کنید — کل رابط فوری به‌روز می‌شود.",
-                    "مقالات و راهنماها هم به‌ازای هر زبان در دسترس‌اند.",
-                    "زبان‌های پشتیبانی‌شده: EN، PT، FA، DE، FR، JA، NL، SV، NO، DA، IT، ES، TR و AR.",
-                ),
-            ),
+            None,
         ),
     },
     {

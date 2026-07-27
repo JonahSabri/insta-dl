@@ -9,9 +9,6 @@ router = APIRouter(tags=["geo"])
 
 # ISO country code → site language (only supported langs)
 COUNTRY_TO_LANG: dict[str, str] = {
-    # Persian
-    "IR": "fa",
-    "AF": "fa",
     # Arabic
     "SA": "ar", "AE": "ar", "EG": "ar", "IQ": "ar", "JO": "ar", "KW": "ar",
     "LB": "ar", "OM": "ar", "QA": "ar", "BH": "ar", "SY": "ar", "YE": "ar",
@@ -41,9 +38,9 @@ COUNTRY_TO_LANG: dict[str, str] = {
     "UY": "es", "PR": "es",
     # Turkish
     "TR": "tr",
-    # English-majority / fallbacks stay "en"
+    # English (includes IR/AF — Persian removed from site)
     "US": "en", "GB": "en", "AU": "en", "CA": "en", "NZ": "en", "IE": "en",
-    "ZA": "en", "IN": "en", "SG": "en", "PH": "en",
+    "ZA": "en", "IN": "en", "SG": "en", "PH": "en", "IR": "en", "AF": "en",
 }
 
 

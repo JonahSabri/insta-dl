@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
-import { translations, LANGS, type Lang } from "@/i18n/translations";
+import { LANGS } from "@/i18n/translations";
 import { notFound } from "next/navigation";
+import JsonLd from "@/components/JsonLd";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  buildPageMetadata,
+  isSupportedLang,
+  SITE_NAME,
+} from "@/lib/seo";
 
 interface Props {
   children: React.ReactNode;
@@ -11,51 +19,31 @@ export async function generateStaticParams() {
   return LANGS.map((l) => ({ lang: l.code }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
   const { lang } = await params;
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "JazzGhost";
-
-  const meta: Record<string, { title: string; description: string }> = {
-    en: {
-      title: `${siteName} — Instagram Downloader`,
-      description: "Free Instagram Reels, Posts, Images and Carousel downloader. Fast, no app needed.",
-    },
-    pt: {
-      title: `${siteName} — Baixar do Instagram`,
-      description: "Baixe Reels, Posts, Imagens e Carrosséis do Instagram gratuitamente. Rápido, sem instalação.",
-    },
-    fa: {
-      title: `${siteName} — دانلود ریلز و پست اینستاگرام`,
-      description: "دانلود رایگان ریلز، پست، تصویر و کاروسل اینستاگرام. سریع، بدون نیاز به نصب برنامه.",
-    },
-  };
-
-  const m = meta[lang] ?? meta.en;
-  const languages: Record<string, string> = { "x-default": "/en" };
-  for (const l of LANGS) {
-    languages[l.code === "pt" ? "pt-BR" : l.code] = `/${l.code}`;
-  }
-  return {
-    title: m.title,
-    description: m.description,
-    alternates: {
-      canonical: `/${lang}`,
-      languages,
-    },
-  };
+  if (!isSupportedLang(lang)) return {};
+  return buildPageMetadata(lang, "home");
 }
 
 export default async function LangLayout({ children, params }: Props) {
   const { lang } = await params;
 
-  // Validate lang
   if (!LANGS.some((l) => l.code === lang)) notFound();
 
   const langMeta = LANGS.find((l) => l.code === lang)!;
   const htmlLang = lang === "pt" ? "pt-BR" : lang;
 
+  const crumbs = breadcrumbJsonLd([
+    { name: SITE_NAME, url: absoluteUrl(`/${lang}`) },
+  ]);
+
   return (
     <div lang={htmlLang} dir={langMeta.dir}>
+      <JsonLd data={crumbs} />
       {children}
     </div>
   );
