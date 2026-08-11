@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from pathlib import Path
 
@@ -123,7 +123,7 @@ class LoginResponse(BaseModel):
 async def login(body: LoginRequest) -> LoginResponse:
     if body.username != settings.ADMIN_USERNAME or body.password != settings.ADMIN_PASSWORD:
         raise HTTPException(status_code=401, detail="Invalid username or password.")
-    expire = datetime.now(UTC) + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
     token = jwt.encode(
         {"sub": body.username, "exp": expire},
         settings.SECRET_KEY,
@@ -146,7 +146,7 @@ async def stats(
     failed = await db.scalar(
         select(func.count(Download.id)).where(Download.status == "failed")
     ) or 0
-    today_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     today = await db.scalar(
         select(func.count(Download.id)).where(Download.created_at >= today_start)
     ) or 0
@@ -424,7 +424,7 @@ async def public_banners(
     position: str | None = None,
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
-    now = datetime.now(UTC)
+    now = datetime.now(timezone.utc)
     query = select(Banner).where(Banner.is_active.is_(True)).order_by(Banner.priority.desc())
     if position:
         query = query.where(Banner.position == position)

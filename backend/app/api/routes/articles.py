@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -296,7 +296,7 @@ async def admin_update_article(
         translations[body.lang] = current
 
     article.translations = json.dumps(translations, ensure_ascii=False)
-    article.updated_at = datetime.now(UTC)
+    article.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(article)
     return _admin_item(article)
@@ -312,7 +312,7 @@ async def admin_toggle_article(
     if not article:
         raise HTTPException(status_code=404, detail="Article not found.")
     article.is_published = not article.is_published
-    article.updated_at = datetime.now(UTC)
+    article.updated_at = datetime.now(timezone.utc)
     await db.commit()
     return {"id": article_id, "is_published": article.is_published}
 

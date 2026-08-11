@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 
 
@@ -14,7 +14,7 @@ class JobInfo:
     progress: int = 0
     result: dict[str, Any] | None = None
     error: str | None = None
-    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 _store: dict[str, JobInfo] = {}
@@ -41,7 +41,7 @@ async def update_job(job_id: str, **kwargs: Any) -> None:
 
 async def cleanup_old_jobs(max_age_seconds: int = 3600) -> None:
     async with _lock:
-        now = datetime.now(UTC)
+        now = datetime.now(timezone.utc)
         stale = [
             jid
             for jid, job in _store.items()
