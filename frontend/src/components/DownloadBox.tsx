@@ -97,7 +97,7 @@ function TypeSelector({ selected, onChange, labels }: TypeSelectorProps) {
         <button
           key={opt.id}
           onClick={() => onChange(opt.id)}
-          className={`type-pill ${selected === opt.id ? "active" : ""}`}
+          className={selected === opt.id ? "type-pill active" : "type-pill"}
           type="button"
         >
           <span className="type-pill-icon">{opt.icon}</span>
@@ -241,7 +241,16 @@ function DownloadingOverlay({ progress, t }: DownloadingOverlayProps) {
       {/* Steps */}
       <div className="dl-steps">
         {steps.map((s, i) => (
-          <div key={i} className={`dl-step ${s.done ? "done" : i === steps.filter(x => x.done).length ? "active" : ""}`}>
+          <div
+            key={i}
+            className={
+              s.done
+                ? "dl-step done"
+                : i === steps.filter((x) => x.done).length
+                  ? "dl-step active"
+                  : "dl-step"
+            }
+          >
             <span className="dl-step-icon">{s.icon}</span>
             <span className="dl-step-label">{s.label}</span>
           </div>
@@ -413,7 +422,7 @@ export default function DownloadBox({ onResult }: Props) {
       {/* ─── URL Input ───────────────────────────────────────────────────────── */}
       {isIdle && (
         <div className="anim-scale-in">
-          <div className={`magic-border ${focused || url ? "active" : ""}`}>
+          <div className={focused || url ? "magic-border active" : "magic-border"}>
             <div className="magic-border-inner p-1">
               <div className="flex items-stretch gap-0">
                 <input

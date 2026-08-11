@@ -30,6 +30,8 @@ import type { AdminStats, DownloadRecord, Banner, AdminArticle } from "@/types";
 import Link from "next/link";
 import { LANGS } from "@/i18n/translations";
 import RichTextEditor from "@/components/RichTextEditor";
+import FlagIcon from "@/components/FlagIcon";
+import { cn } from "@/lib/cn";
 
 const ARTICLE_CATEGORIES = [
   { id: "guide", label: "Guide" },
@@ -888,6 +890,7 @@ function ArticleManager({ token }: { token: string }) {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [filterLang, setFilterLang] = useState<string>("all");
   const [formLang, setFormLang] = useState("en");
   const [form, setForm] = useState({
     slug: "",
@@ -1043,35 +1046,62 @@ function ArticleManager({ token }: { token: string }) {
   const catLabel = (id: string) =>
     ARTICLE_CATEGORIES.find((c) => c.id === id)?.label ?? id;
 
+  const filteredItems = items.filter((a) => {
+    if (filterLang === "all") return true;
+    const tr = a.translations?.[filterLang];
+    return Boolean(tr?.title?.trim());
+  });
+
   return (
     <div className="glass-card overflow-hidden">
-      <div className="flex items-center justify-between border-b border-white/5 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 px-4 py-3">
         <div>
           <h3 className="font-semibold text-slate-200">Blog / Articles</h3>
-          <p className="text-xs text-slate-500">{items.length} articles · rich editor · multilingual</p>
+          <p className="text-xs text-slate-500">
+            {filteredItems.length}/{items.length} articles · filter by language · rich editor
+          </p>
         </div>
-        <button onClick={showForm && !editingId ? resetForm : openCreate} className="btn-primary text-xs py-1.5 px-3">
-          {showForm && !editingId ? "Close" : "+ New article"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            className="input-field text-xs py-1.5 w-auto"
+            value={filterLang}
+            onChange={(e) => setFilterLang(e.target.value)}
+            title="Filter list by language"
+          >
+            <option value="all">All languages</option>
+            {LANGS.map((l) => (
+              <option key={l.code} value={l.code}>{l.label} ({l.code})</option>
+            ))}
+          </select>
+          <button onClick={showForm && !editingId ? resetForm : openCreate} className="btn-primary text-xs py-1.5 px-3">
+            {showForm && !editingId ? "Close" : "+ New article"}
+          </button>
+        </div>
       </div>
 
       {showForm && (
         <form onSubmit={handleSubmit} className="border-b border-white/5 p-4 space-y-4">
           <div>
-            <p className="mb-1.5 text-xs text-slate-500">Content language</p>
+            <p className="mb-1.5 text-xs text-slate-500">Writing language (each language is saved separately)</p>
             <div className="flex flex-wrap gap-1">
-              {LANGS.map((l) => (
-                <button
-                  key={l.code}
-                  type="button"
-                  onClick={() => switchLang(l.code)}
-                  className={`rounded-lg px-2 py-1 text-xs transition-colors ${
-                    formLang === l.code ? "bg-brand-600 text-white" : "bg-white/5 text-slate-400 hover:text-white"
-                  }`}
-                >
-                  {l.flag} {l.code}
-                </button>
-              ))}
+              {LANGS.map((l) => {
+                const has = Boolean(editingId && items.find((x) => x.id === editingId)?.translations?.[l.code]?.title?.trim());
+                return (
+                  <button
+                    key={l.code}
+                    type="button"
+                    onClick={() => switchLang(l.code)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-colors",
+                      formLang === l.code ? "bg-brand-600 text-white" : "bg-white/5 text-slate-400 hover:text-white"
+                    )}
+                  >
+                    <FlagIcon lang={l.code} size={14} />
+                    {l.code}
+                    {has ? <span className="text-[10px] opacity-80">✓</span> : null}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -1194,23 +1224,33 @@ function ArticleManager({ token }: { token: string }) {
 
       {loading ? (
         <div className="p-8 text-center text-slate-600">Loading...</div>
-      ) : items.length === 0 ? (
-        <div className="p-8 text-center text-slate-600">No articles yet.</div>
+      ) : filteredItems.length === 0 ? (
+        <div className="p-8 text-center text-slate-600">
+          {items.length === 0 ? "No articles yet." : "No articles for this language filter."}
+        </div>
       ) : (
         <div className="divide-y divide-white/5">
-          {items.map((a) => {
+          {filteredItems.map((a) => {
             const title =
+              (filterLang !== "all" && a.translations[filterLang]?.title) ||
               a.translations.en?.title ||
               Object.values(a.translations)[0]?.title ||
               a.slug;
-            const langs = Object.keys(a.translations).filter((k) => a.translations[k]?.title);
+            const langs = Object.keys(a.translations).filter((k) => a.translations[k]?.title?.trim());
             return (
               <div key={a.id} className="flex items-center gap-3 px-4 py-3">
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-sm font-medium text-slate-200">{title}</p>
                   <p className="text-xs text-slate-600 font-mono truncate">{a.slug}</p>
-                  <p className="text-[10px] text-slate-700 mt-0.5">
-                    {catLabel(a.category || "guide")} · {langs.join(" · ") || "—"}
+                  <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-600">
+                    <span>{catLabel(a.category || "guide")}</span>
+                    <span>·</span>
+                    {langs.map((code) => (
+                      <span key={code} className="inline-flex items-center gap-1 rounded bg-white/5 px-1.5 py-0.5">
+                        <FlagIcon lang={code} size={12} />
+                        {code}
+                      </span>
+                    ))}
                   </p>
                 </div>
                 <span className={`badge ${a.is_published ? "bg-green-500/15 text-green-400" : "bg-slate-500/15 text-slate-500"}`}>

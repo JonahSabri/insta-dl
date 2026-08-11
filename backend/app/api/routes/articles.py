@@ -35,10 +35,12 @@ def _parse_translations(raw: str) -> dict:
         return {}
 
 
-def _pick_lang(translations: dict, lang: str) -> dict:
-    block = translations.get(lang) or translations.get("en") or {}
-    if not block and translations:
-        block = next(iter(translations.values()), {})
+def _pick_lang(translations: dict, lang: str, *, fallback: bool = True) -> dict:
+    block = translations.get(lang)
+    if not block and fallback:
+        block = translations.get("en") or {}
+        if not block and translations:
+            block = next(iter(translations.values()), {})
     return {
         "title": (block or {}).get("title") or "",
         "excerpt": (block or {}).get("excerpt") or "",
@@ -46,20 +48,26 @@ def _pick_lang(translations: dict, lang: str) -> dict:
     }
 
 
+def _has_lang_content(translations: dict, lang: str) -> bool:
+    block = translations.get(lang) or {}
+    return bool(str(block.get("title") or "").strip())
+
+
 def _public_item(article: Article, lang: str) -> dict:
     tr = _parse_translations(article.translations)
-    picked = _pick_lang(tr, lang)
+    picked = _pick_lang(tr, lang, fallback=False)
+    available = sorted(k for k in tr.keys() if _has_lang_content(tr, k))
     return {
         "id": article.id,
         "slug": article.slug,
         "category": article.category or "guide",
         "cover_image": article.cover_image or "",
         "keywords": article.keywords,
-        "lang": lang if lang in tr else ("en" if "en" in tr else next(iter(tr), lang)),
+        "lang": lang,
         "title": picked["title"],
         "excerpt": picked["excerpt"],
         "content": picked["content"],
-        "available_langs": sorted(tr.keys()),
+        "available_langs": available,
         "created_at": article.created_at.isoformat() if article.created_at else None,
         "updated_at": article.updated_at.isoformat() if article.updated_at else None,
     }
@@ -108,6 +116,7 @@ async def list_public_articles(
     lang: str = Query("en"),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    """Return only articles that have content written for the requested language."""
     lang = lang if lang in SUPPORTED_LANGS else "en"
     result = await db.execute(
         select(Article)
@@ -115,21 +124,23 @@ async def list_public_articles(
         .order_by(Article.created_at.desc())
     )
     items = result.scalars().all()
-    return {
-        "items": [
+    out = []
+    for a in items:
+        tr = _parse_translations(a.translations)
+        if not _has_lang_content(tr, lang):
+            continue
+        out.append(
             {
                 "id": a.id,
                 "slug": a.slug,
                 "category": a.category or "guide",
                 "cover_image": a.cover_image or "",
                 "keywords": a.keywords,
-                **_pick_lang(_parse_translations(a.translations), lang),
+                **_pick_lang(tr, lang, fallback=False),
                 "created_at": a.created_at.isoformat() if a.created_at else None,
             }
-            for a in items
-        ],
-        "lang": lang,
-    }
+        )
+    return {"items": out, "lang": lang}
 
 
 @router.get("/v1/articles/{slug}")
@@ -145,6 +156,9 @@ async def get_public_article(
     article = result.scalar_one_or_none()
     if not article:
         raise HTTPException(status_code=404, detail="Article not found.")
+    tr = _parse_translations(article.translations)
+    if not _has_lang_content(tr, lang):
+        raise HTTPException(status_code=404, detail="Article not available in this language.")
     return _public_item(article, lang)
 
 

@@ -4,6 +4,8 @@ import DownloadBox from "@/components/DownloadBox";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import LatestArticlesSlider from "@/components/LatestArticlesSlider";
 import PwaInstallBanner from "@/components/PwaInstallBanner";
+import CookieConsent from "@/components/CookieConsent";
+import SiteFooter from "@/components/SiteFooter";
 import { useT } from "@/i18n/context";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -301,21 +303,8 @@ export default function HomePage() {
 
       {/* ══ PWA INSTALL BANNER ══════════════════════════════════════════ */}
       <PwaInstallBanner />
-
-      {/* ══ FOOTER ══════════════════════════════════════════════════════ */}
-      <footer className="py-8 text-center text-xs text-slate-700">
-        <div
-          className="mx-auto mb-3 h-px max-w-xs"
-          style={{ background: "linear-gradient(90deg,transparent,rgba(131,58,180,0.3),rgba(225,48,108,0.2),transparent)" }}
-        />
-        <div className="mb-3 flex justify-center gap-4">
-          <Link href={`/${lang}`} className="text-slate-500 hover:text-slate-300 transition-colors">{t.nav.home}</Link>
-          <Link href={`/${lang}/articles`} className="text-slate-500 hover:text-slate-300 transition-colors">{t.nav.articles}</Link>
-        </div>
-        <span className="text-slate-600">© {new Date().getFullYear()} {siteName}</span>
-        <span className="mx-2 text-slate-800">·</span>
-        <span>{t.footer.madeWith}</span>
-      </footer>
+      <CookieConsent />
+      <SiteFooter />
     </div>
   );
 }

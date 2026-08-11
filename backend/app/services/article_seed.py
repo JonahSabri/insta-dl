@@ -19,18 +19,15 @@ def _t(
     _legacy_fa: tuple[str, str, str] | None = None,
     others: dict[str, tuple[str, str, str]] | None = None,
 ) -> dict[str, dict[str, str]]:
-    """Build translations dict. Missing langs fall back to English. Persian removed."""
+    """Build translations. Only include languages that actually have content (no silent EN fill)."""
     out: dict[str, dict[str, str]] = {
         "en": {"title": en[0], "excerpt": en[1], "content": en[2]},
     }
     if others:
         for code, vals in others.items():
-            if code == "fa":
+            if code == "fa" or code not in LANGS:
                 continue
             out[code] = {"title": vals[0], "excerpt": vals[1], "content": vals[2]}
-    for lang in LANGS:
-        if lang not in out:
-            out[lang] = out["en"]
     return out
 
 
@@ -578,25 +575,34 @@ SEED_ARTICLES: list[dict] = [
 
 
 async def seed_articles_if_empty(db: AsyncSession) -> int:
-    """Insert any missing default articles. Returns inserted count."""
-    result = await db.execute(select(Article.slug))
-    existing = set(result.scalars().all())
-    added = 0
+    """Insert missing defaults and refresh seed translations (lang-specific only)."""
+    result = await db.execute(select(Article))
+    by_slug = {a.slug: a for a in result.scalars().all()}
+    changed = 0
 
     for item in SEED_ARTICLES:
-        if item["slug"] in existing:
-            continue
-        db.add(
-            Article(
-                slug=item["slug"],
-                category=item.get("category", "guide"),
-                keywords=item["keywords"],
-                translations=json.dumps(item["translations"], ensure_ascii=False),
-                is_published=True,
+        payload = json.dumps(item["translations"], ensure_ascii=False)
+        existing = by_slug.get(item["slug"])
+        if existing is None:
+            db.add(
+                Article(
+                    slug=item["slug"],
+                    category=item.get("category", "guide"),
+                    keywords=item["keywords"],
+                    translations=payload,
+                    is_published=True,
+                )
             )
-        )
-        added += 1
+            changed += 1
+            continue
+        # Keep admin edits for non-seed custom articles; refresh known seed slugs
+        # so each language only shows real localized content (no silent EN copies).
+        if existing.translations != payload:
+            existing.translations = payload
+            existing.keywords = item["keywords"]
+            existing.category = item.get("category", existing.category or "guide")
+            changed += 1
 
-    if added:
+    if changed:
         await db.commit()
-    return added
+    return changed

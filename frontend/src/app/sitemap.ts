@@ -72,6 +72,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
+  // Legal / info pages (Google Ads compliance)
+  const legalPaths = [
+    "/about",
+    "/contact",
+    "/terms",
+    "/privacy-policy",
+    "/cookie-policy",
+    "/disclaimer",
+  ];
+  for (const path of legalPaths) {
+    for (const l of LANGS) {
+      entries.push({
+        url: `${SITE_URL}/${l.code}${path}`,
+        lastModified: now,
+        changeFrequency: "monthly",
+        priority: 0.5,
+        alternates: { languages: langAlternates(path) },
+      });
+    }
+  }
+
   // Individual articles × languages
   for (const article of articles) {
     if (!article.slug) continue;
