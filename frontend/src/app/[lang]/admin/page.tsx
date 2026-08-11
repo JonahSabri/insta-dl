@@ -25,6 +25,7 @@ import {
   toggleArticle,
   deleteArticle,
   uploadAdminImage,
+  translateArticleLang,
 } from "@/lib/api";
 import type { AdminStats, DownloadRecord, Banner, AdminArticle } from "@/types";
 import Link from "next/link";
@@ -903,6 +904,8 @@ function ArticleManager({ token }: { token: string }) {
     content: "",
   });
   const [saving, setSaving] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [translateProgress, setTranslateProgress] = useState("");
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   const load = useCallback(async () => {
@@ -1043,6 +1046,102 @@ function ArticleManager({ token }: { token: string }) {
     }
   }
 
+  async function saveCurrentLang(): Promise<string | null> {
+    const plain = form.content.replace(/<[^>]+>/g, "").trim();
+    if (!form.title.trim() || !plain) {
+      setMsg({ type: "err", text: "Title and content are required before translating." });
+      return null;
+    }
+    const payload = {
+      slug: form.slug,
+      category: form.category,
+      cover_image: form.cover_image,
+      keywords: form.keywords,
+      is_published: form.is_published,
+      lang: formLang,
+      title: form.title,
+      excerpt: form.excerpt,
+      content: form.content,
+    };
+    if (editingId) {
+      await updateArticle(token, editingId, payload);
+      return editingId;
+    }
+    const created = await createArticle(token, payload);
+    setEditingId(created.id);
+    return created.id;
+  }
+
+  async function handleTranslateAll() {
+    const ok = confirm(
+      `Translate the current language (${formLang}) into ALL other site languages with GapGPT?\n\nExisting translations will be overwritten. This may take a few minutes.`
+    );
+    if (!ok) return;
+
+    setTranslating(true);
+    setMsg(null);
+    setTranslateProgress("Saving source language…");
+
+    try {
+      const id = await saveCurrentLang();
+      if (!id) return;
+
+      const targets = LANGS.map((l) => l.code).filter((code) => code !== formLang);
+      let done = 0;
+      let failed = 0;
+
+      for (const target of targets) {
+        done += 1;
+        setTranslateProgress(`Translating ${target.toUpperCase()} (${done}/${targets.length})…`);
+        try {
+          await translateArticleLang(token, id, {
+            source_lang: formLang,
+            target_lang: target,
+            overwrite: true,
+          });
+        } catch (err: unknown) {
+          failed += 1;
+          console.error(err);
+          setTranslateProgress(
+            `Failed ${target}: ${err instanceof Error ? err.message : "error"} — continuing…`
+          );
+        }
+      }
+
+      const refreshed = await fetchAdminArticles(token);
+      setItems(refreshed);
+      const updated = refreshed.find((x) => x.id === id);
+      if (updated) {
+        setEditingId(updated.id);
+        const tr = updated.translations[formLang] || { title: "", excerpt: "", content: "" };
+        setForm((f) => ({
+          ...f,
+          slug: updated.slug,
+          category: updated.category || "guide",
+          cover_image: updated.cover_image || "",
+          keywords: updated.keywords,
+          is_published: updated.is_published,
+          title: tr.title || f.title,
+          excerpt: tr.excerpt || f.excerpt,
+          content: tr.content || f.content,
+        }));
+      }
+
+      setMsg({
+        type: failed ? "err" : "ok",
+        text: failed
+          ? `Done with ${failed} error(s). Check languages with ✓ marks.`
+          : `Translated to all ${targets.length} languages ✓`,
+      });
+      setTranslateProgress("");
+    } catch (err: unknown) {
+      setMsg({ type: "err", text: err instanceof Error ? err.message : "Translate failed" });
+      setTranslateProgress("");
+    } finally {
+      setTranslating(false);
+    }
+  }
+
   const catLabel = (id: string) =>
     ARTICLE_CATEGORIES.find((c) => c.id === id)?.label ?? id;
 
@@ -1091,9 +1190,11 @@ function ArticleManager({ token }: { token: string }) {
                     key={l.code}
                     type="button"
                     onClick={() => switchLang(l.code)}
+                    disabled={translating}
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition-colors",
-                      formLang === l.code ? "bg-brand-600 text-white" : "bg-white/5 text-slate-400 hover:text-white"
+                      formLang === l.code ? "bg-brand-600 text-white" : "bg-white/5 text-slate-400 hover:text-white",
+                      translating && "opacity-50"
                     )}
                   >
                     <FlagIcon lang={l.code} size={14} />
@@ -1102,7 +1203,28 @@ function ArticleManager({ token }: { token: string }) {
                   </button>
                 );
               })}
+              <button
+                type="button"
+                onClick={handleTranslateAll}
+                disabled={translating || saving}
+                title="Translate current language to all other languages with GapGPT"
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors",
+                  translating
+                    ? "bg-amber-500/20 text-amber-300"
+                    : "bg-gradient-to-r from-purple-600/80 to-pink-600/80 text-white hover:from-purple-500 hover:to-pink-500"
+                )}
+              >
+                {translating ? "…" : "✦"} AI · All languages
+              </button>
             </div>
+            {translateProgress ? (
+              <p className="mt-2 text-xs text-amber-300/90">{translateProgress}</p>
+            ) : (
+              <p className="mt-2 text-[11px] text-slate-600">
+                Last option: confirm to auto-translate this article into every language via GapGPT.
+              </p>
+            )}
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
@@ -1214,10 +1336,18 @@ function ArticleManager({ token }: { token: string }) {
           )}
 
           <div className="flex gap-2">
-            <button type="submit" disabled={saving} className="btn-primary text-sm py-2 disabled:opacity-50">
+            <button type="submit" disabled={saving || translating} className="btn-primary text-sm py-2 disabled:opacity-50">
               {saving ? "Saving..." : editingId ? "Update" : "Save"}
             </button>
-            <button type="button" onClick={resetForm} className="btn-secondary text-sm py-2">Cancel</button>
+            <button
+              type="button"
+              onClick={handleTranslateAll}
+              disabled={saving || translating}
+              className="btn-secondary text-sm py-2 disabled:opacity-50"
+            >
+              {translating ? "Translating…" : "AI translate all langs"}
+            </button>
+            <button type="button" onClick={resetForm} disabled={translating} className="btn-secondary text-sm py-2">Cancel</button>
           </div>
         </form>
       )}

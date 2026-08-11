@@ -329,3 +329,72 @@ async def admin_delete_article(
     await db.delete(article)
     await db.commit()
     return {"deleted": True}
+
+
+class TranslateOneBody(BaseModel):
+    source_lang: str = "en"
+    target_lang: str
+    overwrite: bool = True
+
+
+@router.post("/admin/articles/{article_id}/translate")
+async def admin_translate_article_lang(
+    article_id: str,
+    body: TranslateOneBody,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(verify_admin),
+) -> dict:
+    """Translate one language block from source → target via GapGPT and save it."""
+    from app.services.gapgpt_translate import translate_article_fields
+
+    if body.source_lang not in SUPPORTED_LANGS:
+        raise HTTPException(status_code=400, detail="Invalid source_lang.")
+    if body.target_lang not in SUPPORTED_LANGS:
+        raise HTTPException(status_code=400, detail="Invalid target_lang.")
+    if body.source_lang == body.target_lang:
+        raise HTTPException(status_code=400, detail="source_lang and target_lang must differ.")
+
+    article = await db.get(Article, article_id)
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found.")
+
+    translations = _parse_translations(article.translations)
+    source = translations.get(body.source_lang) or {}
+    if not str(source.get("title") or "").strip():
+        raise HTTPException(
+            status_code=400,
+            detail=f"No source content for language '{body.source_lang}'. Save that language first.",
+        )
+
+    existing = translations.get(body.target_lang) or {}
+    if not body.overwrite and str(existing.get("title") or "").strip():
+        return {
+            "skipped": True,
+            "target_lang": body.target_lang,
+            "article": _admin_item(article),
+        }
+
+    try:
+        translated = await translate_article_fields(
+            title=str(source.get("title") or ""),
+            excerpt=str(source.get("excerpt") or ""),
+            content=str(source.get("content") or ""),
+            source_lang=body.source_lang,
+            target_lang=body.target_lang,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Translation failed: {exc}") from exc
+
+    translations[body.target_lang] = translated
+    article.translations = json.dumps(translations, ensure_ascii=False)
+    article.updated_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(article)
+    return {
+        "skipped": False,
+        "target_lang": body.target_lang,
+        "title": translated["title"],
+        "article": _admin_item(article),
+    }

@@ -38,6 +38,11 @@ class Settings(BaseSettings):
     HTTP_PROXY: str | None = None
     HTTPS_PROXY: str | None = None
 
+    # GapGPT (OpenAI-compatible) — article auto-translate
+    GAPGPT_API_KEY: str = "sk-Xybap9XYzUlOb8T44v6tR9MdEcNxUf2kZyz1wysJe9YvnG8y"
+    GAPGPT_BASE_URL: str = "https://api.gapgpt.app/v1"
+    GAPGPT_MODEL: str = "gpt-5.2"
+
     @property
     def proxy(self) -> str | None:
         """Return the effective proxy URL (HTTPS takes priority)."""

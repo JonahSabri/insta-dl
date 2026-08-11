@@ -936,11 +936,13 @@
 .pwa-banner {
   position: fixed;
   bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  margin-inline: auto;
   z-index: 9999;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   border-radius: 1.25rem;
@@ -976,7 +978,10 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 0.1rem;
+  text-align: center;
 }
 
 .pwa-banner-title {
@@ -986,6 +991,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
 }
 
 .pwa-banner-sub {
@@ -994,6 +1001,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
 }
 
 .pwa-banner-actions {

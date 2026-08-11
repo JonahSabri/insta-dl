@@ -310,3 +310,20 @@ export async function deleteArticle(token: string, id: string): Promise<void> {
     headers: authHeader(token),
   });
 }
+
+export async function translateArticleLang(
+  token: string,
+  id: string,
+  data: { source_lang: string; target_lang: string; overwrite?: boolean }
+): Promise<{
+  skipped: boolean;
+  target_lang: string;
+  title?: string;
+  article: AdminArticle;
+}> {
+  return request(`/admin/articles/${id}/translate`, {
+    method: "POST",
+    headers: authHeader(token),
+    body: JSON.stringify(data),
+  });
+}
