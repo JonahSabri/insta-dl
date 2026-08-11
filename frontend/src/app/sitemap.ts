@@ -80,6 +80,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/privacy-policy",
     "/cookie-policy",
     "/disclaimer",
+    "/faq",
   ];
   for (const path of legalPaths) {
     for (const l of LANGS) {

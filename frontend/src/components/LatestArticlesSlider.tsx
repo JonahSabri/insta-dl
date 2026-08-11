@@ -162,7 +162,7 @@ export default function LatestArticlesSlider() {
               className="ms-1 rounded-xl px-3 py-2 text-xs font-medium text-purple-300 transition hover:text-pink-300"
               style={{ background: "rgba(131,58,180,0.12)", border: "1px solid rgba(131,58,180,0.25)" }}
             >
-              {t.nav.articles} →
+              {t.nav.blog} →
             </Link>
           </div>
         </div>

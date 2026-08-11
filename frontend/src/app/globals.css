@@ -1200,6 +1200,21 @@
   margin: 0.75rem 0;
   display: block;
 }
+.rich-editor figure.article-figure,
+.article-body figure.article-figure {
+  margin: 1rem 0;
+}
+.rich-editor figure.article-figure img,
+.article-body figure.article-figure img {
+  margin: 0 auto;
+}
+.rich-editor figcaption,
+.article-body figcaption {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #64748b;
+  text-align: center;
+}
 .article-body {
   font-size: 15px;
   line-height: 1.75;

@@ -41,10 +41,15 @@ def _pick_lang(translations: dict, lang: str, *, fallback: bool = True) -> dict:
         block = translations.get("en") or {}
         if not block and translations:
             block = next(iter(translations.values()), {})
+    block = block or {}
     return {
-        "title": (block or {}).get("title") or "",
-        "excerpt": (block or {}).get("excerpt") or "",
-        "content": (block or {}).get("content") or "",
+        "title": block.get("title") or "",
+        "excerpt": block.get("excerpt") or "",
+        "content": block.get("content") or "",
+        "keywords": block.get("keywords") or "",
+        "meta_title": block.get("meta_title") or "",
+        "meta_description": block.get("meta_description") or "",
+        "cover_alt": block.get("cover_alt") or "",
     }
 
 
@@ -53,16 +58,31 @@ def _has_lang_content(translations: dict, lang: str) -> bool:
     return bool(str(block.get("title") or "").strip())
 
 
+def _effective_keywords(article: Article, picked: dict) -> str:
+    lang_kw = str(picked.get("keywords") or "").strip()
+    base_kw = str(article.keywords or "").strip()
+    if lang_kw and base_kw:
+        # Prefer lang keywords (already include originals+translated after AI);
+        # still merge unique base keywords if missing.
+        from app.services.gapgpt_translate import merge_keywords
+        return merge_keywords(base_kw, lang_kw)
+    return lang_kw or base_kw
+
+
 def _public_item(article: Article, lang: str) -> dict:
     tr = _parse_translations(article.translations)
     picked = _pick_lang(tr, lang, fallback=False)
     available = sorted(k for k in tr.keys() if _has_lang_content(tr, k))
+    keywords = _effective_keywords(article, picked)
     return {
         "id": article.id,
         "slug": article.slug,
         "category": article.category or "guide",
         "cover_image": article.cover_image or "",
-        "keywords": article.keywords,
+        "cover_alt": picked["cover_alt"] or picked["title"],
+        "keywords": keywords,
+        "meta_title": picked["meta_title"] or picked["title"],
+        "meta_description": picked["meta_description"] or picked["excerpt"],
         "lang": lang,
         "title": picked["title"],
         "excerpt": picked["excerpt"],
@@ -129,14 +149,20 @@ async def list_public_articles(
         tr = _parse_translations(a.translations)
         if not _has_lang_content(tr, lang):
             continue
+        picked = _pick_lang(tr, lang, fallback=False)
         out.append(
             {
                 "id": a.id,
                 "slug": a.slug,
                 "category": a.category or "guide",
                 "cover_image": a.cover_image or "",
-                "keywords": a.keywords,
-                **_pick_lang(tr, lang, fallback=False),
+                "cover_alt": picked.get("cover_alt") or picked.get("title") or "",
+                "keywords": _effective_keywords(a, picked),
+                "meta_title": picked.get("meta_title") or "",
+                "meta_description": picked.get("meta_description") or "",
+                "title": picked.get("title") or "",
+                "excerpt": picked.get("excerpt") or "",
+                "content": picked.get("content") or "",
                 "created_at": a.created_at.isoformat() if a.created_at else None,
             }
         )
@@ -168,6 +194,10 @@ class ArticleTranslation(BaseModel):
     title: str = ""
     excerpt: str = ""
     content: str = ""
+    keywords: str = ""
+    meta_title: str = ""
+    meta_description: str = ""
+    cover_alt: str = ""
 
 
 ARTICLE_CATEGORIES = {"guide", "tips", "tutorial", "news", "faq", "seo"}
@@ -183,6 +213,10 @@ class ArticleCreate(BaseModel):
     title: str
     excerpt: str = ""
     content: str = ""
+    meta_title: str = ""
+    meta_description: str = ""
+    cover_alt: str = ""
+    lang_keywords: str = ""
     translations: dict[str, ArticleTranslation] | None = None
 
 
@@ -198,6 +232,10 @@ class ArticleUpdate(BaseModel):
     title: str | None = None
     excerpt: str | None = None
     content: str | None = None
+    meta_title: str | None = None
+    meta_description: str | None = None
+    cover_alt: str | None = None
+    lang_keywords: str | None = None
 
 
 # ─── Admin ───────────────────────────────────────────────────────────────────
@@ -233,6 +271,10 @@ async def admin_create_article(
         "title": body.title,
         "excerpt": body.excerpt,
         "content": body.content,
+        "keywords": body.lang_keywords or body.keywords or "",
+        "meta_title": body.meta_title or "",
+        "meta_description": body.meta_description or "",
+        "cover_alt": body.cover_alt or "",
     }
 
     category = body.category if body.category in ARTICLE_CATEGORIES else "guide"
@@ -286,13 +328,32 @@ async def admin_update_article(
                 translations[code] = block.model_dump()
 
     if body.lang and body.lang in SUPPORTED_LANGS:
-        current = translations.get(body.lang, {"title": "", "excerpt": "", "content": ""})
+        current = translations.get(
+            body.lang,
+            {
+                "title": "",
+                "excerpt": "",
+                "content": "",
+                "keywords": "",
+                "meta_title": "",
+                "meta_description": "",
+                "cover_alt": "",
+            },
+        )
         if body.title is not None:
             current["title"] = body.title
         if body.excerpt is not None:
             current["excerpt"] = body.excerpt
         if body.content is not None:
             current["content"] = body.content
+        if body.lang_keywords is not None:
+            current["keywords"] = body.lang_keywords
+        if body.meta_title is not None:
+            current["meta_title"] = body.meta_title
+        if body.meta_description is not None:
+            current["meta_description"] = body.meta_description
+        if body.cover_alt is not None:
+            current["cover_alt"] = body.cover_alt
         translations[body.lang] = current
 
     article.translations = json.dumps(translations, ensure_ascii=False)
@@ -375,10 +436,15 @@ async def admin_translate_article_lang(
         }
 
     try:
+        source_keywords = str(source.get("keywords") or article.keywords or "")
         translated = await translate_article_fields(
             title=str(source.get("title") or ""),
             excerpt=str(source.get("excerpt") or ""),
             content=str(source.get("content") or ""),
+            keywords=source_keywords,
+            meta_title=str(source.get("meta_title") or ""),
+            meta_description=str(source.get("meta_description") or ""),
+            cover_alt=str(source.get("cover_alt") or ""),
             source_lang=body.source_lang,
             target_lang=body.target_lang,
         )
@@ -388,6 +454,9 @@ async def admin_translate_article_lang(
         raise HTTPException(status_code=502, detail=f"Translation failed: {exc}") from exc
 
     translations[body.target_lang] = translated
+    # Also keep a global keywords bag = originals + latest translated set
+    from app.services.gapgpt_translate import merge_keywords
+    article.keywords = merge_keywords(article.keywords or source_keywords, translated.get("keywords") or "")
     article.translations = json.dumps(translations, ensure_ascii=False)
     article.updated_at = datetime.now(timezone.utc)
     await db.commit()

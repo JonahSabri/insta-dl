@@ -30,14 +30,20 @@ const SIZES = [
   { label: "Huge", value: "7" },
 ];
 
+function escapeAttr(s: string) {
+  return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
 function Btn({
   title,
   onClick,
   children,
+  active,
 }: {
   title: string;
   onClick: () => void;
   children: React.ReactNode;
+  active?: boolean;
 }) {
   return (
     <button
@@ -45,7 +51,10 @@ function Btn({
       title={title}
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className="flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text-xs text-slate-300 transition hover:bg-white/10 hover:text-white"
+      className={cn(
+        "flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text-xs text-slate-300 transition hover:bg-white/10 hover:text-white",
+        active && "bg-white/10 text-white"
+      )}
     >
       {children}
     </button>
@@ -62,6 +71,12 @@ export default function RichTextEditor({
   const editorRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [imgOpen, setImgOpen] = useState(false);
+  const [imgUrl, setImgUrl] = useState("");
+  const [imgAlt, setImgAlt] = useState("");
+  const [imgTitle, setImgTitle] = useState("");
+  const [imgCaption, setImgCaption] = useState("");
+  const [imgCopied, setImgCopied] = useState(false);
   const syncing = useRef(false);
 
   useEffect(() => {
@@ -96,14 +111,18 @@ export default function RichTextEditor({
     const url = window.prompt("Link URL:", "https://");
     if (!url) return;
     const text = window.prompt("Link text (optional):", "") || url;
-    insertHtml(`<a href="${url.replace(/"/g, "&quot;")}" target="_blank" rel="noopener noreferrer">${text}</a>`);
+    insertHtml(
+      `<a href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">${escapeAttr(text)}</a>`
+    );
   };
 
-  const insertImageUrl = () => {
-    const url = window.prompt("Image URL:", "https://");
-    if (!url) return;
-    const alt = window.prompt("Alt text:", "image") || "image";
-    insertHtml(`<img src="${url.replace(/"/g, "&quot;")}" alt="${alt.replace(/"/g, "&quot;")}" />`);
+  const openImagePanel = () => {
+    setImgUrl("");
+    setImgAlt("");
+    setImgTitle("");
+    setImgCaption("");
+    setImgCopied(false);
+    setImgOpen(true);
   };
 
   const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -123,12 +142,49 @@ export default function RichTextEditor({
           reader.readAsDataURL(file);
         });
       }
-      insertHtml(`<img src="${url}" alt="${file.name.replace(/"/g, "")}" />`);
+      setImgUrl(url);
+      if (!imgAlt.trim()) {
+        const base = file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").trim();
+        setImgAlt(base || "Article image");
+      }
+      setImgOpen(true);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Image upload failed");
     } finally {
       setUploading(false);
     }
+  };
+
+  const copyImgUrl = async () => {
+    if (!imgUrl.trim()) return;
+    try {
+      await navigator.clipboard.writeText(imgUrl.trim());
+      setImgCopied(true);
+      setTimeout(() => setImgCopied(false), 1500);
+    } catch {
+      window.prompt("Copy image URL:", imgUrl.trim());
+    }
+  };
+
+  const insertImageIntoEditor = () => {
+    const url = imgUrl.trim();
+    const alt = imgAlt.trim();
+    if (!url) {
+      alert("Image URL is required.");
+      return;
+    }
+    if (!alt) {
+      alert("Alt text is required for SEO.");
+      return;
+    }
+    const title = imgTitle.trim() || alt;
+    const caption = imgCaption.trim();
+    const img = `<img src="${escapeAttr(url)}" alt="${escapeAttr(alt)}" title="${escapeAttr(title)}" loading="lazy" decoding="async" />`;
+    const html = caption
+      ? `<figure class="article-figure">${img}<figcaption>${escapeAttr(caption)}</figcaption></figure>`
+      : `<figure class="article-figure">${img}</figure>`;
+    insertHtml(html + "<p><br></p>");
+    setImgOpen(false);
   };
 
   const isEmpty = !value || value === "<br>" || value === "<div><br></div>";
@@ -140,8 +196,6 @@ export default function RichTextEditor({
         <Btn title="Italic" onClick={() => run("italic")}><i>I</i></Btn>
         <Btn title="Underline" onClick={() => run("underline")}><u>U</u></Btn>
         <Btn title="Strikethrough" onClick={() => run("strikeThrough")}><s>S</s></Btn>
-        <Btn title="Subscript" onClick={() => run("subscript")}>X₂</Btn>
-        <Btn title="Superscript" onClick={() => run("superscript")}>X²</Btn>
 
         <span className="mx-1 h-5 w-px bg-white/10" />
 
@@ -150,7 +204,6 @@ export default function RichTextEditor({
         <Btn title="Heading 3" onClick={() => run("formatBlock", "h3")}>H3</Btn>
         <Btn title="Paragraph" onClick={() => run("formatBlock", "p")}>P</Btn>
         <Btn title="Quote" onClick={() => run("formatBlock", "blockquote")}>❝</Btn>
-        <Btn title="Code block" onClick={() => run("formatBlock", "pre")}>&lt;/&gt;</Btn>
 
         <span className="mx-1 h-5 w-px bg-white/10" />
 
@@ -175,31 +228,26 @@ export default function RichTextEditor({
           Color
           <input type="color" className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent" onChange={(e) => run("foreColor", e.target.value)} />
         </label>
-        <label className="flex h-8 items-center gap-1 rounded-md px-2 text-xs text-slate-300 hover:bg-white/10" title="Highlight">
-          Highlight
-          <input type="color" defaultValue="#fbbf24" className="h-5 w-5 cursor-pointer rounded border-0 bg-transparent" onChange={(e) => run("hiliteColor", e.target.value)} />
-        </label>
 
         <span className="mx-1 h-5 w-px bg-white/10" />
 
         <Btn title="Align left" onClick={() => run("justifyLeft")}>⫷</Btn>
         <Btn title="Align center" onClick={() => run("justifyCenter")}>☰</Btn>
         <Btn title="Align right" onClick={() => run("justifyRight")}>⫸</Btn>
-        <Btn title="Justify" onClick={() => run("justifyFull")}>☰☰</Btn>
 
         <span className="mx-1 h-5 w-px bg-white/10" />
 
         <Btn title="Bullet list" onClick={() => run("insertUnorderedList")}>• List</Btn>
         <Btn title="Numbered list" onClick={() => run("insertOrderedList")}>1. List</Btn>
-        <Btn title="Indent" onClick={() => run("indent")}>→|</Btn>
-        <Btn title="Outdent" onClick={() => run("outdent")}>|←</Btn>
 
         <span className="mx-1 h-5 w-px bg-white/10" />
 
         <Btn title="Insert / edit link" onClick={insertLink}>🔗 Link</Btn>
         <Btn title="Remove link" onClick={() => run("unlink")}>⛓</Btn>
-        <Btn title="Image from URL" onClick={insertImageUrl}>🖼️ URL</Btn>
-        <Btn title="Upload image to server" onClick={() => fileRef.current?.click()}>
+        <Btn title="Insert image (upload or URL + alt)" onClick={openImagePanel} active={imgOpen}>
+          🖼️ Image
+        </Btn>
+        <Btn title="Upload image file" onClick={() => fileRef.current?.click()}>
           {uploading ? "Uploading…" : "⬆ Upload"}
         </Btn>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
@@ -210,8 +258,80 @@ export default function RichTextEditor({
         <Btn title="Undo" onClick={() => run("undo")}>↶</Btn>
         <Btn title="Redo" onClick={() => run("redo")}>↷</Btn>
         <Btn title="Clear formatting" onClick={() => run("removeFormat")}>Tx</Btn>
-        <Btn title="Select all" onClick={() => run("selectAll")}>All</Btn>
       </div>
+
+      {imgOpen && (
+        <div className="border-b border-white/10 bg-slate-900/80 p-3 space-y-3" dir="ltr">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold text-slate-200">Insert image (mid-article)</p>
+            <button
+              type="button"
+              className="text-xs text-slate-500 hover:text-white"
+              onClick={() => setImgOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-[11px] text-slate-500">Image URL (upload first or paste link)</label>
+              <div className="flex flex-wrap gap-2">
+                <input
+                  className="input-field text-xs flex-1 font-mono"
+                  placeholder="/api/v1/uploads/... or https://..."
+                  value={imgUrl}
+                  onChange={(e) => setImgUrl(e.target.value)}
+                />
+                <button type="button" className="btn-secondary text-xs py-1.5 px-2" onClick={() => fileRef.current?.click()}>
+                  {uploading ? "…" : "Upload"}
+                </button>
+                <button type="button" className="btn-secondary text-xs py-1.5 px-2" onClick={copyImgUrl} disabled={!imgUrl.trim()}>
+                  {imgCopied ? "Copied" : "Copy link"}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] text-slate-500">Alt text (SEO · required)</label>
+              <input
+                className="input-field text-xs"
+                placeholder="Describe the image for SEO & accessibility"
+                value={imgAlt}
+                onChange={(e) => setImgAlt(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] text-slate-500">Title attribute</label>
+              <input
+                className="input-field text-xs"
+                placeholder="Optional hover title"
+                value={imgTitle}
+                onChange={(e) => setImgTitle(e.target.value)}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-[11px] text-slate-500">Caption (optional)</label>
+              <input
+                className="input-field text-xs"
+                placeholder="Shown under the image"
+                value={imgCaption}
+                onChange={(e) => setImgCaption(e.target.value)}
+              />
+            </div>
+          </div>
+          {imgUrl.trim() ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imgUrl} alt={imgAlt || "preview"} className="max-h-36 rounded-lg border border-white/10 object-contain" />
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="btn-primary text-xs py-1.5 px-3" onClick={insertImageIntoEditor}>
+              Insert into article
+            </button>
+            <button type="button" className="btn-secondary text-xs py-1.5 px-3" onClick={() => setImgOpen(false)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="relative">
         <div
@@ -230,7 +350,7 @@ export default function RichTextEditor({
         )}
       </div>
       <div className="border-t border-white/5 px-3 py-1.5 text-[10px] text-slate-600">
-        Tip: select text → Bold / Link / Color. Upload images to the server for permanent URLs in the article.
+        Tip: place the cursor where you want the image → Image / Upload → fill Alt text → Insert. You can also Copy link and paste elsewhere.
       </div>
     </div>
   );

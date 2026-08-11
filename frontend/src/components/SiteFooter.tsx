@@ -18,7 +18,8 @@ export default function SiteFooter() {
       />
       <div className="mb-3 flex flex-wrap justify-center gap-x-4 gap-y-2 px-4">
         <Link href={`/${lang}`} className="text-slate-500 hover:text-slate-300 transition-colors">{t.nav.home}</Link>
-        <Link href={`/${lang}/articles`} className="text-slate-500 hover:text-slate-300 transition-colors">{t.nav.articles}</Link>
+        <Link href={`/${lang}/articles`} className="text-slate-500 hover:text-slate-300 transition-colors">{t.nav.blog}</Link>
+        <Link href={`/${lang}/faq`} className="text-slate-500 hover:text-slate-300 transition-colors">{t.nav.faq}</Link>
         {LEGAL_NAV.map((item) => (
           <Link
             key={item.slug}

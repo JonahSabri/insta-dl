@@ -25,7 +25,21 @@ export interface Translations {
   };
   nav: {
     home: string;
+    blog: string;
+    faq: string;
+    /** @deprecated use blog */
     articles: string;
+  };
+  faq: {
+    heading: string;
+    subheading: string;
+    searchPlaceholder: string;
+    categories: string;
+    questions: string;
+    noResults: string;
+    ctaEyebrow: string;
+    ctaTitle: string;
+    ctaButton: string;
   };
   articles: {
     heading: string;
@@ -104,13 +118,24 @@ export interface Translations {
 const en: Translations = {
   dir: "ltr",
   header: { admin: "Admin Panel" },
-  nav: { home: "Home", articles: "Articles" },
+  nav: { home: "Home", blog: "Blog", faq: "FAQ", articles: "Blog" },
+  faq: {
+    heading: "Frequently Asked Questions",
+    subheading: "Find answers to all {count} common questions about JazzGhost — downloads, privacy, quality, and more.",
+    searchPlaceholder: "Search questions...",
+    categories: "Categories",
+    questions: "questions",
+    noResults: "No results found for \"{query}\"",
+    ctaEyebrow: "Still have questions?",
+    ctaTitle: "Try JazzGhost right now",
+    ctaButton: "Go to JazzGhost",
+  },
   articles: {
-    heading: "Articles & Guides",
+    heading: "Blog & Guides",
     subheading: "Tips for downloading Instagram Reels, posts, stories, and more.",
     readMore: "Read more",
-    backToList: "← All articles",
-    empty: "No articles yet.",
+    backToList: "← All blog posts",
+    empty: "No blog posts yet.",
     publishedAt: "Published",
   },
   hero: {
@@ -206,9 +231,20 @@ const en: Translations = {
 const pt: Translations = {
   dir: "ltr",
   header: { admin: "Painel Admin" },
-  nav: { home: "Início", articles: "Artigos" },
+  nav: { home: "Início", blog: "Blog", faq: "FAQ", articles: "Blog" },
+  faq: {
+    heading: "Frequently Asked Questions",
+    subheading: "Find answers to all {count} common questions about JazzGhost — downloads, privacy, quality, and more.",
+    searchPlaceholder: "Search questions...",
+    categories: "Categories",
+    questions: "questions",
+    noResults: "No results found for \"{query}\"",
+    ctaEyebrow: "Still have questions?",
+    ctaTitle: "Try JazzGhost right now",
+    ctaButton: "Go to JazzGhost",
+  },
   articles: {
-    heading: "Artigos e Guias",
+    heading: "Blog e Guias",
     subheading: "Dicas para baixar Reels, posts, stories e mais do Instagram.",
     readMore: "Ler mais",
     backToList: "← Todos os artigos",
@@ -307,9 +343,20 @@ const pt: Translations = {
 const de: Translations = {
   dir: "ltr",
   header: { admin: "Adminbereich" },
-  nav: { home: "Start", articles: "Artikel" },
+  nav: { home: "Start", blog: "Blog", faq: "FAQ", articles: "Blog" },
+  faq: {
+    heading: "Frequently Asked Questions",
+    subheading: "Find answers to all {count} common questions about JazzGhost — downloads, privacy, quality, and more.",
+    searchPlaceholder: "Search questions...",
+    categories: "Categories",
+    questions: "questions",
+    noResults: "No results found for \"{query}\"",
+    ctaEyebrow: "Still have questions?",
+    ctaTitle: "Try JazzGhost right now",
+    ctaButton: "Go to JazzGhost",
+  },
   articles: {
-    heading: "Artikel & Guides",
+    heading: "Blog & Guides",
     subheading: "Tipps zum Herunterladen von Instagram Reels, Posts, Stories und mehr.",
     readMore: "Weiterlesen",
     backToList: "← Alle Artikel",
@@ -409,9 +456,20 @@ const de: Translations = {
 const fr: Translations = {
   dir: "ltr",
   header: { admin: "Panneau Admin" },
-  nav: { home: "Accueil", articles: "Articles" },
+  nav: { home: "Accueil", blog: "Blog", faq: "FAQ", articles: "Blog" },
+  faq: {
+    heading: "Frequently Asked Questions",
+    subheading: "Find answers to all {count} common questions about JazzGhost — downloads, privacy, quality, and more.",
+    searchPlaceholder: "Search questions...",
+    categories: "Categories",
+    questions: "questions",
+    noResults: "No results found for \"{query}\"",
+    ctaEyebrow: "Still have questions?",
+    ctaTitle: "Try JazzGhost right now",
+    ctaButton: "Go to JazzGhost",
+  },
   articles: {
-    heading: "Articles et guides",
+    heading: "Blog et guides",
     subheading: "Conseils pour télécharger des Reels, posts, stories Instagram et plus.",
     readMore: "Lire la suite",
     backToList: "← Tous les articles",
@@ -511,9 +569,20 @@ const fr: Translations = {
 const ja: Translations = {
   dir: "ltr",
   header: { admin: "管理パネル" },
-  nav: { home: "ホーム", articles: "記事" },
+  nav: { home: "ホーム", blog: "ブログ", faq: "FAQ", articles: "ブログ" },
+  faq: {
+    heading: "Frequently Asked Questions",
+    subheading: "Find answers to all {count} common questions about JazzGhost — downloads, privacy, quality, and more.",
+    searchPlaceholder: "Search questions...",
+    categories: "Categories",
+    questions: "questions",
+    noResults: "No results found for \"{query}\"",
+    ctaEyebrow: "Still have questions?",
+    ctaTitle: "Try JazzGhost right now",
+    ctaButton: "Go to JazzGhost",
+  },
   articles: {
-    heading: "記事とガイド",
+    heading: "ブログとガイド",
     subheading: "Instagramのリール、投稿、ストーリーなどのダウンロードのヒント。",
     readMore: "続きを読む",
     backToList: "← すべての記事",
@@ -613,9 +682,20 @@ const ja: Translations = {
 const nl: Translations = {
   dir: "ltr",
   header: { admin: "Beheerpaneel" },
-  nav: { home: "Home", articles: "Artikelen" },
+  nav: { home: "Home", blog: "Blog", faq: "FAQ", articles: "Blog" },
+  faq: {
+    heading: "Frequently Asked Questions",
+    subheading: "Find answers to all {count} common questions about JazzGhost — downloads, privacy, quality, and more.",
+    searchPlaceholder: "Search questions...",
+    categories: "Categories",
+    questions: "questions",
+    noResults: "No results found for \"{query}\"",
+    ctaEyebrow: "Still have questions?",
+    ctaTitle: "Try JazzGhost right now",
+    ctaButton: "Go to JazzGhost",
+  },
   articles: {
-    heading: "Artikelen & gidsen",
+    heading: "Blog & gidsen",
     subheading: "Tips voor het downloaden van Instagram Reels, posts, stories en meer.",
     readMore: "Meer lezen",
     backToList: "← Alle artikelen",
@@ -715,9 +795,20 @@ const nl: Translations = {
 const sv: Translations = {
   dir: "ltr",
   header: { admin: "Adminpanel" },
-  nav: { home: "Hem", articles: "Artiklar" },
+  nav: { home: "Hem", blog: "Blog", faq: "FAQ", articles: "Blog" },
+  faq: {
+    heading: "Frequently Asked Questions",
+    subheading: "Find answers to all {count} common questions about JazzGhost — downloads, privacy, quality, and more.",
+    searchPlaceholder: "Search questions...",
+    categories: "Categories",
+    questions: "questions",
+    noResults: "No results found for \"{query}\"",
+    ctaEyebrow: "Still have questions?",
+    ctaTitle: "Try JazzGhost right now",
+    ctaButton: "Go to JazzGhost",
+  },
   articles: {
-    heading: "Artiklar och guider",
+    heading: "Blog och guider",
     subheading: "Tips för att ladda ner Instagram Reels, inlägg, stories och mer.",
     readMore: "Läs mer",
     backToList: "← Alla artiklar",
@@ -817,9 +908,20 @@ const sv: Translations = {
 const no: Translations = {
   dir: "ltr",
   header: { admin: "Adminpanel" },
-  nav: { home: "Hjem", articles: "Artikler" },
+  nav: { home: "Hjem", blog: "Blog", faq: "FAQ", articles: "Blog" },
+  faq: {
+    heading: "Frequently Asked Questions",
+    subheading: "Find answers to all {count} common questions about JazzGhost — downloads, privacy, quality, and more.",
+    searchPlaceholder: "Search questions...",
+    categories: "Categories",
+    questions: "questions",
+    noResults: "No results found for \"{query}\"",
+    ctaEyebrow: "Still have questions?",
+    ctaTitle: "Try JazzGhost right now",
+    ctaButton: "Go to JazzGhost",
+  },
   articles: {
-    heading: "Artikler og guider",
+    heading: "Blog og guider",
     subheading: "Tips for å laste ned Instagram Reels, innlegg, stories og mer.",
     readMore: "Les mer",
     backToList: "← Alle artikler",
@@ -919,9 +1021,20 @@ const no: Translations = {
 const da: Translations = {
   dir: "ltr",
   header: { admin: "Adminpanel" },
-  nav: { home: "Hjem", articles: "Artikler" },
+  nav: { home: "Hjem", blog: "Blog", faq: "FAQ", articles: "Blog" },
+  faq: {
+    heading: "Frequently Asked Questions",
+    subheading: "Find answers to all {count} common questions about JazzGhost — downloads, privacy, quality, and more.",
+    searchPlaceholder: "Search questions...",
+    categories: "Categories",
+    questions: "questions",
+    noResults: "No results found for \"{query}\"",
+    ctaEyebrow: "Still have questions?",
+    ctaTitle: "Try JazzGhost right now",
+    ctaButton: "Go to JazzGhost",
+  },
   articles: {
-    heading: "Artikler og guides",
+    heading: "Blog & guides",
     subheading: "Tips til at downloade Instagram Reels, opslag, stories og mere.",
     readMore: "Læs mere",
     backToList: "← Alle artikler",
@@ -1021,9 +1134,20 @@ const da: Translations = {
 const it: Translations = {
   dir: "ltr",
   header: { admin: "Pannello Admin" },
-  nav: { home: "Home", articles: "Articoli" },
+  nav: { home: "Home", blog: "Blog", faq: "FAQ", articles: "Blog" },
+  faq: {
+    heading: "Frequently Asked Questions",
+    subheading: "Find answers to all {count} common questions about JazzGhost — downloads, privacy, quality, and more.",
+    searchPlaceholder: "Search questions...",
+    categories: "Categories",
+    questions: "questions",
+    noResults: "No results found for \"{query}\"",
+    ctaEyebrow: "Still have questions?",
+    ctaTitle: "Try JazzGhost right now",
+    ctaButton: "Go to JazzGhost",
+  },
   articles: {
-    heading: "Articoli e guide",
+    heading: "Blog e guide",
     subheading: "Consigli per scaricare Reels, post, storie Instagram e altro.",
     readMore: "Leggi di più",
     backToList: "← Tutti gli articoli",
@@ -1123,9 +1247,20 @@ const it: Translations = {
 const es: Translations = {
   dir: "ltr",
   header: { admin: "Panel de Administración" },
-  nav: { home: "Inicio", articles: "Artículos" },
+  nav: { home: "Inicio", blog: "Blog", faq: "FAQ", articles: "Blog" },
+  faq: {
+    heading: "Frequently Asked Questions",
+    subheading: "Find answers to all {count} common questions about JazzGhost — downloads, privacy, quality, and more.",
+    searchPlaceholder: "Search questions...",
+    categories: "Categories",
+    questions: "questions",
+    noResults: "No results found for \"{query}\"",
+    ctaEyebrow: "Still have questions?",
+    ctaTitle: "Try JazzGhost right now",
+    ctaButton: "Go to JazzGhost",
+  },
   articles: {
-    heading: "Artículos y guías",
+    heading: "Blog y guías",
     subheading: "Consejos para descargar Reels, posts, stories de Instagram y más.",
     readMore: "Leer más",
     backToList: "← Todos los artículos",
@@ -1225,9 +1360,20 @@ const es: Translations = {
 const tr: Translations = {
   dir: "ltr",
   header: { admin: "Yönetici Paneli" },
-  nav: { home: "Ana sayfa", articles: "Makaleler" },
+  nav: { home: "Ana sayfa", blog: "Blog", faq: "SSS", articles: "Blog" },
+  faq: {
+    heading: "Frequently Asked Questions",
+    subheading: "Find answers to all {count} common questions about JazzGhost — downloads, privacy, quality, and more.",
+    searchPlaceholder: "Search questions...",
+    categories: "Categories",
+    questions: "questions",
+    noResults: "No results found for \"{query}\"",
+    ctaEyebrow: "Still have questions?",
+    ctaTitle: "Try JazzGhost right now",
+    ctaButton: "Go to JazzGhost",
+  },
   articles: {
-    heading: "Makaleler ve rehberler",
+    heading: "Blog ve rehberler",
     subheading: "Instagram Reels, gönderi, hikâye indirme ipuçları ve daha fazlası.",
     readMore: "Devamını oku",
     backToList: "← Tüm makaleler",
@@ -1327,9 +1473,20 @@ const tr: Translations = {
 const ar: Translations = {
   dir: "rtl",
   header: { admin: "لوحة الإدارة" },
-  nav: { home: "الرئيسية", articles: "المقالات" },
+  nav: { home: "الرئيسية", blog: "المدونة", faq: "الأسئلة", articles: "المدونة" },
+  faq: {
+    heading: "Frequently Asked Questions",
+    subheading: "Find answers to all {count} common questions about JazzGhost — downloads, privacy, quality, and more.",
+    searchPlaceholder: "Search questions...",
+    categories: "Categories",
+    questions: "questions",
+    noResults: "No results found for \"{query}\"",
+    ctaEyebrow: "Still have questions?",
+    ctaTitle: "Try JazzGhost right now",
+    ctaButton: "Go to JazzGhost",
+  },
   articles: {
-    heading: "مقالات وأدلة",
+    heading: "المدونة والأدلة",
     subheading: "نصائح لتنزيل ريلز ومنشورات وقصص إنستغرام والمزيد.",
     readMore: "اقرأ المزيد",
     backToList: "← كل المقالات",

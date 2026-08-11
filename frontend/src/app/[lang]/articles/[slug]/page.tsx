@@ -61,7 +61,8 @@ export default function ArticleDetailPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={article.cover_image}
-                  alt={article.title}
+                  alt={article.cover_alt || article.title}
+                  title={article.cover_alt || article.title}
                   className="mb-8 w-full rounded-2xl border border-white/10 object-cover max-h-80"
                 />
               )}

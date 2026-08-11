@@ -27,6 +27,9 @@ async function loadArticle(slug: string, lang: string) {
       content?: string;
       keywords?: string;
       cover_image?: string;
+      cover_alt?: string;
+      meta_title?: string;
+      meta_description?: string;
       created_at?: string | null;
       updated_at?: string | null;
       slug: string;
@@ -54,16 +57,19 @@ export async function generateMetadata({
     };
   }
 
+  const title = article.meta_title?.trim() || article.title;
   const description =
+    article.meta_description?.trim() ||
     article.excerpt?.trim() ||
     stripHtml(article.content || "").slice(0, 160);
 
   return buildArticleMetadata({
     lang,
     slug: article.slug || slug,
-    title: article.title,
+    title,
     description,
     image: article.cover_image,
+    imageAlt: article.cover_alt || article.title,
     publishedAt: article.created_at,
     updatedAt: article.updated_at,
     keywords: article.keywords,
@@ -78,6 +84,7 @@ export default async function ArticleSlugLayout({ children, params }: Props) {
 
   const url = absoluteUrl(`/${lang}/articles/${slug}`);
   const description =
+    article.meta_description?.trim() ||
     article.excerpt?.trim() ||
     stripHtml(article.content || "").slice(0, 160);
 
@@ -86,13 +93,13 @@ export default async function ArticleSlugLayout({ children, params }: Props) {
       <JsonLd
         data={breadcrumbJsonLd([
           { name: SITE_NAME, url: absoluteUrl(`/${lang}`) },
-          { name: "Articles", url: absoluteUrl(`/${lang}/articles`) },
+          { name: "Blog", url: absoluteUrl(`/${lang}/articles`) },
           { name: article.title, url },
         ])}
       />
       <JsonLd
         data={articleJsonLd({
-          title: article.title,
+          title: article.meta_title?.trim() || article.title,
           description,
           url,
           image: article.cover_image,

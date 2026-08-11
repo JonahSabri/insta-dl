@@ -902,6 +902,10 @@ function ArticleManager({ token }: { token: string }) {
     title: "",
     excerpt: "",
     content: "",
+    meta_title: "",
+    meta_description: "",
+    cover_alt: "",
+    lang_keywords: "",
   });
   const [saving, setSaving] = useState(false);
   const [translating, setTranslating] = useState(false);
@@ -931,6 +935,10 @@ function ArticleManager({ token }: { token: string }) {
       title: "",
       excerpt: "",
       content: "",
+      meta_title: "",
+      meta_description: "",
+      cover_alt: "",
+      lang_keywords: "",
     });
     setEditingId(null);
     setFormLang("en");
@@ -957,6 +965,10 @@ function ArticleManager({ token }: { token: string }) {
       title: tr.title || "",
       excerpt: tr.excerpt || "",
       content: tr.content || "",
+      meta_title: tr.meta_title || "",
+      meta_description: tr.meta_description || "",
+      cover_alt: tr.cover_alt || "",
+      lang_keywords: tr.keywords || "",
     });
     setShowForm(true);
     setMsg(null);
@@ -972,9 +984,22 @@ function ArticleManager({ token }: { token: string }) {
         title: tr.title || "",
         excerpt: tr.excerpt || "",
         content: tr.content || "",
+        meta_title: tr.meta_title || "",
+        meta_description: tr.meta_description || "",
+        cover_alt: tr.cover_alt || "",
+        lang_keywords: tr.keywords || "",
       }));
     } else {
-      setForm((f) => ({ ...f, title: "", excerpt: "", content: "" }));
+      setForm((f) => ({
+        ...f,
+        title: "",
+        excerpt: "",
+        content: "",
+        meta_title: "",
+        meta_description: "",
+        cover_alt: "",
+        lang_keywords: "",
+      }));
     }
   }
 
@@ -997,6 +1022,10 @@ function ArticleManager({ token }: { token: string }) {
       title: form.title,
       excerpt: form.excerpt,
       content: form.content,
+      meta_title: form.meta_title,
+      meta_description: form.meta_description,
+      cover_alt: form.cover_alt,
+      lang_keywords: form.lang_keywords || form.keywords,
     };
     try {
       if (editingId) {
@@ -1062,6 +1091,10 @@ function ArticleManager({ token }: { token: string }) {
       title: form.title,
       excerpt: form.excerpt,
       content: form.content,
+      meta_title: form.meta_title,
+      meta_description: form.meta_description,
+      cover_alt: form.cover_alt,
+      lang_keywords: form.lang_keywords || form.keywords,
     };
     if (editingId) {
       await updateArticle(token, editingId, payload);
@@ -1155,9 +1188,9 @@ function ArticleManager({ token }: { token: string }) {
     <div className="glass-card overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/5 px-4 py-3">
         <div>
-          <h3 className="font-semibold text-slate-200">Blog / Articles</h3>
+          <h3 className="font-semibold text-slate-200">Blog</h3>
           <p className="text-xs text-slate-500">
-            {filteredItems.length}/{items.length} articles · filter by language · rich editor
+            {filteredItems.length}/{items.length} posts · filter by language · rich editor + AI translate
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -1264,13 +1297,53 @@ function ArticleManager({ token }: { token: string }) {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs text-slate-500">Keywords (comma-separated)</label>
+              <label className="mb-1 block text-xs text-slate-500">Keywords (global · originals; AI appends translations)</label>
               <input
                 className="input-field text-sm"
                 placeholder="instagram reels, download, ..."
                 value={form.keywords}
                 onChange={(e) => setForm({ ...form, keywords: e.target.value })}
               />
+            </div>
+
+            <div className="sm:col-span-2 rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-3">
+              <p className="text-xs font-semibold text-slate-300">SEO for this language ({formLang})</p>
+              <div>
+                <label className="mb-1 block text-[11px] text-slate-500">Meta title (optional · defaults to title)</label>
+                <input
+                  className="input-field text-sm"
+                  placeholder="SEO title for Google / social"
+                  value={form.meta_title}
+                  onChange={(e) => setForm({ ...form, meta_title: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[11px] text-slate-500">Meta description</label>
+                <textarea
+                  className="input-field text-sm min-h-[60px]"
+                  placeholder="Max ~160 chars for search snippets"
+                  value={form.meta_description}
+                  onChange={(e) => setForm({ ...form, meta_description: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[11px] text-slate-500">Language keywords (original + translated after AI)</label>
+                <input
+                  className="input-field text-sm"
+                  placeholder="Localized keywords for this language"
+                  value={form.lang_keywords}
+                  onChange={(e) => setForm({ ...form, lang_keywords: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[11px] text-slate-500">Cover image alt text (SEO)</label>
+                <input
+                  className="input-field text-sm"
+                  placeholder="Describe the cover image"
+                  value={form.cover_alt}
+                  onChange={(e) => setForm({ ...form, cover_alt: e.target.value })}
+                />
+              </div>
             </div>
 
             <div className="sm:col-span-2">
@@ -1290,7 +1363,11 @@ function ArticleManager({ token }: { token: string }) {
               </div>
               {form.cover_image && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={form.cover_image} alt="" className="mt-2 h-28 rounded-xl object-cover border border-white/10" />
+                <img
+                  src={form.cover_image}
+                  alt={form.cover_alt || form.title || "Cover"}
+                  className="mt-2 h-28 rounded-xl object-cover border border-white/10"
+                />
               )}
             </div>
 
@@ -1471,7 +1548,7 @@ export default function AdminPage() {
               }`}
             >
               {t === "downloads" ? "📥 Downloads"
-                : t === "articles" ? "📝 Articles"
+                : t === "articles" ? "📝 Blog"
                 : t === "banners" ? "🖼 Banners"
                 : t === "ratelimit" ? "🚦 Rate limit"
                 : t === "proxy" ? "🌐 Proxy"

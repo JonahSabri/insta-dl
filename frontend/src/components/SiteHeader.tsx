@@ -4,11 +4,22 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useT } from "@/i18n/context";
+import { cn } from "@/lib/cn";
 
-export default function SiteHeader({ active }: { active?: "home" | "articles" | "legal" }) {
+export default function SiteHeader({
+  active,
+}: {
+  active?: "home" | "articles" | "faq" | "legal";
+}) {
   const t = useT();
   const { lang } = useParams<{ lang: string }>();
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "JazzGhost";
+
+  const linkCls = (key: typeof active) =>
+    cn(
+      "rounded-lg px-2.5 py-1.5 text-xs sm:text-sm transition-colors",
+      active === key ? "text-white bg-white/5" : "text-slate-400 hover:text-white"
+    );
 
   return (
     <header
@@ -38,17 +49,14 @@ export default function SiteHeader({ active }: { active?: "home" | "articles" | 
         </Link>
 
         <nav className="flex items-center gap-1 sm:gap-2">
-          <Link
-            href={`/${lang}`}
-            className={active === "home" ? "rounded-lg px-2.5 py-1.5 text-xs sm:text-sm text-white bg-white/5" : "rounded-lg px-2.5 py-1.5 text-xs sm:text-sm text-slate-400 hover:text-white transition-colors"}
-          >
+          <Link href={`/${lang}`} className={linkCls("home")}>
             {t.nav.home}
           </Link>
-          <Link
-            href={`/${lang}/articles`}
-            className={active === "articles" ? "rounded-lg px-2.5 py-1.5 text-xs sm:text-sm text-white bg-white/5" : "rounded-lg px-2.5 py-1.5 text-xs sm:text-sm text-slate-400 hover:text-white transition-colors"}
-          >
-            {t.nav.articles}
+          <Link href={`/${lang}/articles`} className={linkCls("articles")}>
+            {t.nav.blog}
+          </Link>
+          <Link href={`/${lang}/faq`} className={linkCls("faq")}>
+            {t.nav.faq}
           </Link>
           <LanguageSwitcher />
         </nav>

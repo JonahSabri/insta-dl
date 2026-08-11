@@ -76,6 +76,10 @@ export interface ArticleTranslation {
   title: string;
   excerpt: string;
   content: string;
+  keywords?: string;
+  meta_title?: string;
+  meta_description?: string;
+  cover_alt?: string;
 }
 
 export type ArticleCategory = "guide" | "tips" | "tutorial" | "news" | "faq" | "seo";
@@ -85,7 +89,10 @@ export interface ArticleListItem {
   slug: string;
   category?: ArticleCategory | string;
   cover_image?: string;
+  cover_alt?: string;
   keywords: string;
+  meta_title?: string;
+  meta_description?: string;
   title: string;
   excerpt: string;
   content?: string;

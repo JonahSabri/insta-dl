@@ -29,15 +29,21 @@ LANG_NAMES: dict[str, str] = {
 }
 
 SYSTEM_PROMPT = """You are a professional translator for JazzGhost, an Instagram downloader website.
-Translate the article fields into the target language.
+Translate article fields into the target language for SEO and readers.
 
-Rules:
-1) Return ONLY valid JSON with keys: title, excerpt, content
-2) Preserve all HTML tags, attributes, links, and structure in content — translate visible text only
-3) Keep brand names unchanged: JazzGhost, Instagram, Reels, Stories, IGTV
-4) Keep URLs, slug-like tokens, and code unchanged
-5) Natural, SEO-friendly wording for the target locale
-6) Do not wrap the JSON in markdown fences
+Return ONLY valid JSON with these keys:
+title, excerpt, content, keywords, meta_title, meta_description, cover_alt
+
+STRICT rules:
+1) Translate visible human text only.
+2) NEVER change URLs, href, src, srcset, data-* values, file paths, query strings, or HTML tag/attribute names.
+3) Keep brand / product tokens unchanged: JazzGhost, Instagram, Reels, Stories, IGTV, Facebook, WhatsApp, TikTok.
+4) Preserve all HTML structure, tags, classes, and figure/figcaption markup.
+5) DO translate img alt, title, and figcaption text (SEO).
+6) keywords: translate each keyword naturally for the target locale (comma-separated). Do not invent unrelated spam terms.
+7) meta_title / meta_description / cover_alt: translate for SEO; if source is empty, invent a good short SEO version from the title/excerpt.
+8) Natural, native-sounding wording — not literal word-for-word.
+9) No markdown fences. JSON only.
 """
 
 
@@ -52,17 +58,45 @@ def _extract_json(raw: str) -> dict:
     return data
 
 
+def merge_keywords(original: str, translated: str) -> str:
+    """Keep original keywords and append unique translated ones."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for part in f"{original},{translated}".split(","):
+        k = part.strip()
+        if not k:
+            continue
+        key = k.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(k)
+    return ", ".join(out)
+
+
 async def translate_article_fields(
     *,
     title: str,
     excerpt: str,
     content: str,
+    keywords: str = "",
+    meta_title: str = "",
+    meta_description: str = "",
+    cover_alt: str = "",
     source_lang: str,
     target_lang: str,
 ) -> dict[str, str]:
-    """Translate title/excerpt/content from source_lang → target_lang via GapGPT."""
+    """Translate SEO + content fields from source_lang → target_lang via GapGPT."""
     if target_lang == source_lang:
-        return {"title": title, "excerpt": excerpt, "content": content}
+        return {
+            "title": title,
+            "excerpt": excerpt,
+            "content": content,
+            "keywords": keywords,
+            "meta_title": meta_title,
+            "meta_description": meta_description,
+            "cover_alt": cover_alt,
+        }
 
     api_key = (settings.GAPGPT_API_KEY or "").strip()
     if not api_key:
@@ -79,6 +113,10 @@ async def translate_article_fields(
         "title": title or "",
         "excerpt": excerpt or "",
         "content": content or "",
+        "keywords": keywords or "",
+        "meta_title": meta_title or "",
+        "meta_description": meta_description or "",
+        "cover_alt": cover_alt or "",
     }
 
     async with httpx.AsyncClient(timeout=httpx.Timeout(180.0, connect=30.0)) as client:
@@ -97,7 +135,8 @@ async def translate_article_fields(
                     {
                         "role": "user",
                         "content": (
-                            f"Translate this article JSON from {src} to {tgt}:\n"
+                            f"Translate this article JSON from {src} to {tgt}. "
+                            "Keep all URLs and static brand names unchanged:\n"
                             + json.dumps(user_payload, ensure_ascii=False)
                         ),
                     },
@@ -117,8 +156,15 @@ async def translate_article_fields(
             raise RuntimeError("GapGPT returned empty translation")
 
         data = _extract_json(raw)
+        translated_keywords = str(data.get("keywords") or "").strip()
         return {
             "title": str(data.get("title") or title).strip(),
             "excerpt": str(data.get("excerpt") or excerpt).strip(),
             "content": str(data.get("content") or content).strip(),
+            "keywords": merge_keywords(keywords, translated_keywords),
+            "meta_title": str(data.get("meta_title") or data.get("title") or title).strip(),
+            "meta_description": str(
+                data.get("meta_description") or data.get("excerpt") or excerpt
+            ).strip(),
+            "cover_alt": str(data.get("cover_alt") or data.get("title") or title).strip(),
         }

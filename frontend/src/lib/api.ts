@@ -248,6 +248,10 @@ export async function createArticle(
     title: string;
     excerpt?: string;
     content?: string;
+    meta_title?: string;
+    meta_description?: string;
+    cover_alt?: string;
+    lang_keywords?: string;
     translations?: Record<string, ArticleTranslation>;
   }
 ): Promise<AdminArticle> {
@@ -271,6 +275,10 @@ export async function updateArticle(
     title?: string;
     excerpt?: string;
     content?: string;
+    meta_title?: string;
+    meta_description?: string;
+    cover_alt?: string;
+    lang_keywords?: string;
     translations?: Record<string, ArticleTranslation>;
   }
 ): Promise<AdminArticle> {
