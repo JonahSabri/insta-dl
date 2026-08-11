@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { LanguageProvider } from "@/i18n/context";
 import PwaRegister from "@/components/PwaRegister";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import JsonLd from "@/components/JsonLd";
 import {
   DEFAULT_OG_IMAGE,
@@ -32,6 +33,12 @@ export const metadata: Metadata = {
     email: false,
     address: false,
   },
+  icons: {
+    icon: [{ url: "/icon", type: "image/png", sizes: "32x32" }],
+    apple: [{ url: "/apple-icon", type: "image/png", sizes: "180x180" }],
+    shortcut: ["/icon"],
+  },
+  manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
@@ -119,6 +126,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <JsonLd data={websiteJsonLd()} />
       </head>
       <body className="min-h-screen bg-slate-950" suppressHydrationWarning>
+        <GoogleAnalytics />
         <div className="bg-stage" aria-hidden="true">
           <div className="bg-orb bg-orb-1" />
           <div className="bg-orb bg-orb-2" />

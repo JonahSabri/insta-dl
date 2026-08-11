@@ -20,6 +20,7 @@ const nextConfig = {
 
   async redirects() {
     return [
+      { source: "/favicon.ico", destination: "/icon", permanent: false },
       { source: "/cookie-consent", destination: "/en/cookie-policy", permanent: true },
       { source: "/:lang/cookie-consent", destination: "/:lang/cookie-policy", permanent: true },
       { source: "/terms", destination: "/en/terms", permanent: false },

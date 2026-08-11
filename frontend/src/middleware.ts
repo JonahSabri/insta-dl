@@ -4,6 +4,10 @@ import type { NextRequest } from "next/server";
 const SUPPORTED_LANGS = ["en", "pt", "de", "fr", "ja", "nl", "sv", "no", "da", "it", "es", "tr", "ar"];
 const DEFAULT_LANG = "en";
 
+/** Root assets / Next metadata — never prefix with /{lang} */
+const SKIP_LANG_PREFIX =
+  /^\/(api|_next|fonts|icon|apple-icon|opengraph-image|twitter-image|pwa-icon|manifest\.webmanifest|robots\.txt|sitemap\.xml|favicon\.ico)(\/|$|\?)/;
+
 const COUNTRY_TO_LANG: Record<string, string> = {
   // Persian removed — IR/AF fall through to English
   SA: "ar", AE: "ar", EG: "ar", IQ: "ar", JO: "ar", KW: "ar", LB: "ar",
@@ -71,7 +75,6 @@ async function detectLangFromGeo(request: NextRequest): Promise<string> {
     if (res.ok) {
       const data = (await res.json()) as { lang?: string; country?: string };
       if (data.lang && SUPPORTED_LANGS.includes(data.lang)) return data.lang;
-      // country known but not mapped → English
       if (data.country) return DEFAULT_LANG;
     }
   } catch {
@@ -82,7 +85,6 @@ async function detectLangFromGeo(request: NextRequest): Promise<string> {
 }
 
 async function detectLang(request: NextRequest): Promise<string> {
-  // Manual language choice always wins
   const manual = request.cookies.get("lang_manual")?.value;
   const saved = request.cookies.get("lang")?.value;
   if (manual === "1" && saved && SUPPORTED_LANGS.includes(saved)) {
@@ -109,15 +111,19 @@ export async function middleware(request: NextRequest) {
   const hasLangPrefix = SUPPORTED_LANGS.some(
     (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`)
   );
-  if (hasLangPrefix) return NextResponse.next();
+  if (hasLangPrefix) {
+    // Recover mistaken /{lang}/icon etc. (bookmarks / old HTML) → root asset
+    const rest = pathname.replace(/^\/[a-z]{2}(?=\/)/, "") || "/";
+    if (SKIP_LANG_PREFIX.test(rest)) {
+      const url = request.nextUrl.clone();
+      url.pathname = rest;
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
 
-  // Skip: api, Next.js internals, static files
-  if (
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/fonts") ||
-    pathname.includes(".")
-  ) {
+  // Skip: api, Next internals, metadata icons, static files
+  if (SKIP_LANG_PREFIX.test(pathname) || pathname.includes(".")) {
     return NextResponse.next();
   }
 
@@ -126,11 +132,12 @@ export async function middleware(request: NextRequest) {
   url.pathname = `/${lang}${pathname === "/" ? "" : pathname}`;
 
   const res = NextResponse.redirect(url);
-  // Persist geo/manual lang for subsequent visits (manual flag unchanged)
   res.cookies.set("lang", lang, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
   return res;
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|icon|apple-icon|opengraph-image|twitter-image|pwa-icon|manifest.webmanifest|robots.txt|sitemap.xml).*)",
+  ],
 };

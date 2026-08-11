@@ -3,31 +3,25 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-
-const KEY = "jg_cookie_consent";
-
-type Consent = "accepted" | "necessary" | null;
+import {
+  CONSENT_KEY,
+  readConsent,
+  saveConsent,
+  type ConsentChoice,
+} from "@/lib/consent";
 
 export default function CookieConsent() {
   const { lang } = useParams<{ lang: string }>();
-  const [choice, setChoice] = useState<Consent>(null);
+  const [choice, setChoice] = useState<ConsentChoice | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const v = localStorage.getItem(KEY) as Consent;
-      setChoice(v === "accepted" || v === "necessary" ? v : null);
-    } catch {
-      setChoice(null);
-    }
+    setChoice(readConsent());
     setReady(true);
   }, []);
 
-  function save(v: "accepted" | "necessary") {
-    try {
-      localStorage.setItem(KEY, v);
-      document.cookie = `jg_cookie_consent=${v};path=/;max-age=31536000;SameSite=Lax`;
-    } catch { /* ignore */ }
+  function save(v: ConsentChoice) {
+    saveConsent(v);
     setChoice(v);
   }
 
@@ -78,3 +72,6 @@ export default function CookieConsent() {
     </div>
   );
 }
+
+// Keep key export aligned for any external readers
+export { CONSENT_KEY };
