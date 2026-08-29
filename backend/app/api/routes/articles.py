@@ -59,14 +59,56 @@ def _has_lang_content(translations: dict, lang: str) -> bool:
 
 
 def _effective_keywords(article: Article, picked: dict) -> str:
-    lang_kw = str(picked.get("keywords") or "").strip()
-    base_kw = str(article.keywords or "").strip()
-    if lang_kw and base_kw:
-        # Prefer lang keywords (already include originals+translated after AI);
-        # still merge unique base keywords if missing.
-        from app.services.gapgpt_translate import merge_keywords
-        return merge_keywords(base_kw, lang_kw)
-    return lang_kw or base_kw
+    """Per-language keywords only — never merge global bag across locales."""
+    return str(picked.get("keywords") or "").strip()
+
+
+def _migrate_global_keywords_into_translations(article: Article) -> bool:
+    """One-shot: copy legacy global keywords into lang blocks that lack them."""
+    base = str(article.keywords or "").strip()
+    if not base:
+        return False
+    tr = _parse_translations(article.translations)
+    changed = False
+    if not tr:
+        tr["en"] = {
+            "title": "",
+            "excerpt": "",
+            "content": "",
+            "keywords": base,
+            "meta_title": "",
+            "meta_description": "",
+            "cover_alt": "",
+        }
+        changed = True
+    else:
+        for code, block in list(tr.items()):
+            if not isinstance(block, dict):
+                continue
+            if not str(block.get("keywords") or "").strip():
+                block = {**block, "keywords": base}
+                tr[code] = block
+                changed = True
+    if changed:
+        article.translations = json.dumps(tr, ensure_ascii=False)
+        article.keywords = ""
+    elif base:
+        # Still clear global bag once per-lang already has keywords
+        article.keywords = ""
+        changed = True
+    return changed
+
+
+async def migrate_all_article_keywords(db: AsyncSession) -> int:
+    result = await db.execute(select(Article))
+    articles = result.scalars().all()
+    n = 0
+    for article in articles:
+        if _migrate_global_keywords_into_translations(article):
+            n += 1
+    if n:
+        await db.commit()
+    return n
 
 
 def _public_item(article: Article, lang: str) -> dict:
@@ -271,7 +313,7 @@ async def admin_create_article(
         "title": body.title,
         "excerpt": body.excerpt,
         "content": body.content,
-        "keywords": body.lang_keywords or body.keywords or "",
+        "keywords": body.lang_keywords or "",
         "meta_title": body.meta_title or "",
         "meta_description": body.meta_description or "",
         "cover_alt": body.cover_alt or "",
@@ -282,7 +324,7 @@ async def admin_create_article(
         slug=slug,
         category=category,
         cover_image=body.cover_image or "",
-        keywords=body.keywords,
+        keywords="",
         translations=json.dumps(translations, ensure_ascii=False),
         is_published=body.is_published,
     )
@@ -312,7 +354,8 @@ async def admin_update_article(
             article.slug = new_slug
 
     if body.keywords is not None:
-        article.keywords = body.keywords
+        # Global keywords deprecated — ignore writes; SoT is per-lang only
+        pass
     if body.category is not None:
         article.category = body.category if body.category in ARTICLE_CATEGORIES else "guide"
     if body.cover_image is not None:
@@ -436,7 +479,7 @@ async def admin_translate_article_lang(
         }
 
     try:
-        source_keywords = str(source.get("keywords") or article.keywords or "")
+        source_keywords = str(source.get("keywords") or "")
         translated = await translate_article_fields(
             title=str(source.get("title") or ""),
             excerpt=str(source.get("excerpt") or ""),
@@ -454,9 +497,8 @@ async def admin_translate_article_lang(
         raise HTTPException(status_code=502, detail=f"Translation failed: {exc}") from exc
 
     translations[body.target_lang] = translated
-    # Also keep a global keywords bag = originals + latest translated set
-    from app.services.gapgpt_translate import merge_keywords
-    article.keywords = merge_keywords(article.keywords or source_keywords, translated.get("keywords") or "")
+    # Do not merge keywords into global bag — keep per-language only
+    article.keywords = ""
     article.translations = json.dumps(translations, ensure_ascii=False)
     article.updated_at = datetime.now(timezone.utc)
     await db.commit()

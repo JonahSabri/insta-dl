@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { LANGS } from "@/i18n/translations";
+import { DOWNLOADER_SLUGS } from "@/content/downloaders";
 import { SITE_URL } from "@/lib/seo";
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
@@ -32,7 +33,6 @@ async function fetchArticleSlugs(): Promise<SitemapArticle[]> {
     /* fall through */
   }
 
-  // Fallback: public articles list
   try {
     const res = await fetch(`${API_URL}/api/v1/articles?lang=en`, {
       next: { revalidate: 3600 },
@@ -50,7 +50,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const articles = await fetchArticleSlugs();
   const entries: MetadataRoute.Sitemap = [];
 
-  // Home pages per language
   for (const l of LANGS) {
     entries.push({
       url: `${SITE_URL}/${l.code}`,
@@ -61,7 +60,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  // Articles index per language
+  for (const slug of DOWNLOADER_SLUGS) {
+    const suffix = `/${slug}`;
+    for (const l of LANGS) {
+      entries.push({
+        url: `${SITE_URL}/${l.code}${suffix}`,
+        lastModified: now,
+        changeFrequency: "weekly",
+        priority: 0.95,
+        alternates: { languages: langAlternates(suffix) },
+      });
+    }
+  }
+
   for (const l of LANGS) {
     entries.push({
       url: `${SITE_URL}/${l.code}/articles`,
@@ -72,7 +83,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   }
 
-  // Legal / info pages (Google Ads compliance)
   const legalPaths = [
     "/about",
     "/contact",
@@ -94,7 +104,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // Individual articles × languages
   for (const article of articles) {
     if (!article.slug) continue;
     const lastMod = article.updated_at || article.created_at

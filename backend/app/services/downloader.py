@@ -48,6 +48,8 @@ def validate_url(url: str) -> None:
 
 
 def detect_media_type(url: str) -> str:
+    if "/stories/highlights/" in url or "/highlights/" in url:
+        return "highlight"
     if "/reel" in url:
         return "reel"
     if "/stories/" in url:
@@ -57,6 +59,14 @@ def detect_media_type(url: str) -> str:
     if "/p/" in url:
         return "post"
     return "unknown"
+
+
+def _highlight_id(url: str) -> str | None:
+    m = re.search(r"/stories/highlights/(\d+)", url)
+    if m:
+        return m.group(1)
+    m = re.search(r"/highlights?/(\d+)", url)
+    return m.group(1) if m else None
 
 
 def _shortcode(url: str) -> str | None:
@@ -310,7 +320,7 @@ def _clean_title(caption: str | None, media_type: str) -> str:
     defaults = {
         "reel": "Instagram Reel", "post": "Instagram Post",
         "carousel": "Instagram Carousel", "story": "Instagram Story",
-        "igtv": "Instagram TV",
+        "highlight": "Instagram Highlight", "igtv": "Instagram TV",
     }
     if not caption:
         return defaults.get(media_type, "Instagram Media")
@@ -320,9 +330,121 @@ def _clean_title(caption: str | None, media_type: str) -> str:
     return first_line[:97] + "…" if len(first_line) > 100 else first_line
 
 
+def _fetch_highlight_targets(session: creq.Session, url: str) -> tuple[list[dict], str | None]:
+    hid = _highlight_id(url)
+    if not hid:
+        raise RuntimeError("لینک هایلایت معتبر نیست. از /stories/highlights/ID/ استفاده کنید.")
+
+    reel_key = f"highlight:{hid}"
+    r = session.get(
+        f"https://www.instagram.com/api/v1/feed/reels_media/?reel_ids={reel_key}",
+        headers={"X-Requested-With": "XMLHttpRequest"},
+        timeout=30,
+    )
+    try:
+        data = r.json()
+        reel = (data.get("reels") or {}).get(reel_key) or {}
+        items = reel.get("items") or []
+        title = reel.get("title") or "Instagram Highlight"
+        owner = None
+        user = reel.get("user") or {}
+        if isinstance(user, dict):
+            owner = user.get("username")
+    except Exception:
+        raise RuntimeError("نتونستم هایلایت را بگیرم (خصوصی، حذف‌شده، یا کوکی نامعتبر).")
+
+    if not items:
+        raise RuntimeError("این هایلایت خالی است یا دیگر در دسترس نیست.")
+
+    return [_item_to_target(it) for it in items], owner or title
+
+
+def fetch_profile_bio(username: str) -> dict[str, Any]:
+    """Public profile bio lookup via web_profile_info."""
+    clean = username.strip().lstrip("@")
+    if not re.fullmatch(r"[A-Za-z0-9._]{1,30}", clean):
+        raise ValueError("یوزرنیم اینستاگرام معتبر نیست.")
+
+    session, _ = _build_session()
+    r = session.get(
+        f"https://www.instagram.com/api/v1/users/web_profile_info/?username={clean}",
+        headers={"X-Requested-With": "XMLHttpRequest"},
+        timeout=30,
+    )
+    if r.status_code != 200:
+        raise RuntimeError(f"پروفایل پیدا نشد (HTTP {r.status_code}).")
+    try:
+        user = r.json()["data"]["user"]
+    except Exception:
+        raise RuntimeError("پاسخ پروفایل قابل خواندن نبود (شاید خصوصی یا ناموجود).")
+
+    if user.get("is_private"):
+        raise RuntimeError("این حساب خصوصی است؛ بیو در دسترس نیست.")
+
+    bio = user.get("biography") or ""
+    return {
+        "username": user.get("username") or clean,
+        "full_name": user.get("full_name") or "",
+        "biography": bio,
+        "followers": (user.get("edge_followed_by") or {}).get("count")
+        if isinstance(user.get("edge_followed_by"), dict)
+        else user.get("follower_count"),
+        "following": (user.get("edge_follow") or {}).get("count")
+        if isinstance(user.get("edge_follow"), dict)
+        else user.get("following_count"),
+        "posts": (user.get("edge_owner_to_timeline_media") or {}).get("count")
+        if isinstance(user.get("edge_owner_to_timeline_media"), dict)
+        else user.get("media_count"),
+        "profile_pic_url": user.get("profile_pic_url_hd") or user.get("profile_pic_url"),
+        "is_verified": bool(user.get("is_verified")),
+        "external_url": user.get("external_url") or "",
+    }
+
+
+def fetch_caption(url: str) -> dict[str, Any]:
+    """Extract caption text from a public post/reel URL without downloading media."""
+    validate_url(url)
+    url = _clean_url(url)
+    if "/stories/" in url and "/highlights/" not in url:
+        raise ValueError("برای کپشن از لینک پست یا ریل استفاده کنید.")
+
+    session, _ = _build_session()
+    sc = _shortcode(url)
+    if not sc:
+        raise RuntimeError("نتونستم shortcode را از لینک تشخیص بدم.")
+
+    resp = session.get(url, timeout=30)
+    if resp.status_code != 200:
+        raise RuntimeError(f"HTTP {resp.status_code} هنگام گرفتن صفحه.")
+    media = find_primary_media(resp.text, sc)
+    if media is None:
+        raise RuntimeError("دادهٔ مدیا پیدا نشد؛ پست ممکن است خصوصی باشد.")
+
+    caption = _media_caption(media) or ""
+    mt = media.get("media_type")
+    resolved = {1: "post", 2: "reel", 8: "carousel"}.get(mt, detect_media_type(url))
+    return {
+        "caption": caption,
+        "uploader": _uploader_handle(_media_owner(media)),
+        "media_type": resolved,
+        "shortcode": sc,
+        "title": _clean_title(caption, resolved),
+    }
+
+
 def _extract(session: creq.Session, url: str) -> dict[str, Any]:
     """Return {media_type, title, uploader, duration, targets}."""
     url = _clean_url(url)
+
+    if "/stories/highlights/" in url or _highlight_id(url):
+        targets, owner = _fetch_highlight_targets(session, url)
+        return {
+            "media_type": "highlight",
+            "title": "Instagram Highlight",
+            "uploader": owner,
+            "duration": None,
+            "targets": targets,
+        }
 
     if "/stories/" in url:
         targets = _fetch_story_targets(session, url)
@@ -442,7 +564,7 @@ def download_media(url: str, job_id: str) -> dict[str, Any]:
 
     targets = info["targets"]
     media_type = info["media_type"]
-    name = _shortcode(url) or _story_username(url) or "instagram"
+    name = _shortcode(url) or _highlight_id(url) or _story_username(url) or "instagram"
     multi = len(targets) > 1
 
     saved: list[tuple[Path, str]] = []   # (path, "video"|"image")

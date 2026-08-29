@@ -16,11 +16,11 @@ import {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} — Free Instagram Reels & Posts Downloader`,
+    default: `${SITE_NAME} — Instagram Tools & Downloaders`,
     template: `%s | ${SITE_NAME}`,
   },
   description:
-    "Download Instagram Reels, posts, carousels and stories in HD for free. No sign-up, no app — paste a link and save in seconds with JazzGhost.",
+    "JazzGhost: focused Instagram tools for Reels, posts, stories, highlights, bios and captions. Free, private, no app install.",
   keywords: GLOBAL_KEYWORDS,
   applicationName: SITE_NAME,
   authors: [{ name: SITE_NAME, url: SITE_URL }],
@@ -42,9 +42,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
-    title: `${SITE_NAME} — Free Instagram Reels & Posts Downloader`,
+    title: `${SITE_NAME} — Instagram Tools & Downloaders`,
     description:
-      "Download Instagram Reels, posts, carousels and stories in HD for free. No sign-up needed.",
+      "JazzGhost: focused Instagram tools for Reels, posts, stories, highlights, bios and captions.",
     url: SITE_URL,
     locale: "en_US",
     images: [
@@ -61,9 +61,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: SITE_TWITTER,
     creator: SITE_TWITTER,
-    title: `${SITE_NAME} — Free Instagram Reels & Posts Downloader`,
+    title: `${SITE_NAME} — Instagram Tools & Downloaders`,
     description:
-      "Download Instagram Reels, posts, carousels and stories in HD for free.",
+      "JazzGhost: focused Instagram tools for Reels, posts, stories, highlights, bios and captions.",
     images: [DEFAULT_OG_IMAGE],
   },
   robots: {

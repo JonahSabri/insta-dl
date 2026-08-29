@@ -9,7 +9,6 @@ const SKIP_LANG_PREFIX =
   /^\/(api|_next|fonts|icon|apple-icon|opengraph-image|twitter-image|pwa-icon|manifest\.webmanifest|robots\.txt|sitemap\.xml|favicon\.ico)(\/|$|\?)/;
 
 const COUNTRY_TO_LANG: Record<string, string> = {
-  // Persian removed — IR/AF fall through to English
   SA: "ar", AE: "ar", EG: "ar", IQ: "ar", JO: "ar", KW: "ar", LB: "ar",
   OM: "ar", QA: "ar", BH: "ar", SY: "ar", YE: "ar", MA: "ar", DZ: "ar",
   TN: "ar", LY: "ar", SD: "ar", PS: "ar",
@@ -49,13 +48,33 @@ function getCountryFromHeaders(request: NextRequest): string | null {
   );
 }
 
-async function detectLangFromGeo(request: NextRequest): Promise<string> {
+/** Map Accept-Language to first supported locale. */
+function detectLangFromAcceptLanguage(header: string | null): string | null {
+  if (!header) return null;
+  const parts = header.split(",").map((p) => {
+    const [tag, qPart] = p.trim().split(";q=");
+    const q = qPart ? Number(qPart) : 1;
+    return { tag: tag.trim().toLowerCase(), q: Number.isFinite(q) ? q : 1 };
+  });
+  parts.sort((a, b) => b.q - a.q);
+
+  for (const { tag } of parts) {
+    if (!tag || tag === "*") continue;
+    const primary = tag.split("-")[0];
+    // pt-BR → pt
+    if (SUPPORTED_LANGS.includes(primary)) return primary;
+    if (tag.startsWith("nb") || tag.startsWith("nn")) return "no";
+  }
+  return null;
+}
+
+async function detectLangFromGeo(request: NextRequest): Promise<string | null> {
   const headerCountry = getCountryFromHeaders(request);
   const fromHeader = langFromCountry(headerCountry);
   if (fromHeader) return fromHeader;
 
-  // If CDN already gave a country not in our map → English
-  if (headerCountry) return DEFAULT_LANG;
+  // CDN gave a country we don't map → treat as inconclusive (fall through)
+  if (headerCountry) return null;
 
   try {
     const api = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
@@ -75,29 +94,41 @@ async function detectLangFromGeo(request: NextRequest): Promise<string> {
     if (res.ok) {
       const data = (await res.json()) as { lang?: string; country?: string };
       if (data.lang && SUPPORTED_LANGS.includes(data.lang)) return data.lang;
-      if (data.country) return DEFAULT_LANG;
     }
   } catch {
-    /* ignore geo failures */
+    /* ignore geo failures — fall through to Accept-Language / default */
   }
 
-  return DEFAULT_LANG;
+  return null;
 }
 
+/**
+ * Priority: Manual selection > Saved preference > Browser Accept-Language > IP geo > en
+ */
 async function detectLang(request: NextRequest): Promise<string> {
   const manual = request.cookies.get("lang_manual")?.value;
   const saved = request.cookies.get("lang")?.value;
+
   if (manual === "1" && saved && SUPPORTED_LANGS.includes(saved)) {
     return saved;
   }
 
-  return detectLangFromGeo(request);
+  if (saved && SUPPORTED_LANGS.includes(saved)) {
+    return saved;
+  }
+
+  const fromBrowser = detectLangFromAcceptLanguage(request.headers.get("accept-language"));
+  if (fromBrowser) return fromBrowser;
+
+  const fromGeo = await detectLangFromGeo(request);
+  if (fromGeo) return fromGeo;
+
+  return DEFAULT_LANG;
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Persian removed — redirect old /fa paths to English
   if (pathname === "/fa" || pathname.startsWith("/fa/")) {
     const url = request.nextUrl.clone();
     url.pathname = pathname.replace(/^\/fa/, "/en") || "/en";
@@ -107,22 +138,32 @@ export async function middleware(request: NextRequest) {
     return res;
   }
 
-  // Skip: already has a lang prefix
   const hasLangPrefix = SUPPORTED_LANGS.some(
     (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`)
   );
   if (hasLangPrefix) {
-    // Recover mistaken /{lang}/icon etc. (bookmarks / old HTML) → root asset
     const rest = pathname.replace(/^\/[a-z]{2}(?=\/)/, "") || "/";
     if (SKIP_LANG_PREFIX.test(rest)) {
       const url = request.nextUrl.clone();
       url.pathname = rest;
       return NextResponse.redirect(url);
     }
-    return NextResponse.next();
+    // Sync cookie to URL lang without clearing manual preference
+    const urlLang = pathname.split("/")[1];
+    const res = NextResponse.next();
+    if (urlLang && SUPPORTED_LANGS.includes(urlLang)) {
+      const current = request.cookies.get("lang")?.value;
+      if (current !== urlLang) {
+        res.cookies.set("lang", urlLang, {
+          path: "/",
+          maxAge: 60 * 60 * 24 * 365,
+          sameSite: "lax",
+        });
+      }
+    }
+    return res;
   }
 
-  // Skip: api, Next internals, metadata icons, static files
   if (SKIP_LANG_PREFIX.test(pathname) || pathname.includes(".")) {
     return NextResponse.next();
   }

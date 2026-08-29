@@ -68,6 +68,36 @@ export async function pollStatus(jobId: string): Promise<StatusResponse> {
   return request<StatusResponse>(`/v1/download/${jobId}/status`);
 }
 
+export async function fetchBio(username: string): Promise<{
+  username: string;
+  full_name: string;
+  biography: string;
+  followers: number | null;
+  following: number | null;
+  posts: number | null;
+  profile_pic_url: string | null;
+  is_verified: boolean;
+  external_url: string;
+}> {
+  return request("/v1/download/bio", {
+    method: "POST",
+    body: JSON.stringify({ username }),
+  });
+}
+
+export async function fetchCaption(url: string): Promise<{
+  caption: string;
+  uploader: string | null;
+  media_type: string;
+  shortcode: string | null;
+  title: string;
+}> {
+  return request("/v1/download/caption", {
+    method: "POST",
+    body: JSON.stringify({ url }),
+  });
+}
+
 export function getDownloadUrl(jobId: string): string {
   return `${BASE}/v1/download/${jobId}/file`;
 }

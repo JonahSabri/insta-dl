@@ -8,7 +8,9 @@ import SkeletonCard from "./SkeletonCard";
 import PreviewCard from "./PreviewCard";
 
 /* ─── types ────────────────────────────────────────────────────────────────── */
-export type ExtendedMediaTypeFilter = MediaTypeFilter | "carousel";
+export type ExtendedMediaTypeFilter = MediaTypeFilter | "carousel" | "highlight";
+
+export type LockedToolType = ExtendedMediaTypeFilter | "bio" | "caption";
 
 /* ─── helpers ──────────────────────────────────────────────────────────────── */
 
@@ -23,13 +25,22 @@ function isInstagramUrl(url: string): boolean {
 function matchesType(url: string, type: ExtendedMediaTypeFilter): boolean {
   if (type === "all") return true;
   const path = url.toLowerCase();
-  // Instagram uses both /reel/ and /reels/ URL formats
-  if (type === "reel")     return path.includes("/reel/") || path.includes("/reels/");
-  if (type === "post")     return path.includes("/p/");
+  if (type === "reel") return path.includes("/reel/") || path.includes("/reels/");
+  if (type === "post") return path.includes("/p/");
   if (type === "carousel") return path.includes("/p/");
-  if (type === "story")    return path.includes("/stories/");
+  if (type === "story") return path.includes("/stories/") && !path.includes("/highlights/");
+  if (type === "highlight") return path.includes("/highlights/");
   return true;
 }
+
+const PLACEHOLDERS: Record<string, string> = {
+  reel: "https://www.instagram.com/reel/…",
+  post: "https://www.instagram.com/p/…",
+  carousel: "https://www.instagram.com/p/… (carousel)",
+  story: "https://www.instagram.com/stories/username/…",
+  highlight: "https://www.instagram.com/stories/highlights/…",
+  all: "https://www.instagram.com/…",
+};
 
 /* ─── SVG icon atoms ────────────────────────────────────────────────────────── */
 const IcoReel = () => (
@@ -264,12 +275,23 @@ function DownloadingOverlay({ progress, t }: DownloadingOverlayProps) {
 
 interface Props {
   onResult?: (result: DownloadResult) => void;
+  /** When set, hides type pills and locks validation to this tool */
+  lockedType?: ExtendedMediaTypeFilter;
+  placeholder?: string;
+  ctaLabel?: string;
+  tip?: string;
 }
 
-export default function DownloadBox({ onResult }: Props) {
+export default function DownloadBox({
+  onResult,
+  lockedType,
+  placeholder,
+  ctaLabel,
+  tip,
+}: Props) {
   const t = useT();
 
-  const [mediaType, setMediaType] = useState<ExtendedMediaTypeFilter>("reel");
+  const [mediaType, setMediaType] = useState<ExtendedMediaTypeFilter>(lockedType ?? "reel");
   const [url, setUrl] = useState("");
   const [step, setStep] = useState<DownloadStep>("idle");
   const [progress, setProgress] = useState(0);
@@ -280,13 +302,20 @@ export default function DownloadBox({ onResult }: Props) {
 
   const inputRef = useRef<HTMLInputElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // Ref keeps previewData accessible inside setInterval closure without stale capture
   const previewDataRef = useRef<PreviewData | null>(null);
 
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
 
-  const currentTypeOpt = TYPE_OPTIONS.find(o => o.id === mediaType) ?? TYPE_OPTIONS[4];
+  useEffect(() => {
+    if (lockedType) setMediaType(lockedType);
+  }, [lockedType]);
+
+  const currentTypeOpt = TYPE_OPTIONS.find((o) => o.id === mediaType) ?? TYPE_OPTIONS[4];
   const typeLabels = t.download.typeLabels;
+  const inputPlaceholder =
+    placeholder ?? PLACEHOLDERS[mediaType] ?? currentTypeOpt.placeholder;
+  const showTypeSelector = !lockedType && (step === "idle" || step === "error");
+  const isIdle = step === "idle" || step === "error";
 
   /* ── Phase 1: fetch preview ──────────────────────────────────────────────── */
   async function handleFetchPreview() {
@@ -298,7 +327,7 @@ export default function DownloadBox({ onResult }: Props) {
       return;
     }
     if (!matchesType(trimmed, mediaType)) {
-      setError(t.download.errorTypeMismatch.replace("{type}", typeLabels[mediaType] ?? mediaType));
+      setError(t.download.errorTypeMismatch.replace("{type}", typeLabels[mediaType as keyof typeof typeLabels] ?? mediaType));
       return;
     }
 
@@ -325,8 +354,6 @@ export default function DownloadBox({ onResult }: Props) {
     setProgress(10);
 
     try {
-      // Pass the already-proxied preview thumbnail URL to the backend so it can
-      // be used as a guaranteed fallback if yt-dlp doesn't write a thumbnail file.
       const previewThumbUrl = previewDataRef.current?.thumbnail_url ?? undefined;
       const data = await analyzeUrl(trimmed, previewThumbUrl);
       setProgress(20);
@@ -353,9 +380,6 @@ export default function DownloadBox({ onResult }: Props) {
           const res: DownloadResult = {
             job_id: jobId,
             title: status.title ?? "Instagram Media",
-            // status.thumbnail_url is either the downloaded job thumbnail or the
-            // pre-cached preview thumbnail we sent via preview_thumbnail_url —
-            // either way it's reliable. Fall back to cached preview as last resort.
             thumbnail_url: status.thumbnail_url || cached?.thumbnail_url || "",
             media_type: status.media_type ?? cached?.media_type ?? "unknown",
             file_count: status.file_count ?? 1,
@@ -365,8 +389,6 @@ export default function DownloadBox({ onResult }: Props) {
           setStep("ready");
           onResult?.(res);
 
-          // Auto-trigger browser download after the result card has rendered
-          // (small delay so the thumbnail has a chance to start loading first)
           setTimeout(() => {
             const a = document.createElement("a");
             a.href = getDownloadUrl(jobId);
@@ -391,35 +413,38 @@ export default function DownloadBox({ onResult }: Props) {
 
   function handleReset() {
     if (pollRef.current) clearInterval(pollRef.current);
-    setUrl(""); setStep("idle"); setProgress(0);
-    setResult(null); setPreviewData(null); setError(null);
+    setUrl("");
+    setStep("idle");
+    setProgress(0);
+    setResult(null);
+    setPreviewData(null);
+    setError(null);
     previewDataRef.current = null;
     setTimeout(() => inputRef.current?.focus(), 60);
   }
 
-  const isIdle = step === "idle" || step === "error";
-
   return (
     <div className="mx-auto w-full max-w-2xl space-y-5">
 
-      {/* ─── Type Selector ───────────────────────────────────────────────────── */}
-      {isIdle && (
+      {showTypeSelector && (
         <div className="anim-fade-in">
           <TypeSelector
             selected={mediaType}
-            onChange={(t) => { setMediaType(t); setError(null); }}
+            onChange={(next) => {
+              setMediaType(next);
+              setError(null);
+            }}
             labels={{
-              reel:     typeLabels.reel,
-              post:     typeLabels.post,
+              reel: typeLabels.reel,
+              post: typeLabels.post,
               carousel: typeLabels.carousel ?? "Carousel",
-              story:    typeLabels.story,
-              all:      typeLabels.all,
+              story: typeLabels.story,
+              all: typeLabels.all,
             }}
           />
         </div>
       )}
 
-      {/* ─── URL Input ───────────────────────────────────────────────────────── */}
       {isIdle && (
         <div className="anim-scale-in">
           <div className={focused || url ? "magic-border active" : "magic-border"}>
@@ -429,11 +454,14 @@ export default function DownloadBox({ onResult }: Props) {
                   ref={inputRef}
                   type="url"
                   value={url}
-                  onChange={(e) => { setUrl(e.target.value); if (error) setError(null); }}
+                  onChange={(e) => {
+                    setUrl(e.target.value);
+                    if (error) setError(null);
+                  }}
                   onKeyDown={(e) => e.key === "Enter" && handleFetchPreview()}
                   onFocus={() => setFocused(true)}
                   onBlur={() => setFocused(false)}
-                  placeholder={currentTypeOpt.placeholder}
+                  placeholder={inputPlaceholder}
                   className="min-w-0 flex-1 rounded-r-[14px] bg-transparent px-4 py-3.5 text-sm text-white
                     placeholder-slate-600 outline-none"
                   dir="ltr"
@@ -442,12 +470,13 @@ export default function DownloadBox({ onResult }: Props) {
                   onClick={handleFetchPreview}
                   disabled={!url.trim()}
                   className="btn-primary m-1 shrink-0 rounded-[12px] px-5 py-2.5 text-sm disabled:transform-none"
+                  type="button"
                 >
                   <svg className="mr-1.5 inline h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round"
                       d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
                   </svg>
-                  {t.download.fetchPreview}
+                  {ctaLabel ?? t.download.fetchPreview}
                 </button>
               </div>
             </div>
@@ -457,16 +486,14 @@ export default function DownloadBox({ onResult }: Props) {
             <div className="anim-fade-in mt-3 flex items-start gap-2.5 rounded-2xl border border-red-500/20
               bg-red-500/8 px-4 py-3 text-sm text-red-400"
               style={{ background: "rgba(239,68,68,0.07)" }}>
-              <span className="mt-px shrink-0">⚠️</span>
               <span>{error}</span>
             </div>
           )}
 
-          <p className="mt-3 text-center text-xs text-slate-700">{t.download.tip}</p>
+          <p className="mt-3 text-center text-xs text-slate-700">{tip ?? t.download.tip}</p>
         </div>
       )}
 
-      {/* ─── Phase 1: Skeleton (previewing) ──────────────────────────────────── */}
       {step === "previewing" && (
         <div className="anim-fade-in space-y-4">
           <p className="text-center text-sm text-slate-500 animate-pulse">{t.download.fetchingPreview}</p>
@@ -474,7 +501,6 @@ export default function DownloadBox({ onResult }: Props) {
         </div>
       )}
 
-      {/* ─── Phase 1: Preview ready ───────────────────────────────────────────── */}
       {step === "preview_ready" && previewData && (
         <PreviewStageCard
           preview={previewData}
@@ -484,12 +510,10 @@ export default function DownloadBox({ onResult }: Props) {
         />
       )}
 
-      {/* ─── Phase 2: Downloading progress ───────────────────────────────────── */}
       {step === "downloading" && (
         <DownloadingOverlay progress={progress} t={t} />
       )}
 
-      {/* ─── Phase 2: Complete ───────────────────────────────────────────────── */}
       {step === "ready" && result && (
         <PreviewCard result={result} onReset={handleReset} />
       )}

@@ -204,6 +204,16 @@ export default function RichTextEditor({
         <Btn title="Heading 3" onClick={() => run("formatBlock", "h3")}>H3</Btn>
         <Btn title="Paragraph" onClick={() => run("formatBlock", "p")}>P</Btn>
         <Btn title="Quote" onClick={() => run("formatBlock", "blockquote")}>❝</Btn>
+        <Btn
+          title="Code block"
+          onClick={() =>
+            insertHtml(
+              `<pre class="article-code"><code>${escapeAttr("code here")}</code></pre><p><br></p>`
+            )
+          }
+        >
+          {"</>"}
+        </Btn>
 
         <span className="mx-1 h-5 w-px bg-white/10" />
 

@@ -31,6 +31,7 @@ import type { AdminStats, DownloadRecord, Banner, AdminArticle } from "@/types";
 import Link from "next/link";
 import { LANGS } from "@/i18n/translations";
 import RichTextEditor from "@/components/RichTextEditor";
+import ContentImageManager from "@/components/ContentImageManager";
 import FlagIcon from "@/components/FlagIcon";
 import { cn } from "@/lib/cn";
 
@@ -1016,7 +1017,7 @@ function ArticleManager({ token }: { token: string }) {
       slug: form.slug,
       category: form.category,
       cover_image: form.cover_image,
-      keywords: form.keywords,
+      keywords: "",
       is_published: form.is_published,
       lang: formLang,
       title: form.title,
@@ -1025,7 +1026,7 @@ function ArticleManager({ token }: { token: string }) {
       meta_title: form.meta_title,
       meta_description: form.meta_description,
       cover_alt: form.cover_alt,
-      lang_keywords: form.lang_keywords || form.keywords,
+      lang_keywords: form.lang_keywords,
     };
     try {
       if (editingId) {
@@ -1085,7 +1086,7 @@ function ArticleManager({ token }: { token: string }) {
       slug: form.slug,
       category: form.category,
       cover_image: form.cover_image,
-      keywords: form.keywords,
+      keywords: "",
       is_published: form.is_published,
       lang: formLang,
       title: form.title,
@@ -1094,7 +1095,7 @@ function ArticleManager({ token }: { token: string }) {
       meta_title: form.meta_title,
       meta_description: form.meta_description,
       cover_alt: form.cover_alt,
-      lang_keywords: form.lang_keywords || form.keywords,
+      lang_keywords: form.lang_keywords,
     };
     if (editingId) {
       await updateArticle(token, editingId, payload);
@@ -1296,16 +1297,6 @@ function ArticleManager({ token }: { token: string }) {
               />
             </div>
 
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs text-slate-500">Keywords (global · originals; AI appends translations)</label>
-              <input
-                className="input-field text-sm"
-                placeholder="instagram reels, download, ..."
-                value={form.keywords}
-                onChange={(e) => setForm({ ...form, keywords: e.target.value })}
-              />
-            </div>
-
             <div className="sm:col-span-2 rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-3">
               <p className="text-xs font-semibold text-slate-300">SEO for this language ({formLang})</p>
               <div>
@@ -1327,10 +1318,10 @@ function ArticleManager({ token }: { token: string }) {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[11px] text-slate-500">Language keywords (original + translated after AI)</label>
+                <label className="mb-1 block text-[11px] text-slate-500">Keywords (this language only)</label>
                 <input
                   className="input-field text-sm"
-                  placeholder="Localized keywords for this language"
+                  placeholder="Localized keywords — never mixed with other languages"
                   value={form.lang_keywords}
                   onChange={(e) => setForm({ ...form, lang_keywords: e.target.value })}
                 />
@@ -1390,6 +1381,12 @@ function ArticleManager({ token }: { token: string }) {
                 uploadImage={(file) => uploadAdminImage(token, file)}
                 placeholder="Write the article with formatting…"
               />
+              <div className="mt-3">
+                <ContentImageManager
+                  html={form.content}
+                  onChange={(html) => setForm((f) => ({ ...f, content: html }))}
+                />
+              </div>
             </div>
 
             <label className="flex items-center gap-2 text-sm text-slate-400 sm:col-span-2">

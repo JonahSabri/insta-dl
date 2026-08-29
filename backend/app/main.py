@@ -26,9 +26,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     from app.database import AsyncSessionLocal
     from app.services import settings_store
     from app.services.article_seed import seed_articles_if_empty
+    from app.api.routes.articles import migrate_all_article_keywords
     async with AsyncSessionLocal() as db:
         await settings_store.load_from_db(db)
         await seed_articles_if_empty(db)
+        await migrate_all_article_keywords(db)
     yield
 
 

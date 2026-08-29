@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "JazzGhost — Instagram Downloader",
+    name: "JazzGhost — Instagram Tools",
     short_name: "JazzGhost",
     description:
-      "Free Instagram Reels, Posts, Carousels & Stories downloader. No sign-up, no app needed.",
+      "Free Instagram tools: Reels, posts, stories, highlights, bio and caption — no sign-up required.",
     start_url: "/en",
     scope: "/",
     display: "standalone",
@@ -42,14 +42,14 @@ export default function manifest(): MetadataRoute.Manifest {
         name: "Download Reel",
         short_name: "Reel",
         description: "Download an Instagram Reel",
-        url: "/en?type=reel",
+        url: "/en/instagram-reels-downloader",
         icons: [{ src: "/pwa-icon/96", sizes: "96x96", type: "image/png" }],
       },
       {
         name: "Download Post",
         short_name: "Post",
         description: "Download an Instagram Post",
-        url: "/en?type=post",
+        url: "/en/instagram-post-downloader",
         icons: [{ src: "/pwa-icon/96", sizes: "96x96", type: "image/png" }],
       },
     ],

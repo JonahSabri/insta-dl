@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useT } from "@/i18n/context";
+import { TOOL_NAV } from "@/content/downloaders";
 import { LEGAL_NAV } from "@/lib/legal-nav";
 
 export default function SiteFooter() {
@@ -27,6 +28,17 @@ export default function SiteFooter() {
             className="text-slate-500 hover:text-slate-300 transition-colors"
           >
             {item.label}
+          </Link>
+        ))}
+      </div>
+      <div className="mb-4 flex flex-wrap justify-center gap-x-3 gap-y-2 px-4">
+        {TOOL_NAV.map((tool) => (
+          <Link
+            key={tool.slug}
+            href={tool.href(lang)}
+            className="text-slate-600 hover:text-slate-300 transition-colors"
+          >
+            {tool.shortLabel}
           </Link>
         ))}
       </div>

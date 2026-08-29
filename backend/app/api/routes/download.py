@@ -16,7 +16,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database import get_db
 from app.models.download import Download
-from app.services.downloader import detect_media_type, download_media, get_preview, validate_url
+from app.services.downloader import (
+    detect_media_type,
+    download_media,
+    fetch_caption,
+    fetch_profile_bio,
+    get_preview,
+    validate_url,
+)
 from app.services.job_store import create_job, get_job, update_job
 from app.services.rate_limiter import check_rate_limit, record_download
 
@@ -77,6 +84,34 @@ class PreviewResponse(BaseModel):
     duration: float | None = None
     uploader: str | None = None
     media_type: str
+
+
+class BioRequest(BaseModel):
+    username: str
+
+
+class BioResponse(BaseModel):
+    username: str
+    full_name: str = ""
+    biography: str = ""
+    followers: int | None = None
+    following: int | None = None
+    posts: int | None = None
+    profile_pic_url: str | None = None
+    is_verified: bool = False
+    external_url: str = ""
+
+
+class CaptionRequest(BaseModel):
+    url: str
+
+
+class CaptionResponse(BaseModel):
+    caption: str
+    uploader: str | None = None
+    media_type: str
+    shortcode: str | None = None
+    title: str = ""
 
 
 # ─── Thumbnail proxy helpers ─────────────────────────────────────────────────
@@ -191,6 +226,34 @@ async def _run_download(job_id: str, url: str, preview_thumbnail_url: str | None
                 record.status = "failed"
                 record.error_message = str(exc)
                 await session.commit()
+
+
+@router.post("/bio", response_model=BioResponse)
+async def bio_lookup(body: BioRequest) -> BioResponse:
+    """Public Instagram profile bio / info (no media download)."""
+    try:
+        data = await asyncio.to_thread(fetch_profile_bio, body.username)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return BioResponse(**data)
+
+
+@router.post("/caption", response_model=CaptionResponse)
+async def caption_lookup(body: CaptionRequest) -> CaptionResponse:
+    """Extract caption text from a public post/reel URL."""
+    try:
+        validate_url(body.url)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    try:
+        data = await asyncio.to_thread(fetch_caption, body.url)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return CaptionResponse(**data)
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)

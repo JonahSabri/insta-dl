@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { LANGS, type Lang } from "@/i18n/translations";
-import { flattenFaqItems } from "@/content/faq";
 
 export const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME ?? "JazzGhost";
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://jazzghost.com").replace(/\/$/, "");
@@ -8,23 +7,17 @@ export const SITE_TWITTER = process.env.NEXT_PUBLIC_TWITTER_HANDLE || "@JazzGhos
 export const DEFAULT_OG_IMAGE = `${SITE_URL}/opengraph-image`;
 
 export const SITE_DESCRIPTION =
-  "Free online Instagram Reels, posts, carousels and stories downloader. No sign-up, no app — paste a link and save in HD with JazzGhost.";
+  "JazzGhost is a free Instagram toolkit — dedicated downloaders for Reels, posts, carousels, stories and highlights, plus bio and caption tools. No sign-up required.";
 
 export const GLOBAL_KEYWORDS = [
+  "JazzGhost",
   "Instagram downloader",
   "download Instagram Reels",
-  "download Instagram video",
   "Instagram post downloader",
-  "Instagram carousel download",
   "Instagram story saver",
-  "save Instagram Reels",
-  "free Instagram downloader",
-  "online Instagram saver",
-  "JazzGhost",
-  "baixar Instagram",
-  "descargar Instagram",
-  "Instagram Video herunterladen",
-  "télécharger Instagram",
+  "Instagram bio copy",
+  "Instagram caption extractor",
+  "free Instagram tools",
 ];
 
 type PageKey = "home" | "articles";
@@ -38,11 +31,11 @@ interface LocaleCopy {
 
 const HOME: Record<string, LocaleCopy> = {
   en: {
-    title: `${SITE_NAME} — Free Instagram Reels & Posts Downloader`,
+    title: `${SITE_NAME} — Instagram Tools & Downloaders`,
     description:
-      "Download Instagram Reels, posts, carousels and stories in HD for free. No sign-up, no app — paste a link and save in seconds with JazzGhost.",
+      "JazzGhost: focused Instagram tools for Reels, posts, stories, highlights, bios and captions. Free, private, no app install.",
     ogLocale: "en_US",
-    keywords: ["download Instagram Reels HD", "save Instagram video online", "free IG downloader"],
+    keywords: ["JazzGhost Instagram", "Instagram tools", "Reels downloader"],
   },
   pt: {
     title: `${SITE_NAME} — Baixar Reels e Posts do Instagram Grátis`,
@@ -343,14 +336,40 @@ export function buildArticleMetadata(opts: {
 }
 
 export function websiteJsonLd() {
-  const faqEntities = flattenFaqItems().slice(0, 12).map((item) => ({
-    "@type": "Question",
-    name: item.q,
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: item.a.replace(/\n/g, " "),
+  const faqEntities = [
+    {
+      "@type": "Question",
+      name: "What is JazzGhost?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "JazzGhost is a free browser-based toolkit for saving public Instagram media and reading public bio/caption text.",
+      },
     },
-  }));
+    {
+      "@type": "Question",
+      name: "Which Instagram formats are supported?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Dedicated tools cover Reels, posts, carousels, stories, highlights, profile bios, and captions.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is JazzGhost free?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes. Core downloaders are free to use, with fair-use rate limits.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Do you need my Instagram password?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Never. Paste public links or usernames only.",
+      },
+    },
+  ];
 
   return {
     "@context": "https://schema.org",
@@ -360,18 +379,10 @@ export function websiteJsonLd() {
         "@id": `${SITE_URL}/#website`,
         url: SITE_URL,
         name: SITE_NAME,
-        alternateName: ["Jazz Ghost", "JazzGhost Instagram Downloader"],
+        alternateName: ["Jazz Ghost", "JazzGhost Instagram Tools"],
         description: SITE_DESCRIPTION,
         inLanguage: LANGS.map((l) => (l.code === "pt" ? "pt-BR" : l.code)),
         publisher: { "@id": `${SITE_URL}/#organization` },
-        potentialAction: {
-          "@type": "SearchAction",
-          target: {
-            "@type": "EntryPoint",
-            urlTemplate: `${SITE_URL}/en/articles?q={search_term_string}`,
-          },
-          "query-input": "required name=search_term_string",
-        },
       },
       {
         "@type": "Organization",
@@ -392,16 +403,13 @@ export function websiteJsonLd() {
           url: `${SITE_URL}/en/contact`,
           availableLanguage: LANGS.map((l) => (l.code === "pt" ? "pt-BR" : l.code)),
         },
-        sameAs: [
-          // add real social profile URLs when available
-        ].filter(Boolean),
       },
       {
         "@type": ["SoftwareApplication", "WebApplication"],
         "@id": `${SITE_URL}/#app`,
         name: SITE_NAME,
         applicationCategory: "MultimediaApplication",
-        applicationSubCategory: "Instagram Downloader",
+        applicationSubCategory: "Instagram Tools",
         operatingSystem: "Any",
         browserRequirements: "Requires JavaScript. Works in modern web browsers.",
         offers: {
@@ -413,16 +421,14 @@ export function websiteJsonLd() {
         description: SITE_DESCRIPTION,
         url: SITE_URL,
         image: DEFAULT_OG_IMAGE,
-        screenshot: DEFAULT_OG_IMAGE,
         featureList: [
-          "Download Instagram Reels",
-          "Download Instagram posts",
-          "Download Instagram carousels",
-          "Download Instagram Stories",
-          "HD quality",
-          "No sign-up required",
-          "Works in browser",
-          "Free forever",
+          "Instagram Reels Downloader",
+          "Instagram Post Downloader",
+          "Instagram Carousel Downloader",
+          "Instagram Story Downloader",
+          "Instagram Highlight Downloader",
+          "Instagram Bio information",
+          "Instagram Caption extractor",
         ],
         publisher: { "@id": `${SITE_URL}/#organization` },
       },
@@ -430,10 +436,10 @@ export function websiteJsonLd() {
         "@type": "WebPage",
         "@id": `${SITE_URL}/#webpage`,
         url: SITE_URL,
-        name: `${SITE_NAME} — Free Instagram Reels & Posts Downloader`,
+        name: `${SITE_NAME} — Instagram Tools & Downloaders`,
         description: SITE_DESCRIPTION,
         isPartOf: { "@id": `${SITE_URL}/#website` },
-        about: { "@id": `${SITE_URL}/#app` },
+        about: { "@id": `${SITE_URL}/#organization` },
         primaryImageOfPage: {
           "@type": "ImageObject",
           url: DEFAULT_OG_IMAGE,
@@ -453,59 +459,22 @@ export function websiteJsonLd() {
         ],
       },
       {
-        "@type": "HowTo",
-        "@id": `${SITE_URL}/#howto`,
-        name: "How to download Instagram Reels and posts with JazzGhost",
-        description:
-          "Download Instagram Reels, posts, carousels and Stories in 3 simple steps — free, no app needed.",
-        totalTime: "PT1M",
-        estimatedCost: {
-          "@type": "MonetaryAmount",
-          currency: "USD",
-          value: "0",
-        },
-        tool: {
-          "@type": "HowToTool",
-          name: "JazzGhost web app",
-        },
-        step: [
-          {
-            "@type": "HowToStep",
-            position: 1,
-            name: "Copy the Instagram link",
-            text: "Open Instagram and copy the link to the Reel, post, carousel, or Story you want to save.",
-            url: `${SITE_URL}/en#download`,
-          },
-          {
-            "@type": "HowToStep",
-            position: 2,
-            name: "Paste the link on JazzGhost",
-            text: "Paste the Instagram URL into the JazzGhost download box on the homepage.",
-            url: `${SITE_URL}/en#download`,
-          },
-          {
-            "@type": "HowToStep",
-            position: 3,
-            name: "Download in HD",
-            text: "Click download and save the file to your device in the highest available quality.",
-            url: `${SITE_URL}/en#download`,
-          },
-        ],
-      },
-      {
         "@type": "FAQPage",
         "@id": `${SITE_URL}/#faq`,
         mainEntity: faqEntities,
       },
       {
         "@type": "ItemList",
-        "@id": `${SITE_URL}/#features`,
-        name: "Supported Instagram content types",
+        "@id": `${SITE_URL}/#tools`,
+        name: "JazzGhost Instagram tools",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Instagram Reels" },
-          { "@type": "ListItem", position: 2, name: "Instagram Posts" },
-          { "@type": "ListItem", position: 3, name: "Instagram Carousels" },
-          { "@type": "ListItem", position: 4, name: "Instagram Stories" },
+          { "@type": "ListItem", position: 1, name: "Instagram Reels Downloader", url: `${SITE_URL}/en/instagram-reels-downloader` },
+          { "@type": "ListItem", position: 2, name: "Instagram Post Downloader", url: `${SITE_URL}/en/instagram-post-downloader` },
+          { "@type": "ListItem", position: 3, name: "Instagram Story Downloader", url: `${SITE_URL}/en/instagram-story-downloader` },
+          { "@type": "ListItem", position: 4, name: "Instagram Carousel Downloader", url: `${SITE_URL}/en/instagram-carousel-downloader` },
+          { "@type": "ListItem", position: 5, name: "Instagram Highlight Downloader", url: `${SITE_URL}/en/instagram-highlight-downloader` },
+          { "@type": "ListItem", position: 6, name: "Instagram Bio Downloader", url: `${SITE_URL}/en/instagram-bio-downloader` },
+          { "@type": "ListItem", position: 7, name: "Instagram Caption Downloader", url: `${SITE_URL}/en/instagram-caption-downloader` },
         ],
       },
     ],
@@ -579,4 +548,124 @@ export function articleJsonLd(opts: {
 
 export function isSupportedLang(lang: string): lang is Lang {
   return LANGS.some((l) => l.code === lang);
+}
+
+export function buildDownloaderMetadata(
+  lang: string,
+  content: {
+    slug: string;
+    metaTitle: string;
+    metaDescription: string;
+    keywords: string[];
+    h1: string;
+  }
+): Metadata {
+  const path = `/${lang}/${content.slug}`;
+  const url = absoluteUrl(path);
+  const ogLocale = HOME[lang]?.ogLocale ?? HOME.en.ogLocale;
+
+  return {
+    title: content.metaTitle,
+    description: content.metaDescription,
+    keywords: content.keywords,
+    alternates: {
+      canonical: url,
+      languages: hreflangLanguages(`/${content.slug}`),
+    },
+    openGraph: {
+      type: "website",
+      url,
+      siteName: SITE_NAME,
+      title: content.metaTitle,
+      description: content.metaDescription,
+      locale: ogLocale,
+      images: [
+        {
+          url: DEFAULT_OG_IMAGE,
+          width: 1200,
+          height: 630,
+          alt: content.h1,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      site: SITE_TWITTER,
+      title: content.metaTitle,
+      description: content.metaDescription,
+      images: [DEFAULT_OG_IMAGE],
+    },
+    robots: { index: true, follow: true },
+  };
+}
+
+export function downloaderToolJsonLd(
+  lang: string,
+  content: {
+    slug: string;
+    h1: string;
+    metaDescription: string;
+    subtitle: string;
+    howToTitle: string;
+    steps: { order: number; title: string; description: string; image?: string; imageAlt?: string }[];
+    faqs: { question: string; answer: string }[];
+  }
+) {
+  const url = absoluteUrl(`/${lang}/${content.slug}`);
+  const sortedSteps = [...content.steps].sort((a, b) => a.order - b.order);
+
+  const howTo = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: content.howToTitle,
+    description: content.metaDescription,
+    totalTime: "PT1M",
+    estimatedCost: { "@type": "MonetaryAmount", currency: "USD", value: "0" },
+    tool: { "@type": "HowToTool", name: SITE_NAME },
+    step: sortedSteps.map((s) => ({
+      "@type": "HowToStep",
+      position: s.order,
+      name: s.title,
+      text: s.description,
+      url: `${url}#tool`,
+      ...(s.image
+        ? {
+            image: absoluteUrl(s.image),
+          }
+        : {}),
+    })),
+  };
+
+  const faq = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: content.faqs.map((f) => ({
+      "@type": "Question",
+      name: f.question,
+      acceptedAnswer: { "@type": "Answer", text: f.answer },
+    })),
+  };
+
+  const webApp = {
+    "@context": "https://schema.org",
+    "@type": ["WebApplication", "SoftwareApplication"],
+    name: content.h1,
+    applicationCategory: "MultimediaApplication",
+    operatingSystem: "Any",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    description: content.metaDescription,
+    url,
+    publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+  };
+
+  const webPage = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: content.h1,
+    description: content.subtitle,
+    url,
+    isPartOf: { "@type": "WebSite", name: SITE_NAME, url: SITE_URL },
+  };
+
+  return [webPage, webApp, howTo, faq];
 }
