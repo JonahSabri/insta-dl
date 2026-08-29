@@ -37,13 +37,13 @@ const FLOAT_LAYOUT: {
   float: string;
   size: string;
 }[] = [
-  { id: "reel", className: "left-[4%] top-[18%] sm:left-[8%] sm:top-[22%]", float: "home-float-a", size: "h-5 w-5 sm:h-6 sm:w-6" },
-  { id: "story", className: "right-[6%] top-[14%] sm:right-[10%] sm:top-[18%]", float: "home-float-b", size: "h-5 w-5 sm:h-6 sm:w-6" },
-  { id: "post", className: "left-[8%] bottom-[22%] sm:left-[12%] sm:bottom-[26%]", float: "home-float-c", size: "h-5 w-5 sm:h-6 sm:w-6" },
-  { id: "carousel", className: "right-[5%] bottom-[20%] sm:right-[9%] sm:bottom-[24%]", float: "home-float-a", size: "h-5 w-5 sm:h-6 sm:w-6" },
-  { id: "highlight", className: "left-[42%] top-[8%] hidden sm:flex", float: "home-float-b", size: "h-5 w-5" },
-  { id: "bio", className: "right-[28%] top-[12%] hidden md:flex", float: "home-float-c", size: "h-5 w-5" },
-  { id: "caption", className: "left-[22%] bottom-[12%] hidden md:flex", float: "home-float-a", size: "h-5 w-5" },
+  { id: "reel", className: "hidden sm:flex left-[8%] top-[22%]", float: "home-float-a", size: "h-6 w-6" },
+  { id: "story", className: "hidden sm:flex right-[10%] top-[18%]", float: "home-float-b", size: "h-6 w-6" },
+  { id: "post", className: "hidden sm:flex left-[12%] bottom-[26%]", float: "home-float-c", size: "h-6 w-6" },
+  { id: "carousel", className: "hidden sm:flex right-[9%] bottom-[24%]", float: "home-float-a", size: "h-6 w-6" },
+  { id: "highlight", className: "hidden sm:flex left-[42%] top-[8%]", float: "home-float-b", size: "h-5 w-5" },
+  { id: "bio", className: "hidden md:flex right-[28%] top-[12%]", float: "home-float-c", size: "h-5 w-5" },
+  { id: "caption", className: "hidden md:flex left-[22%] bottom-[12%]", float: "home-float-a", size: "h-5 w-5" },
 ];
 
 const BENEFIT_ICONS: Record<string, ReactNode> = {
