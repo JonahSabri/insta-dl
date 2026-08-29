@@ -1,0 +1,31 @@
+"""Structured downloader errors — API returns `code`, frontend localizes by user language."""
+
+from __future__ import annotations
+
+
+class DownloaderError(Exception):
+    def __init__(self, code: str, *, detail: str = "") -> None:
+        self.code = code
+        super().__init__(detail or code)
+
+
+# Stable codes (do not rename without updating frontend i18n/errors.ts)
+INVALID_URL = "INVALID_URL"
+INVALID_USERNAME = "INVALID_USERNAME"
+PRIVATE_ACCOUNT = "PRIVATE_ACCOUNT"
+PROFILE_NOT_FOUND = "PROFILE_NOT_FOUND"
+INVALID_STORY_URL = "INVALID_STORY_URL"
+STORY_UNAVAILABLE = "STORY_UNAVAILABLE"
+STORY_EMPTY = "STORY_EMPTY"
+INVALID_HIGHLIGHT_URL = "INVALID_HIGHLIGHT_URL"
+HIGHLIGHT_UNAVAILABLE = "HIGHLIGHT_UNAVAILABLE"
+HIGHLIGHT_EMPTY = "HIGHLIGHT_EMPTY"
+INVALID_CAPTION_URL = "INVALID_CAPTION_URL"
+SHORTCODE_NOT_FOUND = "SHORTCODE_NOT_FOUND"
+PAGE_FETCH_FAILED = "PAGE_FETCH_FAILED"
+MEDIA_NOT_FOUND = "MEDIA_NOT_FOUND"
+DOWNLOAD_FAILED = "DOWNLOAD_FAILED"
+AUTH_REQUIRED = "AUTH_REQUIRED"
+CDN_FAILED = "CDN_FAILED"
+USER_LOOKUP_FAILED = "USER_LOOKUP_FAILED"
+GENERIC = "GENERIC"

@@ -22,6 +22,8 @@ from curl_cffi import requests as creq
 
 from app.config import settings
 from app.services import settings_store
+from app.services import errors as err
+from app.services.errors import DownloaderError
 
 ALLOWED_HOSTS = {"instagram.com", "www.instagram.com", "m.instagram.com"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".webp", ".png"}
@@ -42,9 +44,9 @@ _BROWSER_UA = (
 def validate_url(url: str) -> None:
     parsed = urlparse(url)
     if not parsed.scheme.startswith("http"):
-        raise ValueError("لینک باید با http یا https شروع شود.")
+        raise DownloaderError(err.INVALID_URL)
     if parsed.netloc.lower() not in ALLOWED_HOSTS:
-        raise ValueError("فقط لینک‌های اینستاگرام پشتیبانی می‌شوند.")
+        raise DownloaderError(err.INVALID_URL)
 
 
 def detect_media_type(url: str) -> str:
@@ -276,7 +278,7 @@ def _user_id(session: creq.Session, username: str) -> str:
     try:
         return r.json()["data"]["user"]["id"]
     except Exception:
-        raise RuntimeError(f"نتونستم آیدی کاربر «{username}» را بگیرم.")
+        raise DownloaderError(err.USER_LOOKUP_FAILED)
 
 
 def _item_to_target(item: dict) -> dict:
@@ -293,7 +295,7 @@ def _item_to_target(item: dict) -> dict:
 def _fetch_story_targets(session: creq.Session, url: str) -> list[dict]:
     m = re.search(r"/stories/([^/]+)/(\d+)", url)
     if not m:
-        raise RuntimeError("لینک استوری معتبر نیست.")
+        raise DownloaderError(err.INVALID_STORY_URL)
     username, story_id = m.group(1), m.group(2)
 
     uid = _user_id(session, username)
@@ -305,9 +307,9 @@ def _fetch_story_targets(session: creq.Session, url: str) -> list[dict]:
         reel = r.json()["reels"][uid]
         items = reel.get("items", [])
     except Exception:
-        raise RuntimeError("نتونستم استوری‌ها را بگیرم (شاید منقضی شده یا دسترسی نداری).")
+        raise DownloaderError(err.STORY_UNAVAILABLE)
     if not items:
-        raise RuntimeError("این کاربر الان استوری فعالی ندارد (یا منقضی شده).")
+        raise DownloaderError(err.STORY_EMPTY)
 
     match = [it for it in items if str(it.get("pk")) == story_id]
     chosen = match or items
@@ -333,7 +335,7 @@ def _clean_title(caption: str | None, media_type: str) -> str:
 def _fetch_highlight_targets(session: creq.Session, url: str) -> tuple[list[dict], str | None]:
     hid = _highlight_id(url)
     if not hid:
-        raise RuntimeError("لینک هایلایت معتبر نیست. از /stories/highlights/ID/ استفاده کنید.")
+        raise DownloaderError(err.INVALID_HIGHLIGHT_URL)
 
     reel_key = f"highlight:{hid}"
     r = session.get(
@@ -351,10 +353,10 @@ def _fetch_highlight_targets(session: creq.Session, url: str) -> tuple[list[dict
         if isinstance(user, dict):
             owner = user.get("username")
     except Exception:
-        raise RuntimeError("نتونستم هایلایت را بگیرم (خصوصی، حذف‌شده، یا کوکی نامعتبر).")
+        raise DownloaderError(err.HIGHLIGHT_UNAVAILABLE)
 
     if not items:
-        raise RuntimeError("این هایلایت خالی است یا دیگر در دسترس نیست.")
+        raise DownloaderError(err.HIGHLIGHT_EMPTY)
 
     return [_item_to_target(it) for it in items], owner or title
 
@@ -363,7 +365,7 @@ def fetch_profile_bio(username: str) -> dict[str, Any]:
     """Public profile bio lookup via web_profile_info."""
     clean = username.strip().lstrip("@")
     if not re.fullmatch(r"[A-Za-z0-9._]{1,30}", clean):
-        raise ValueError("یوزرنیم اینستاگرام معتبر نیست.")
+        raise DownloaderError(err.INVALID_USERNAME)
 
     session, _ = _build_session()
     r = session.get(
@@ -372,14 +374,14 @@ def fetch_profile_bio(username: str) -> dict[str, Any]:
         timeout=30,
     )
     if r.status_code != 200:
-        raise RuntimeError(f"پروفایل پیدا نشد (HTTP {r.status_code}).")
+        raise DownloaderError(err.PROFILE_NOT_FOUND)
     try:
         user = r.json()["data"]["user"]
     except Exception:
-        raise RuntimeError("پاسخ پروفایل قابل خواندن نبود (شاید خصوصی یا ناموجود).")
+        raise DownloaderError(err.PROFILE_NOT_FOUND)
 
     if user.get("is_private"):
-        raise RuntimeError("این حساب خصوصی است؛ بیو در دسترس نیست.")
+        raise DownloaderError(err.PRIVATE_ACCOUNT)
 
     bio = user.get("biography") or ""
     return {
@@ -406,19 +408,19 @@ def fetch_caption(url: str) -> dict[str, Any]:
     validate_url(url)
     url = _clean_url(url)
     if "/stories/" in url and "/highlights/" not in url:
-        raise ValueError("برای کپشن از لینک پست یا ریل استفاده کنید.")
+        raise DownloaderError(err.INVALID_CAPTION_URL)
 
     session, _ = _build_session()
     sc = _shortcode(url)
     if not sc:
-        raise RuntimeError("نتونستم shortcode را از لینک تشخیص بدم.")
+        raise DownloaderError(err.SHORTCODE_NOT_FOUND)
 
     resp = session.get(url, timeout=30)
     if resp.status_code != 200:
-        raise RuntimeError(f"HTTP {resp.status_code} هنگام گرفتن صفحه.")
+        raise DownloaderError(err.PAGE_FETCH_FAILED)
     media = find_primary_media(resp.text, sc)
     if media is None:
-        raise RuntimeError("دادهٔ مدیا پیدا نشد؛ پست ممکن است خصوصی باشد.")
+        raise DownloaderError(err.MEDIA_NOT_FOUND)
 
     caption = _media_caption(media) or ""
     mt = media.get("media_type")
@@ -458,17 +460,14 @@ def _extract(session: creq.Session, url: str) -> dict[str, Any]:
 
     sc = _shortcode(url)
     if not sc:
-        raise RuntimeError("نتونستم shortcode را از لینک تشخیص بدم.")
+        raise DownloaderError(err.SHORTCODE_NOT_FOUND)
 
     resp = session.get(url, timeout=30)
     if resp.status_code != 200:
-        raise RuntimeError(f"HTTP {resp.status_code} هنگام گرفتن صفحه.")
+        raise DownloaderError(err.PAGE_FETCH_FAILED)
     media = find_primary_media(resp.text, sc)
     if media is None:
-        raise RuntimeError(
-            "دادهٔ مدیا پیدا نشد. ممکن است پست خصوصی باشد، کوکی منقضی شده "
-            "باشد، یا اینستاگرام موقتاً محدودت کرده باشد."
-        )
+        raise DownloaderError(err.MEDIA_NOT_FOUND)
 
     targets = _collect_targets(media)
     mt = media.get("media_type")
@@ -554,13 +553,14 @@ def download_media(url: str, job_id: str) -> dict[str, Any]:
 
     try:
         info = _extract(session, url)
-    except RuntimeError as exc:
+    except DownloaderError:
         shutil.rmtree(target_dir, ignore_errors=True)
-        hint = (
-            "" if has_cookies
-            else "\n\n💡 برای دانلود باید در پنل ادمین فایل کوکی اینستاگرام (لاگین‌شده) را آپلود کنی."
-        )
-        raise RuntimeError(f"{exc}{hint}")
+        raise
+    except Exception as exc:
+        shutil.rmtree(target_dir, ignore_errors=True)
+        if not has_cookies:
+            raise DownloaderError(err.AUTH_REQUIRED) from exc
+        raise DownloaderError(err.DOWNLOAD_FAILED) from exc
 
     targets = info["targets"]
     media_type = info["media_type"]
@@ -588,7 +588,7 @@ def download_media(url: str, job_id: str) -> dict[str, Any]:
 
     if not saved:
         shutil.rmtree(target_dir, ignore_errors=True)
-        raise RuntimeError("هیچ فایلی دانلود نشد (لینک‌های CDN پاسخ ندادند).")
+        raise DownloaderError(err.CDN_FAILED)
 
     # Thumbnail: prefer a downloaded cover, else the first image file
     thumb: Path | None = covers[0] if covers else next(

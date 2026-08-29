@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { fetchCaption } from "@/lib/api";
+import { ApiError, fetchCaption } from "@/lib/api";
+import { useLang } from "@/i18n/context";
+import { localizeErrorCode } from "@/i18n/errors";
 
 interface Props {
   placeholder?: string;
@@ -12,6 +14,7 @@ export default function CaptionBox({
   placeholder = "https://www.instagram.com/p/… or /reel/…",
   ctaLabel = "Fetch Caption",
 }: Props) {
+  const { lang } = useLang();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +35,8 @@ export default function CaptionBox({
       setCaption(res.caption || "");
       setMeta({ uploader: res.uploader, media_type: res.media_type, title: res.title });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not fetch caption");
+      const code = err instanceof ApiError ? err.code : "GENERIC";
+      setError(localizeErrorCode(code, lang));
     } finally {
       setLoading(false);
     }

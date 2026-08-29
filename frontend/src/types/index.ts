@@ -58,6 +58,15 @@ export interface AdminStats {
   failed: number;
   today: number;
   success_rate: number;
+  bio_lookups?: number;
+  bio_success?: number;
+  profile_lookups?: number;
+  caption_lookups?: number;
+  caption_success?: number;
+  highlight_downloads?: number;
+  highlight_success?: number;
+  media_downloads?: number;
+  media_completed?: number;
 }
 
 export interface DownloadRecord {

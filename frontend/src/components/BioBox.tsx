@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { fetchBio } from "@/lib/api";
+import { ApiError, fetchBio } from "@/lib/api";
+import { useLang } from "@/i18n/context";
+import { localizeErrorCode } from "@/i18n/errors";
 
 interface BioData {
   username: string;
@@ -24,6 +26,7 @@ export default function BioBox({
   placeholder = "username (without @)",
   ctaLabel = "Fetch Bio",
 }: Props) {
+  const { lang } = useLang();
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +44,8 @@ export default function BioBox({
       const res = await fetchBio(clean);
       setData(res);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not fetch bio");
+      const code = err instanceof ApiError ? err.code : "GENERIC";
+      setError(localizeErrorCode(code, lang));
     } finally {
       setLoading(false);
     }

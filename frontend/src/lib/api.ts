@@ -15,11 +15,34 @@ const BASE = "/api";
 
 export class RateLimitError extends Error {
   limit: number;
+  code = "RATE_LIMIT_EXCEEDED";
   constructor(limit: number) {
     super("RATE_LIMIT_EXCEEDED");
     this.limit = limit;
     this.name = "RateLimitError";
   }
+}
+
+/** API error with stable `code` for localization */
+export class ApiError extends Error {
+  code: string;
+  constructor(code: string, message?: string) {
+    super(message || code);
+    this.code = code;
+    this.name = "ApiError";
+  }
+}
+
+function extractErrorCode(detail: unknown): string | null {
+  if (detail && typeof detail === "object" && "code" in detail) {
+    const code = (detail as { code?: unknown }).code;
+    return typeof code === "string" ? code : null;
+  }
+  if (typeof detail === "string") {
+    // Legacy / already-a-code string
+    if (/^[A-Z][A-Z0-9_]+$/.test(detail)) return detail;
+  }
+  return null;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -31,10 +54,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     const detail = (body as { detail?: unknown }).detail;
-    if (res.status === 429 && detail && typeof detail === "object" && (detail as { code?: string }).code === "RATE_LIMIT_EXCEEDED") {
+    const code = extractErrorCode(detail);
+    if (res.status === 429 && code === "RATE_LIMIT_EXCEEDED") {
       throw new RateLimitError((detail as { limit?: number }).limit ?? 3);
     }
-    throw new Error(typeof detail === "string" ? detail : `HTTP ${res.status}`);
+    if (code) throw new ApiError(code);
+    throw new ApiError("GENERIC", typeof detail === "string" ? detail : `HTTP ${res.status}`);
   }
   return res.json() as Promise<T>;
 }

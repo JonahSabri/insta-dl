@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { previewUrl, analyzeUrl, pollStatus, getDownloadUrl, RateLimitError } from "@/lib/api";
+import { previewUrl, analyzeUrl, pollStatus, getDownloadUrl, RateLimitError, ApiError } from "@/lib/api";
 import type { DownloadResult, DownloadStep, MediaTypeFilter, PreviewData, StatusResponse } from "@/types";
-import { useT } from "@/i18n/context";
+import { useLang, useT } from "@/i18n/context";
+import { localizeErrorCode } from "@/i18n/errors";
 import SkeletonCard from "./SkeletonCard";
 import PreviewCard from "./PreviewCard";
 
@@ -290,6 +291,20 @@ export default function DownloadBox({
   tip,
 }: Props) {
   const t = useT();
+  const { lang } = useLang();
+
+  const localizeErr = (err: unknown, fallbackCode = "GENERIC") => {
+    if (err instanceof RateLimitError) {
+      return t.download.errorRateLimit(err.limit);
+    }
+    if (err instanceof ApiError) {
+      return localizeErrorCode(err.code, lang);
+    }
+    if (err instanceof Error && /^[A-Z][A-Z0-9_]+$/.test(err.message)) {
+      return localizeErrorCode(err.message, lang);
+    }
+    return localizeErrorCode(fallbackCode, lang);
+  };
 
   const [mediaType, setMediaType] = useState<ExtendedMediaTypeFilter>(lockedType ?? "reel");
   const [url, setUrl] = useState("");
@@ -340,7 +355,7 @@ export default function DownloadBox({
       previewDataRef.current = data;
       setStep("preview_ready");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t.download.errorServer);
+      setError(localizeErr(err));
       setStep("error");
     }
   }
@@ -359,11 +374,7 @@ export default function DownloadBox({
       setProgress(20);
       startPolling(data.job_id);
     } catch (err: unknown) {
-      if (err instanceof RateLimitError) {
-        setError(t.download.errorRateLimit(err.limit));
-      } else {
-        setError(err instanceof Error ? err.message : t.download.errorServer);
-      }
+      setError(localizeErr(err));
       setStep("error");
     }
   }
@@ -400,7 +411,7 @@ export default function DownloadBox({
           }, 300);
         } else if (status.status === "failed") {
           clearInterval(pollRef.current!);
-          setError(status.error ?? t.download.errorServer);
+          setError(localizeErrorCode(status.error, lang));
           setStep("error");
         }
       } catch {

@@ -24,6 +24,8 @@ from app.services.downloader import (
     get_preview,
     validate_url,
 )
+from app.services.errors import DownloaderError
+from app.services import errors as err_codes
 from app.services.job_store import create_job, get_job, update_job
 from app.services.rate_limiter import check_rate_limit, record_download
 
@@ -31,6 +33,16 @@ router = APIRouter(prefix="/download", tags=["download"])
 
 # Directory for locally cached preview thumbnails (so CDN URLs don't expire)
 _THUMB_CACHE_DIR = Path(settings.DOWNLOADS_DIR) / "thumb_cache"
+
+
+def _http_downloader_error(exc: DownloaderError, status: int = 422) -> HTTPException:
+    return HTTPException(status_code=status, detail={"code": exc.code})
+
+
+def _error_code_from_exc(exc: BaseException) -> str:
+    if isinstance(exc, DownloaderError):
+        return exc.code
+    return err_codes.GENERIC
 
 
 def _real_ip(request: Request) -> str:
@@ -148,13 +160,15 @@ async def preview(
     """Fast metadata extraction — no file download, no rate-limit consumption."""
     try:
         validate_url(body.url)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+    except DownloaderError as exc:
+        raise _http_downloader_error(exc, 400) from exc
 
     try:
         data = await asyncio.to_thread(get_preview, body.url)
+    except DownloaderError as exc:
+        raise _http_downloader_error(exc) from exc
     except RuntimeError as exc:
-        raise HTTPException(status_code=422, detail=str(exc))
+        raise HTTPException(status_code=422, detail={"code": err_codes.GENERIC}) from exc
 
     # Pre-fetch and cache the thumbnail locally so the CDN URL never expires
     if data.get("thumbnail_url"):
@@ -219,40 +233,106 @@ async def _run_download(job_id: str, url: str, preview_thumbnail_url: str | None
                 await session.commit()
 
     except Exception as exc:
-        await update_job(job_id, status="failed", error=str(exc))
+        code = _error_code_from_exc(exc)
+        await update_job(job_id, status="failed", error=code)
         async with db as session:
             record = await session.get(Download, job_id)
             if record:
                 record.status = "failed"
-                record.error_message = str(exc)
+                record.error_message = code
                 await session.commit()
 
 
+async def _log_tool_usage(
+    db: AsyncSession,
+    *,
+    request: Request,
+    media_type: str,
+    target: str,
+    title: str | None,
+    status: str = "completed",
+    error: str | None = None,
+) -> None:
+    """Persist bio/caption (and similar) lookups for admin stats."""
+    job_id = str(uuid.uuid4())
+    record = Download(
+        id=job_id,
+        job_id=job_id,
+        ip_address=_real_ip(request),
+        user_agent=request.headers.get("user-agent"),
+        instagram_url=target,
+        status=status,
+        media_type=media_type,
+        title=(title or media_type)[:255] if title or media_type else media_type,
+        error_message=error,
+    )
+    db.add(record)
+    await db.commit()
+
+
 @router.post("/bio", response_model=BioResponse)
-async def bio_lookup(body: BioRequest) -> BioResponse:
+async def bio_lookup(
+    body: BioRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> BioResponse:
     """Public Instagram profile bio / info (no media download)."""
     try:
         data = await asyncio.to_thread(fetch_profile_bio, body.username)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except RuntimeError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except DownloaderError as exc:
+        await _log_tool_usage(
+            db,
+            request=request,
+            media_type="bio",
+            target=body.username.strip().lstrip("@"),
+            title=None,
+            status="failed",
+            error=exc.code,
+        )
+        raise _http_downloader_error(exc, 400 if exc.code in (err_codes.INVALID_USERNAME,) else 422) from exc
+    await _log_tool_usage(
+        db,
+        request=request,
+        media_type="bio",
+        target=data.get("username") or body.username,
+        title=f"@{data.get('username') or body.username}",
+        status="completed",
+    )
     return BioResponse(**data)
 
 
 @router.post("/caption", response_model=CaptionResponse)
-async def caption_lookup(body: CaptionRequest) -> CaptionResponse:
+async def caption_lookup(
+    body: CaptionRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> CaptionResponse:
     """Extract caption text from a public post/reel URL."""
     try:
         validate_url(body.url)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    try:
         data = await asyncio.to_thread(fetch_caption, body.url)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except RuntimeError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except DownloaderError as exc:
+        await _log_tool_usage(
+            db,
+            request=request,
+            media_type="caption",
+            target=body.url,
+            title=None,
+            status="failed",
+            error=exc.code,
+        )
+        raise _http_downloader_error(
+            exc,
+            400 if exc.code in (err_codes.INVALID_URL, err_codes.INVALID_CAPTION_URL) else 422,
+        ) from exc
+    await _log_tool_usage(
+        db,
+        request=request,
+        media_type="caption",
+        target=body.url,
+        title=(data.get("title") or "Caption")[:255],
+        status="completed",
+    )
     return CaptionResponse(**data)
 
 
@@ -267,8 +347,8 @@ async def analyze(
 
     try:
         validate_url(body.url)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+    except DownloaderError as exc:
+        raise _http_downloader_error(exc, 400) from exc
 
     from app.services import settings_store as _ss
     _rl_enabled = _ss.get("rate_limit_enabled", "true").lower() != "false"

@@ -150,12 +150,47 @@ async def stats(
     today = await db.scalar(
         select(func.count(Download.id)).where(Download.created_at >= today_start)
     ) or 0
+
+    async def _count_type(media_type: str, *, completed_only: bool = False) -> int:
+        q = select(func.count(Download.id)).where(Download.media_type == media_type)
+        if completed_only:
+            q = q.where(Download.status == "completed")
+        return await db.scalar(q) or 0
+
+    bio_total = await _count_type("bio")
+    bio_ok = await _count_type("bio", completed_only=True)
+    caption_total = await _count_type("caption")
+    caption_ok = await _count_type("caption", completed_only=True)
+    highlight_total = await _count_type("highlight")
+    highlight_ok = await _count_type("highlight", completed_only=True)
+
+    # Media downloads exclude text tools (bio/caption)
+    media_types_excl = ("bio", "caption")
+    media_total = await db.scalar(
+        select(func.count(Download.id)).where(Download.media_type.notin_(media_types_excl))
+    ) or 0
+    media_completed = await db.scalar(
+        select(func.count(Download.id)).where(
+            Download.media_type.notin_(media_types_excl),
+            Download.status == "completed",
+        )
+    ) or 0
+
     return {
         "total": total,
         "completed": completed,
         "failed": failed,
         "today": today,
         "success_rate": round((completed / total * 100) if total else 0, 1),
+        "bio_lookups": bio_total,
+        "bio_success": bio_ok,
+        "profile_lookups": bio_total,  # alias — bio tool = profile info
+        "caption_lookups": caption_total,
+        "caption_success": caption_ok,
+        "highlight_downloads": highlight_total,
+        "highlight_success": highlight_ok,
+        "media_downloads": media_total,
+        "media_completed": media_completed,
     }
 
 

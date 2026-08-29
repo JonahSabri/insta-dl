@@ -901,6 +901,92 @@
   .anim-delay-500 { animation-delay: 0.5s; }
 }
 
+/* ── Home: floating tool icons & tool cards ─────────────── */
+@keyframes home-float-a {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-14px) rotate(3deg); }
+}
+@keyframes home-float-b {
+  0%, 100% { transform: translateY(0) rotate(5deg); }
+  50% { transform: translateY(-18px) rotate(-2deg); }
+}
+@keyframes home-float-c {
+  0%, 100% { transform: translateY(0) rotate(-2deg) scale(1); }
+  50% { transform: translateY(-10px) rotate(4deg) scale(1.04); }
+}
+@keyframes home-orbit-ring {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes home-shimmer-line {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.home-float-a { animation: home-float-a 5.5s ease-in-out infinite; }
+.home-float-b { animation: home-float-b 6.8s ease-in-out infinite; }
+.home-float-c { animation: home-float-c 4.8s ease-in-out infinite; }
+
+.home-tool-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015) 45%, transparent),
+    rgba(8, 8, 20, 0.55);
+  transition: border-color 0.35s ease, transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s ease;
+}
+.home-tool-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  background: radial-gradient(600px circle at var(--mx, 50%) var(--my, 0%), var(--tool-soft, rgba(131,58,180,0.15)), transparent 45%);
+  pointer-events: none;
+}
+.home-tool-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 20px 50px -24px var(--tool-glow, rgba(131,58,180,0.5));
+}
+.home-tool-card:hover::before { opacity: 1; }
+
+.home-tool-icon {
+  display: flex;
+  height: 3rem;
+  width: 3rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.9rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--tool-from), var(--tool-to));
+  box-shadow: 0 8px 24px -10px var(--tool-glow);
+}
+
+.home-hero-chip {
+  display: flex;
+  height: 3.25rem;
+  width: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1.1rem;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 12px 32px -12px var(--tool-glow),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-float-a, .home-float-b, .home-float-c {
+    animation: none !important;
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════
    SECTION DIVIDERS
 ══════════════════════════════════════════════════════════════ */

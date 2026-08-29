@@ -104,11 +104,16 @@ function LoginForm({ onLogin }: { onLogin: (t: string) => void }) {
 // ─── Stats Cards ──────────────────────────────────────────────────────────────
 
 function StatsCards({ stats }: { stats: AdminStats }) {
+  const n = (v?: number) => (v ?? 0).toLocaleString("en");
   const cards = [
-    { label: "Total downloads", value: stats.total.toLocaleString("en"), icon: "📥", color: "text-brand-400" },
-    { label: "Today", value: stats.today.toLocaleString("en"), icon: "📅", color: "text-cyan-400" },
-    { label: "Completed", value: stats.completed.toLocaleString("en"), icon: "✅", color: "text-green-400" },
+    { label: "Total requests", value: n(stats.total), icon: "📥", color: "text-brand-400" },
+    { label: "Today", value: n(stats.today), icon: "📅", color: "text-cyan-400" },
+    { label: "Media downloads", value: n(stats.media_completed ?? stats.completed), icon: "✅", color: "text-green-400" },
     { label: "Success rate", value: `${stats.success_rate}%`, icon: "📊", color: "text-purple-400" },
+    { label: "Bio / Profile lookups", value: `${n(stats.bio_success ?? stats.bio_lookups)} / ${n(stats.bio_lookups ?? stats.profile_lookups)}`, icon: "👤", color: "text-pink-400" },
+    { label: "Caption extractions", value: `${n(stats.caption_success)} / ${n(stats.caption_lookups)}`, icon: "💬", color: "text-amber-400" },
+    { label: "Highlight downloads", value: `${n(stats.highlight_success)} / ${n(stats.highlight_downloads)}`, icon: "✨", color: "text-violet-400" },
+    { label: "Failed", value: n(stats.failed), icon: "⚠️", color: "text-red-400" },
   ];
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
