@@ -20,7 +20,7 @@ export const GLOBAL_KEYWORDS = [
   "free Instagram tools",
 ];
 
-type PageKey = "home" | "articles";
+type PageKey = "home" | "blogs";
 
 interface LocaleCopy {
   title: string;
@@ -215,11 +215,11 @@ export function absoluteUrl(path: string): string {
 
 export function buildPageMetadata(lang: string, page: PageKey = "home"): Metadata {
   const copy = copyFor(page, lang);
-  const path = page === "home" ? `/${lang}` : `/${lang}/articles`;
+  const path = page === "home" ? `/${lang}` : `/${lang}/blogs`;
   const url = absoluteUrl(path);
   const keywords = [...GLOBAL_KEYWORDS, ...(copy.keywords ?? [])];
 
-  const languages = hreflangLanguages(page === "home" ? "" : "/articles");
+  const languages = hreflangLanguages(page === "home" ? "" : "/blogs");
 
   return {
     title: copy.title,
@@ -287,7 +287,7 @@ export function buildArticleMetadata(opts: {
   updatedAt?: string | null;
   keywords?: string;
 }): Metadata {
-  const path = `/${opts.lang}/articles/${opts.slug}`;
+  const path = `/${opts.lang}/blogs/${opts.slug}`;
   const url = absoluteUrl(path);
   const image = opts.image
     ? absoluteUrl(opts.image)
@@ -305,7 +305,7 @@ export function buildArticleMetadata(opts: {
       : GLOBAL_KEYWORDS,
     alternates: {
       canonical: url,
-      languages: hreflangLanguages(`/articles/${opts.slug}`),
+      languages: hreflangLanguages(`/blogs/${opts.slug}`),
     },
     openGraph: {
       type: "article",

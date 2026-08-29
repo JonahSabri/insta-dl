@@ -75,11 +75,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const l of LANGS) {
     entries.push({
-      url: `${SITE_URL}/${l.code}/articles`,
+      url: `${SITE_URL}/${l.code}/blogs`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.9,
-      alternates: { languages: langAlternates("/articles") },
+      alternates: { languages: langAlternates("/blogs") },
     });
   }
 
@@ -109,7 +109,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const lastMod = article.updated_at || article.created_at
       ? new Date(article.updated_at || article.created_at || now)
       : now;
-    const suffix = `/articles/${article.slug}`;
+    const suffix = `/blogs/${article.slug}`;
 
     for (const l of LANGS) {
       entries.push({

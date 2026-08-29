@@ -138,6 +138,18 @@ export async function middleware(request: NextRequest) {
     return res;
   }
 
+  // Legacy public URLs: /articles → /blogs
+  const articlesMatch = pathname.match(
+    /^\/(?:(en|pt|de|fr|ja|nl|sv|no|da|it|es|tr|ar)\/)?articles(\/.*)?$/
+  );
+  if (articlesMatch) {
+    const langSeg = articlesMatch[1];
+    const rest = articlesMatch[2] || "";
+    const url = request.nextUrl.clone();
+    url.pathname = langSeg ? `/${langSeg}/blogs${rest}` : `/blogs${rest}`;
+    return NextResponse.redirect(url, 308);
+  }
+
   const hasLangPrefix = SUPPORTED_LANGS.some(
     (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`)
   );

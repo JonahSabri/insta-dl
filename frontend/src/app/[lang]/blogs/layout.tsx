@@ -20,14 +20,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { lang } = await params;
   if (!isSupportedLang(lang)) return {};
-  return buildPageMetadata(lang, "articles");
+  return buildPageMetadata(lang, "blogs");
 }
 
 export default async function ArticlesLayout({ children, params }: Props) {
   const { lang } = await params;
   const crumbs = breadcrumbJsonLd([
     { name: SITE_NAME, url: absoluteUrl(`/${lang}`) },
-    { name: "Articles", url: absoluteUrl(`/${lang}/articles`) },
+    { name: "Blogs", url: absoluteUrl(`/${lang}/blogs`) },
   ]);
 
   return (

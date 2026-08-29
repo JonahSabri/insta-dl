@@ -28,7 +28,7 @@ export default function ArticlesPage() {
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden w-full">
-      <SiteHeader active="articles" />
+      <SiteHeader active="blogs" />
 
       <main className="flex-1 px-4 py-10 sm:py-14">
         <div className="mx-auto max-w-3xl">
@@ -53,7 +53,7 @@ export default function ArticlesPage() {
               {items.map((a) => (
                 <Link
                   key={a.id}
-                  href={`/${lang}/articles/${a.slug}`}
+                  href={`/${lang}/blogs/${a.slug}`}
                   className="glass-card group block p-5 transition-colors hover:border-purple-500/30"
                 >
                   <h2 className="mb-2 text-lg font-bold text-slate-100 group-hover:text-white">{a.title}</h2>

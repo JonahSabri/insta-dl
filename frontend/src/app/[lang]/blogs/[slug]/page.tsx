@@ -33,11 +33,11 @@ export default function ArticleDetailPage() {
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden w-full">
-      <SiteHeader active="articles" />
+      <SiteHeader active="blogs" />
 
       <main className="flex-1 px-4 py-10 sm:py-14">
         <article className="mx-auto max-w-2xl">
-          <Link href={`/${lang}/articles`} className="mb-6 inline-block text-sm text-slate-500 hover:text-purple-400">
+          <Link href={`/${lang}/blogs`} className="mb-6 inline-block text-sm text-slate-500 hover:text-purple-400">
             {t.articles.backToList}
           </Link>
 

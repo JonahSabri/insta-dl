@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
 export default function SiteHeader({
   active,
 }: {
-  active?: "home" | "articles" | "faq" | "legal";
+  active?: "home" | "blogs" | "faq" | "legal";
 }) {
   const t = useT();
   const { lang } = useParams<{ lang: string }>();
@@ -52,7 +52,7 @@ export default function SiteHeader({
           <Link href={`/${lang}`} className={linkCls("home")}>
             {t.nav.home}
           </Link>
-          <Link href={`/${lang}/articles`} className={linkCls("articles")}>
+          <Link href={`/${lang}/blogs`} className={linkCls("blogs")}>
             {t.nav.blog}
           </Link>
           <Link href={`/${lang}/faq`} className={linkCls("faq")}>

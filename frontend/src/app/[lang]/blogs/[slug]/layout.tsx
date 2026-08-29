@@ -82,7 +82,7 @@ export default async function ArticleSlugLayout({ children, params }: Props) {
 
   if (!article) return children;
 
-  const url = absoluteUrl(`/${lang}/articles/${slug}`);
+  const url = absoluteUrl(`/${lang}/blogs/${slug}`);
   const description =
     article.meta_description?.trim() ||
     article.excerpt?.trim() ||
@@ -93,7 +93,7 @@ export default async function ArticleSlugLayout({ children, params }: Props) {
       <JsonLd
         data={breadcrumbJsonLd([
           { name: SITE_NAME, url: absoluteUrl(`/${lang}`) },
-          { name: "Blog", url: absoluteUrl(`/${lang}/articles`) },
+          { name: "Blogs", url: absoluteUrl(`/${lang}/blogs`) },
           { name: article.title, url },
         ])}
       />

@@ -158,7 +158,7 @@ export default function LatestArticlesSlider() {
               </svg>
             </button>
             <Link
-              href={`/${lang}/articles`}
+              href={`/${lang}/blogs`}
               className="ms-1 rounded-xl px-3 py-2 text-xs font-medium text-purple-300 transition hover:text-pink-300"
               style={{ background: "rgba(131,58,180,0.12)", border: "1px solid rgba(131,58,180,0.25)" }}
             >
@@ -199,7 +199,7 @@ export default function LatestArticlesSlider() {
                     {group.map((a) => (
                       <Link
                         key={a.id}
-                        href={`/${lang}/articles/${a.slug}`}
+                        href={`/${lang}/blogs/${a.slug}`}
                         dir={textDir}
                         className="glass-card group flex h-full flex-col p-5 transition-colors hover:border-purple-500/30"
                       >
