@@ -76,7 +76,7 @@ export default function PreviewCard({ result, onReset }: Props) {
 
   const downloadUrl = getDownloadUrl(result.job_id);
   const meta = preview.types[result.media_type] ?? preview.types.unknown;
-  const isCarousel = result.media_type === "carousel" && result.file_count > 1;
+  const isMultiItem = result.file_count > 1 && (result.carousel_files?.length ?? 0) > 0;
   const isImage = result.media_type === "image" || result.media_type === "post";
   const slides = result.carousel_files ?? [];
 
@@ -88,7 +88,7 @@ export default function PreviewCard({ result, onReset }: Props) {
     } catch { /* ignore */ }
   }
 
-  const downloadLabel = isCarousel
+  const downloadLabel = isMultiItem
     ? preview.downloadZip(result.file_count)
     : isImage
       ? preview.downloadImage
@@ -123,7 +123,7 @@ export default function PreviewCard({ result, onReset }: Props) {
             {meta.label}
           </span>
 
-          {isCarousel && (
+          {isMultiItem && (
             <div className="absolute inset-0 flex items-center justify-center rounded-2xl"
               style={{ background: "rgba(0,0,0,0.45)" }}>
               <div className="flex flex-col items-center gap-1">
@@ -156,7 +156,7 @@ export default function PreviewCard({ result, onReset }: Props) {
               style={{ background: `${meta.color}18`, border: `1px solid ${meta.color}35`, color: meta.color }}>
               {meta.label}
             </span>
-            {isCarousel && (
+            {isMultiItem && (
               <span className="badge flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-400">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M18 8h2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/></svg>
                 {result.file_count} files
@@ -167,7 +167,7 @@ export default function PreviewCard({ result, onReset }: Props) {
       </div>
 
       {/* ── Carousel actions ── */}
-      {isCarousel && (
+      {isMultiItem && (
         <div className="mx-4 mb-3 space-y-2">
           <div className="flex gap-2">
             <a href={downloadUrl} download
@@ -208,7 +208,7 @@ export default function PreviewCard({ result, onReset }: Props) {
       )}
 
       {/* ── Non-carousel actions ── */}
-      {!isCarousel && (
+      {!isMultiItem && (
         <>
           <div className="mx-5 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
           <div className="flex gap-2.5 p-4">

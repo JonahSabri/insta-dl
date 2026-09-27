@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { translations, LANGS, type Lang } from "@/i18n/translations";
 import { notFound } from "next/navigation";
+import { toHtmlLang } from "@/lib/htmlLang";
 
 interface Props {
   children: React.ReactNode;
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 
   const m = meta[lang] ?? meta.en;
   return {
-    title: m.title,
+    title: { absolute: m.title },
     description: m.description,
     alternates: {
       languages: {
@@ -51,10 +52,9 @@ export default async function LangLayout({ children, params }: Props) {
   if (!LANGS.some((l) => l.code === lang)) notFound();
 
   const langMeta = LANGS.find((l) => l.code === lang)!;
-  const htmlLang = lang === "pt" ? "pt-BR" : lang;
 
   return (
-    <div lang={htmlLang} dir={langMeta.dir}>
+    <div lang={toHtmlLang(lang)} dir={langMeta.dir}>
       {children}
     </div>
   );

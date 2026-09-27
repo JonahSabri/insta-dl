@@ -9,6 +9,7 @@ import {
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { LANGS, translations, type Lang, type Translations } from "./translations";
+import { toHtmlLang } from "@/lib/htmlLang";
 
 interface LangCtx {
   lang: Lang;
@@ -43,8 +44,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   // Update <html> lang + dir
   useEffect(() => {
     const meta = LANGS.find((l) => l.code === lang);
-    const htmlLangMap: Partial<Record<string, string>> = { pt: "pt-BR", no: "nb-NO" };
-    document.documentElement.lang = htmlLangMap[lang] ?? lang;
+    document.documentElement.lang = toHtmlLang(lang);
     document.documentElement.dir = meta?.dir ?? "ltr";
     // Save preference as cookie for middleware detection
     document.cookie = `lang=${lang};path=/;max-age=31536000;SameSite=Lax`;

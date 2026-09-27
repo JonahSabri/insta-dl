@@ -20,16 +20,6 @@ const nextConfig = {
   // Legacy /admin redirect → /en/admin (handled by middleware for / paths too)
 
 
-  async headers() {
-    return [
-      {
-        source: "/api/:path*",
-        headers: [
-          { key: "X-Forwarded-For", value: ":remote-addr" },
-        ],
-      },
-    ];
-  },
 };
 
 export default nextConfig;

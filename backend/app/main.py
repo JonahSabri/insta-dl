@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import ipaddress
+import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -14,6 +16,21 @@ from app.database import init_db
 import app.models  # noqa: F401
 from app.api.routes.download import router as download_router
 from app.api.routes.admin import router as admin_router
+
+_DEFAULT_TRUSTED = "127.0.0.0/8,::1/128,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+TRUSTED_PROXY_NETS = [
+    ipaddress.ip_network(c.strip())
+    for c in os.getenv("TRUSTED_PROXY_CIDRS", _DEFAULT_TRUSTED).split(",")
+    if c.strip()
+]
+
+
+def _is_trusted(host: str) -> bool:
+    try:
+        addr = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return any(addr in net for net in TRUSTED_PROXY_NETS)
 
 
 @asynccontextmanager
@@ -43,14 +60,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Trust X-Forwarded-For from local proxies (Next.js dev server / nginx)
 class ForwardedForMiddleware(BaseHTTPMiddleware):
+    """Trust X-Forwarded-For only from known private/proxy CIDRs.
+
+    Takes the right-most untrusted hop so a spoofed header in the
+    leftmost position cannot bypass the per-IP download cap.
+    """
     async def dispatch(self, request, call_next):
-        xff = request.headers.get("x-forwarded-for")
-        if xff:
-            real_ip = xff.split(",")[0].strip()
-            # Patch scope so request.client.host also returns the real IP
-            request.scope["client"] = (real_ip, 0)
+        client = request.scope.get("client")
+        peer = client[0] if client else ""
+        if _is_trusted(peer):
+            xff = request.headers.get("x-forwarded-for")
+            if xff:
+                for candidate in reversed([p.strip() for p in xff.split(",")]):
+                    if candidate and not _is_trusted(candidate):
+                        request.scope["client"] = (candidate, 0)
+                        break
         return await call_next(request)
 
 app.add_middleware(ForwardedForMiddleware)

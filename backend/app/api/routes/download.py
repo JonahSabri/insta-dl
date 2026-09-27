@@ -23,16 +23,7 @@ router = APIRouter(prefix="/download", tags=["download"])
 
 
 def _real_ip(request: Request) -> str:
-    """Extract the real client IP, handling reverse-proxy forwarded headers."""
-    # Next.js rewrite passes X-Forwarded-For; also respect X-Real-IP
-    forwarded = (
-        request.headers.get("x-forwarded-for")
-        or request.headers.get("x-real-ip")
-        or ""
-    )
-    if forwarded:
-        # X-Forwarded-For can be a comma-separated list; take the first (real client)
-        return forwarded.split(",")[0].strip()
+    """Return the peer IP after ForwardedForMiddleware has resolved it."""
     return request.client.host if request.client else "unknown"
 
 

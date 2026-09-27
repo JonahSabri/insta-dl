@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -34,9 +35,30 @@ class Settings(BaseSettings):
 
     INSTAGRAM_COOKIES_FILE: str | None = None
 
+    GAPGPT_API_KEY: str = ""
+
     # Proxy — supports http/https/socks5, e.g. http://127.0.0.1:10809
     HTTP_PROXY: str | None = None
     HTTPS_PROXY: str | None = None
+
+    @model_validator(mode="after")
+    def _reject_insecure_defaults(self) -> "Settings":
+        if self.DEBUG:
+            return self
+        problems: list[str] = []
+        if self.SECRET_KEY == "dev-secret-key-please-change-in-production":
+            problems.append("SECRET_KEY is still the development default")
+        if len(self.SECRET_KEY) < 32:
+            problems.append("SECRET_KEY must be at least 32 characters")
+        if self.ADMIN_PASSWORD == "changeme":
+            problems.append("ADMIN_PASSWORD is still the development default")
+        if len(self.ADMIN_PASSWORD) < 12:
+            problems.append("ADMIN_PASSWORD must be at least 12 characters")
+        if problems:
+            raise ValueError(
+                "Insecure configuration with DEBUG=false:\n  - " + "\n  - ".join(problems)
+            )
+        return self
 
     @property
     def proxy(self) -> str | None:

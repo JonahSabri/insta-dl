@@ -2,17 +2,18 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { LanguageProvider } from "@/i18n/context";
 import PwaRegister from "@/components/PwaRegister";
+import AdSense from "@/components/AdSense";
 
 const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "JazzGhost";
 const siteUrl  = process.env.NEXT_PUBLIC_SITE_URL  ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
   title: {
-    default:  `${siteName} — Instagram Downloader`,
+    default:  "Instagram Reels, Posts & Stories Downloader — Free, No Login",
     template: `%s | ${siteName}`,
   },
   description:
-    "Free Instagram Reels, Posts, Images and Carousel downloader. Fast, no sign-up needed.",
+    "Download Instagram Reels, posts, stories, highlights, bios and captions in HD. No watermark, no login, no app. Free and instant.",
   keywords: [
     "Instagram downloader",
     "download reels",
@@ -96,6 +97,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <LanguageProvider>
           {children}
         </LanguageProvider>
+        <AdSense />
 
         {/* Service Worker registration — client-only, no render */}
         <PwaRegister />
