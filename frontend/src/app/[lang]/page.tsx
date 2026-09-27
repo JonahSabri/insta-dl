@@ -153,9 +153,9 @@ export default function HomePage() {
             {/* Trust indicators */}
             <div className="anim-fade-in anim-delay-500 mt-6 flex flex-wrap justify-center gap-5 text-xs text-slate-600">
               {[
-                { icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>, label: "No login required" },
-                { icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>, label: "HD quality" },
-                { icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>, label: "Always free" },
+                { icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>, label: t.trustBadges.noLogin },
+                { icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>, label: t.trustBadges.hdQuality },
+                { icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>, label: t.trustBadges.alwaysFree },
               ].map((item) => (
                 <span key={item.label} className="flex items-center gap-1.5">
                   {item.icon} {item.label}
@@ -177,7 +177,7 @@ export default function HomePage() {
             <div className="anim-fade-up mb-12 text-center">
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest"
                 style={{ color: "#e1306c" }}>
-                How it works
+                {t.sections.howItWorks}
               </p>
               <h2 className="text-2xl font-extrabold text-white sm:text-3xl">
                 {t.howTo.heading}
@@ -227,7 +227,7 @@ export default function HomePage() {
             <div className="mb-12 text-center">
               <p className="anim-fade-up mb-2 text-xs font-semibold uppercase tracking-widest"
                 style={{ color: "#fcb045" }}>
-                Features
+                {t.sections.features}
               </p>
               <h2 className="anim-fade-up text-2xl font-extrabold text-white sm:text-3xl">
                 {t.features.heading}

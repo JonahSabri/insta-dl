@@ -2,19 +2,60 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.models.site_setting import SiteSetting
+
+log = logging.getLogger(__name__)
 
 # ─── In-memory cache ─────────────────────────────────────────────────────────
 _cache: dict[str, str] = {}
 
+# Keys that contain sensitive values and should be encrypted at rest.
+_ENCRYPTED_KEYS = {"instagram_password"}
+
+
+def _get_fernet():
+    """Return a Fernet instance if a key is configured, else None."""
+    key = settings.SETTINGS_ENCRYPTION_KEY
+    if not key:
+        return None
+    try:
+        from cryptography.fernet import Fernet
+        return Fernet(key.encode())
+    except Exception as exc:
+        log.warning("Could not initialise Fernet: %s", exc)
+        return None
+
+
+def _encrypt(value: str) -> str:
+    f = _get_fernet()
+    if f is None:
+        return value
+    return f.encrypt(value.encode()).decode()
+
+
+def _decrypt(value: str) -> str:
+    f = _get_fernet()
+    if f is None:
+        return value
+    try:
+        return f.decrypt(value.encode()).decode()
+    except Exception:
+        # Value is likely plaintext (stored before encryption was enabled).
+        return value
+
 
 def get(key: str, default: str = "") -> str:
-    return _cache.get(key, default)
+    raw = _cache.get(key, default)
+    if key in _ENCRYPTED_KEYS:
+        return _decrypt(raw)
+    return raw
 
 
 async def load_from_db(db: AsyncSession) -> None:
@@ -26,13 +67,14 @@ async def load_from_db(db: AsyncSession) -> None:
 
 
 async def save(key: str, value: str, db: AsyncSession) -> None:
+    stored_value = _encrypt(value) if key in _ENCRYPTED_KEYS else value
     existing = await db.get(SiteSetting, key)
     if existing:
-        existing.value = value
+        existing.value = stored_value
     else:
-        db.add(SiteSetting(key=key, value=value))
+        db.add(SiteSetting(key=key, value=stored_value))
     await db.commit()
-    _cache[key] = value
+    _cache[key] = stored_value
     _write_gallery_dl_config()
 
 

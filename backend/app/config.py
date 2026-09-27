@@ -37,6 +37,11 @@ class Settings(BaseSettings):
 
     GAPGPT_API_KEY: str = ""
 
+    # Fernet key for encrypting sensitive settings in the DB.
+    # Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    # Leave empty to disable encryption (plaintext fallback).
+    SETTINGS_ENCRYPTION_KEY: str = ""
+
     # Proxy — supports http/https/socks5, e.g. http://127.0.0.1:10809
     HTTP_PROXY: str | None = None
     HTTPS_PROXY: str | None = None

@@ -87,6 +87,18 @@ export interface Translations {
     zipInfo: (n: number) => string;
     types: Record<string, { label: string; icon: string; color: string }>;
   };
+  sections: {
+    howItWorks: string;
+    features: string;
+  };
+  trustBadges: {
+    noLogin: string;
+    hdQuality: string;
+    alwaysFree: string;
+  };
+  tool: {
+    disclaimer: string;
+  };
 }
 
 // ─── English ──────────────────────────────────────────────────────────────────
@@ -179,6 +191,18 @@ const en: Translations = {
       igtv:     { label: "IGTV",     icon: "📺",  color: "#7c3aed" },
       unknown:  { label: "Video",    icon: "🎥",  color: "#7c3aed" },
     },
+  },
+  sections: {
+    howItWorks: "How it works",
+    features: "Features",
+  },
+  trustBadges: {
+    noLogin: "No login required",
+    hdQuality: "HD quality",
+    alwaysFree: "Always free",
+  },
+  tool: {
+    disclaimer: "JazzGhost is not affiliated with Instagram™ or Meta. We don\'t host any Instagram content — all rights belong to their owners. Only public content can be accessed.",
   },
 };
 
@@ -273,6 +297,18 @@ const pt: Translations = {
       unknown:  { label: "Vídeo",     icon: "🎥",  color: "#7c3aed" },
     },
   },
+  sections: {
+    howItWorks: "Como funciona",
+    features: "Recursos",
+  },
+  trustBadges: {
+    noLogin: "Sem login",
+    hdQuality: "Qualidade HD",
+    alwaysFree: "Sempre grátis",
+  },
+  tool: {
+    disclaimer: "JazzGhost não é afiliado ao Instagram™ ou Meta. Não hospedamos conteúdo do Instagram — todos os direitos pertencem aos seus proprietários. Apenas conteúdo público pode ser acessado.",
+  },
 };
 
 // ─── Persian / Farsi ──────────────────────────────────────────────────────────
@@ -365,6 +401,18 @@ const fa: Translations = {
       igtv:     { label: "IGTV",    icon: "📺",  color: "#7c3aed" },
       unknown:  { label: "ویدیو",   icon: "🎥",  color: "#7c3aed" },
     },
+  },
+  sections: {
+    howItWorks: "چطور کار می‌کند",
+    features: "امکانات",
+  },
+  trustBadges: {
+    noLogin: "بدون ورود",
+    hdQuality: "کیفیت HD",
+    alwaysFree: "همیشه رایگان",
+  },
+  tool: {
+    disclaimer: "JazzGhost به اینستاگرام™ یا متا وابسته نیست. ما هیچ محتوایی از اینستاگرام میزبانی نمی‌کنیم — تمام حقوق متعلق به صاحبان آن‌هاست. فقط محتوای عمومی قابل دسترسی است.",
   },
 };
 
@@ -459,6 +507,18 @@ const de: Translations = {
       unknown:  { label: "Video",     icon: "🎥",  color: "#7c3aed" },
     },
   },
+  sections: {
+    howItWorks: "So funktioniert es",
+    features: "Funktionen",
+  },
+  trustBadges: {
+    noLogin: "Kein Login",
+    hdQuality: "HD-Qualität",
+    alwaysFree: "Immer kostenlos",
+  },
+  tool: {
+    disclaimer: "JazzGhost ist nicht mit Instagram™ oder Meta verbunden. Wir hosten keine Instagram-Inhalte — alle Rechte liegen bei den jeweiligen Eigentümern. Nur öffentliche Inhalte können abgerufen werden.",
+  },
 };
 
 // ─── French ───────────────────────────────────────────────────────────────────
@@ -551,6 +611,18 @@ const fr: Translations = {
       igtv:     { label: "IGTV",      icon: "📺",  color: "#7c3aed" },
       unknown:  { label: "Vidéo",     icon: "🎥",  color: "#7c3aed" },
     },
+  },
+  sections: {
+    howItWorks: "Comment ça marche",
+    features: "Fonctionnalités",
+  },
+  trustBadges: {
+    noLogin: "Sans connexion",
+    hdQuality: "Qualité HD",
+    alwaysFree: "Toujours gratuit",
+  },
+  tool: {
+    disclaimer: "JazzGhost n\'est pas affilié à Instagram™ ou Meta. Nous n\'hébergeons aucun contenu Instagram — tous les droits appartiennent à leurs propriétaires. Seul le contenu public est accessible.",
   },
 };
 
@@ -645,6 +717,18 @@ const ja: Translations = {
       unknown:  { label: "動画",      icon: "🎥",  color: "#7c3aed" },
     },
   },
+  sections: {
+    howItWorks: "使い方",
+    features: "機能",
+  },
+  trustBadges: {
+    noLogin: "ログイン不要",
+    hdQuality: "HD画質",
+    alwaysFree: "常に無料",
+  },
+  tool: {
+    disclaimer: "JazzGhostはInstagram™またはMetaとは無関係です。Instagramのコンテンツをホストしていません — すべての権利は各所有者に帰属します。公開コンテンツのみアクセス可能です。",
+  },
 };
 
 // ─── Dutch ────────────────────────────────────────────────────────────────────
@@ -737,6 +821,18 @@ const nl: Translations = {
       igtv:     { label: "IGTV",      icon: "📺",  color: "#7c3aed" },
       unknown:  { label: "Video",     icon: "🎥",  color: "#7c3aed" },
     },
+  },
+  sections: {
+    howItWorks: "Hoe het werkt",
+    features: "Functies",
+  },
+  trustBadges: {
+    noLogin: "Geen login",
+    hdQuality: "HD-kwaliteit",
+    alwaysFree: "Altijd gratis",
+  },
+  tool: {
+    disclaimer: "JazzGhost is niet gelieerd aan Instagram™ of Meta. We hosten geen Instagram-inhoud — alle rechten behoren toe aan hun eigenaars. Alleen publieke inhoud is toegankelijk.",
   },
 };
 
@@ -831,6 +927,18 @@ const sv: Translations = {
       unknown:  { label: "Video",    icon: "🎥",  color: "#7c3aed" },
     },
   },
+  sections: {
+    howItWorks: "Hur det fungerar",
+    features: "Funktioner",
+  },
+  trustBadges: {
+    noLogin: "Ingen inloggning",
+    hdQuality: "HD-kvalitet",
+    alwaysFree: "Alltid gratis",
+  },
+  tool: {
+    disclaimer: "JazzGhost är inte anslutet till Instagram™ eller Meta. Vi är värd för inget Instagram-innehåll — alla rättigheter tillhör sina ägare. Endast offentligt innehåll kan nås.",
+  },
 };
 
 // ─── Norwegian ────────────────────────────────────────────────────────────────
@@ -923,6 +1031,18 @@ const no: Translations = {
       igtv:     { label: "IGTV",     icon: "📺",  color: "#7c3aed" },
       unknown:  { label: "Video",    icon: "🎥",  color: "#7c3aed" },
     },
+  },
+  sections: {
+    howItWorks: "Slik fungerer det",
+    features: "Funksjoner",
+  },
+  trustBadges: {
+    noLogin: "Ingen innlogging",
+    hdQuality: "HD-kvalitet",
+    alwaysFree: "Alltid gratis",
+  },
+  tool: {
+    disclaimer: "JazzGhost er ikke tilknyttet Instagram™ eller Meta. Vi er vert for ingen Instagram-innhold — alle rettigheter tilhører sine eiere. Bare offentlig innhold er tilgjengelig.",
   },
 };
 
@@ -1017,6 +1137,18 @@ const da: Translations = {
       unknown:  { label: "Video",    icon: "🎥",  color: "#7c3aed" },
     },
   },
+  sections: {
+    howItWorks: "Sådan fungerer det",
+    features: "Funktioner",
+  },
+  trustBadges: {
+    noLogin: "Ingen login",
+    hdQuality: "HD-kvalitet",
+    alwaysFree: "Altid gratis",
+  },
+  tool: {
+    disclaimer: "JazzGhost er ikke tilknyttet Instagram™ eller Meta. Vi hoster intet Instagram-indhold — alle rettigheder tilhører ejerne. Kun offentligt indhold er tilgængeligt.",
+  },
 };
 
 // ─── Italian ──────────────────────────────────────────────────────────────────
@@ -1109,6 +1241,18 @@ const it: Translations = {
       igtv:     { label: "IGTV",     icon: "📺",  color: "#7c3aed" },
       unknown:  { label: "Video",    icon: "🎥",  color: "#7c3aed" },
     },
+  },
+  sections: {
+    howItWorks: "Come funziona",
+    features: "Funzionalità",
+  },
+  trustBadges: {
+    noLogin: "Nessun login",
+    hdQuality: "Qualità HD",
+    alwaysFree: "Sempre gratuito",
+  },
+  tool: {
+    disclaimer: "JazzGhost non è affiliato a Instagram™ o Meta. Non ospitiamo contenuti Instagram — tutti i diritti appartengono ai loro proprietari. Solo i contenuti pubblici sono accessibili.",
   },
 };
 
@@ -1203,6 +1347,18 @@ const es: Translations = {
       unknown:  { label: "Video",      icon: "🎥",  color: "#7c3aed" },
     },
   },
+  sections: {
+    howItWorks: "Cómo funciona",
+    features: "Características",
+  },
+  trustBadges: {
+    noLogin: "Sin inicio de sesión",
+    hdQuality: "Calidad HD",
+    alwaysFree: "Siempre gratis",
+  },
+  tool: {
+    disclaimer: "JazzGhost no está afiliado a Instagram™ ni a Meta. No alojamos contenido de Instagram — todos los derechos pertenecen a sus propietarios. Solo se puede acceder al contenido público.",
+  },
 };
 
 // ─── Turkish ──────────────────────────────────────────────────────────────────
@@ -1296,6 +1452,18 @@ const tr: Translations = {
       unknown:  { label: "Video",    icon: "🎥",  color: "#7c3aed" },
     },
   },
+  sections: {
+    howItWorks: "Nasıl çalışır",
+    features: "Özellikler",
+  },
+  trustBadges: {
+    noLogin: "Giriş gerekmiyor",
+    hdQuality: "HD kalite",
+    alwaysFree: "Her zaman ücretsiz",
+  },
+  tool: {
+    disclaimer: "JazzGhost, Instagram™ veya Meta ile bağlantılı değildir. Herhangi bir Instagram içeriğine ev sahipliği yapmıyoruz — tüm haklar sahiplerine aittir. Yalnızca genel içeriklere erişilebilir.",
+  },
 };
 
 // ─── Arabic ───────────────────────────────────────────────────────────────────
@@ -1388,6 +1556,18 @@ const ar: Translations = {
       igtv:     { label: "IGTV",     icon: "📺",  color: "#7c3aed" },
       unknown:  { label: "فيديو",    icon: "🎥",  color: "#7c3aed" },
     },
+  },
+  sections: {
+    howItWorks: "كيف يعمل",
+    features: "المميزات",
+  },
+  trustBadges: {
+    noLogin: "بدون تسجيل دخول",
+    hdQuality: "جودة HD",
+    alwaysFree: "مجاني دائماً",
+  },
+  tool: {
+    disclaimer: "JazzGhost غير مرتبط بـ Instagram™ أو Meta. لا نستضيف أي محتوى من Instagram — جميع الحقوق تعود لأصحابها. يمكن الوصول إلى المحتوى العام فقط.",
   },
 };
 
