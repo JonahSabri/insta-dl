@@ -4,7 +4,6 @@ import {
   createContext,
   useContext,
   useEffect,
-  useState,
   type ReactNode,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -32,30 +31,24 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [lang, setLangState] = useState<Lang>(() => getLangFromPath(pathname));
+  // Derive lang directly from the URL — no separate state needed.
+  // This guarantees the UI is always in sync with the URL without
+  // any state-vs-URL race conditions.
+  const lang: Lang = getLangFromPath(pathname);
 
-  // Sync when URL changes (e.g. user navigates back/forward)
-  useEffect(() => {
-    const urlLang = getLangFromPath(pathname);
-    if (urlLang !== lang) setLangState(urlLang);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
-
-  // Update <html> lang + dir
+  // Keep <html lang> and dir up-to-date, and save preference cookie.
   useEffect(() => {
     const meta = LANGS.find((l) => l.code === lang);
     document.documentElement.lang = toHtmlLang(lang);
     document.documentElement.dir = meta?.dir ?? "ltr";
-    // Save preference as cookie for middleware detection
     document.cookie = `lang=${lang};path=/;max-age=31536000;SameSite=Lax`;
   }, [lang]);
 
   function setLang(l: Lang) {
-    // Replace the lang segment in the current path
+    // Only navigate — the language is derived from the URL on the next render.
     const segments = pathname.split("/");
     segments[1] = l;
     const newPath = segments.join("/") || `/${l}`;
-    setLangState(l);
     router.push(newPath);
   }
 
