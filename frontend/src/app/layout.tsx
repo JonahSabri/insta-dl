@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { LanguageProvider } from "@/i18n/context";
 import PwaRegister from "@/components/PwaRegister";
 import AdSense from "@/components/AdSense";
 
@@ -94,9 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="bg-noise" />
         </div>
 
-        <LanguageProvider>
-          {children}
-        </LanguageProvider>
+        {children}
         <AdSense />
 
         {/* Service Worker registration — client-only, no render */}

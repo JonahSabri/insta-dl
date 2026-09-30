@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { translations, LANGS, type Lang } from "@/i18n/translations";
+import { LanguageProvider } from "@/i18n/context";
 import { notFound } from "next/navigation";
 import { toHtmlLang } from "@/lib/htmlLang";
 
@@ -93,14 +94,21 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
 export default async function LangLayout({ children, params }: Props) {
   const { lang } = await params;
 
-  // Validate lang
   if (!LANGS.some((l) => l.code === lang)) notFound();
 
   const langMeta = LANGS.find((l) => l.code === lang)!;
+  const validLang = lang as Lang;
 
   return (
-    <div lang={toHtmlLang(lang)} dir={langMeta.dir}>
-      {children}
-    </div>
+    /*
+     * LanguageProvider is a client component. By passing `lang` as a prop
+     * from this server component, the correct language is guaranteed from
+     * the very first render — no usePathname() parsing, no hydration drift.
+     */
+    <LanguageProvider lang={validLang}>
+      <div lang={toHtmlLang(lang)} dir={langMeta.dir}>
+        {children}
+      </div>
+    </LanguageProvider>
   );
 }

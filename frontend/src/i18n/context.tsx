@@ -6,7 +6,7 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { LANGS, translations, type Lang, type Translations } from "./translations";
 import { toHtmlLang } from "@/lib/htmlLang";
 
@@ -22,21 +22,21 @@ const LangContext = createContext<LangCtx>({
   setLang: () => {},
 });
 
-function getLangFromPath(pathname: string): Lang {
-  const segment = pathname.split("/")[1] as Lang;
-  return translations[segment] ? segment : "en";
+interface LanguageProviderProps {
+  lang: Lang;
+  children: ReactNode;
 }
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
+/**
+ * Must be rendered by a server component that already knows the lang
+ * (i.e. [lang]/layout.tsx).  Receiving lang as a prop avoids any
+ * usePathname() parsing on the client and eliminates hydration mismatches.
+ */
+export function LanguageProvider({ lang, children }: LanguageProviderProps) {
   const router = useRouter();
+  const pathname = usePathname();
 
-  // Derive lang directly from the URL — no separate state needed.
-  // This guarantees the UI is always in sync with the URL without
-  // any state-vs-URL race conditions.
-  const lang: Lang = getLangFromPath(pathname);
-
-  // Keep <html lang> and dir up-to-date, and save preference cookie.
+  // Keep <html lang>, dir, and the preference cookie in sync.
   useEffect(() => {
     const meta = LANGS.find((l) => l.code === lang);
     document.documentElement.lang = toHtmlLang(lang);
@@ -45,11 +45,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, [lang]);
 
   function setLang(l: Lang) {
-    // Only navigate — the language is derived from the URL on the next render.
+    // Replace the lang segment in the current path and navigate.
     const segments = pathname.split("/");
     segments[1] = l;
-    const newPath = segments.join("/") || `/${l}`;
-    router.push(newPath);
+    router.push(segments.join("/") || `/${l}`);
   }
 
   return (
