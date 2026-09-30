@@ -99,6 +99,11 @@ export interface Translations {
   tool: {
     disclaimer: string;
   };
+  stats: {
+    quality: string;
+    speed: string;
+    price: string;
+  };
 }
 
 // ─── English ──────────────────────────────────────────────────────────────────
@@ -203,6 +208,11 @@ const en: Translations = {
   },
   tool: {
     disclaimer: "JazzGhost is not affiliated with Instagram™ or Meta. We don\'t host any Instagram content — all rights belong to their owners. Only public content can be accessed.",
+  },
+  stats: {
+    quality: "Max quality",
+    speed: "Avg download",
+    price: "Free forever",
   },
 };
 
@@ -309,6 +319,11 @@ const pt: Translations = {
   tool: {
     disclaimer: "JazzGhost não é afiliado ao Instagram™ ou Meta. Não hospedamos conteúdo do Instagram — todos os direitos pertencem aos seus proprietários. Apenas conteúdo público pode ser acessado.",
   },
+  stats: {
+    quality: "Qualidade máxima",
+    speed: "Download médio",
+    price: "Sempre grátis",
+  },
 };
 
 // ─── Persian / Farsi ──────────────────────────────────────────────────────────
@@ -413,6 +428,11 @@ const fa: Translations = {
   },
   tool: {
     disclaimer: "JazzGhost به اینستاگرام™ یا متا وابسته نیست. ما هیچ محتوایی از اینستاگرام میزبانی نمی‌کنیم — تمام حقوق متعلق به صاحبان آن‌هاست. فقط محتوای عمومی قابل دسترسی است.",
+  },
+  stats: {
+    quality: "بیشترین کیفیت",
+    speed: "میانگین دانلود",
+    price: "همیشه رایگان",
   },
 };
 
@@ -519,6 +539,11 @@ const de: Translations = {
   tool: {
     disclaimer: "JazzGhost ist nicht mit Instagram™ oder Meta verbunden. Wir hosten keine Instagram-Inhalte — alle Rechte liegen bei den jeweiligen Eigentümern. Nur öffentliche Inhalte können abgerufen werden.",
   },
+  stats: {
+    quality: "Maximale Qualität",
+    speed: "Ø-Download",
+    price: "Immer kostenlos",
+  },
 };
 
 // ─── French ───────────────────────────────────────────────────────────────────
@@ -623,6 +648,11 @@ const fr: Translations = {
   },
   tool: {
     disclaimer: "JazzGhost n\'est pas affilié à Instagram™ ou Meta. Nous n\'hébergeons aucun contenu Instagram — tous les droits appartiennent à leurs propriétaires. Seul le contenu public est accessible.",
+  },
+  stats: {
+    quality: "Qualité max",
+    speed: "Téléchargement moy.",
+    price: "Toujours gratuit",
   },
 };
 
@@ -729,6 +759,11 @@ const ja: Translations = {
   tool: {
     disclaimer: "JazzGhostはInstagram™またはMetaとは無関係です。Instagramのコンテンツをホストしていません — すべての権利は各所有者に帰属します。公開コンテンツのみアクセス可能です。",
   },
+  stats: {
+    quality: "最高品質",
+    speed: "平均ダウンロード",
+    price: "ずっと無料",
+  },
 };
 
 // ─── Dutch ────────────────────────────────────────────────────────────────────
@@ -833,6 +868,11 @@ const nl: Translations = {
   },
   tool: {
     disclaimer: "JazzGhost is niet gelieerd aan Instagram™ of Meta. We hosten geen Instagram-inhoud — alle rechten behoren toe aan hun eigenaars. Alleen publieke inhoud is toegankelijk.",
+  },
+  stats: {
+    quality: "Max kwaliteit",
+    speed: "Gem. download",
+    price: "Altijd gratis",
   },
 };
 
@@ -939,6 +979,11 @@ const sv: Translations = {
   tool: {
     disclaimer: "JazzGhost är inte anslutet till Instagram™ eller Meta. Vi är värd för inget Instagram-innehåll — alla rättigheter tillhör sina ägare. Endast offentligt innehåll kan nås.",
   },
+  stats: {
+    quality: "Maxkvalitet",
+    speed: "Gn. nedladdning",
+    price: "Alltid gratis",
+  },
 };
 
 // ─── Norwegian ────────────────────────────────────────────────────────────────
@@ -1043,6 +1088,11 @@ const no: Translations = {
   },
   tool: {
     disclaimer: "JazzGhost er ikke tilknyttet Instagram™ eller Meta. Vi er vert for ingen Instagram-innhold — alle rettigheter tilhører sine eiere. Bare offentlig innhold er tilgjengelig.",
+  },
+  stats: {
+    quality: "Maks kvalitet",
+    speed: "Gj. nedlasting",
+    price: "Alltid gratis",
   },
 };
 
@@ -1149,6 +1199,11 @@ const da: Translations = {
   tool: {
     disclaimer: "JazzGhost er ikke tilknyttet Instagram™ eller Meta. Vi hoster intet Instagram-indhold — alle rettigheder tilhører ejerne. Kun offentligt indhold er tilgængeligt.",
   },
+  stats: {
+    quality: "Maks kvalitet",
+    speed: "Gns. download",
+    price: "Altid gratis",
+  },
 };
 
 // ─── Italian ──────────────────────────────────────────────────────────────────
@@ -1253,6 +1308,11 @@ const it: Translations = {
   },
   tool: {
     disclaimer: "JazzGhost non è affiliato a Instagram™ o Meta. Non ospitiamo contenuti Instagram — tutti i diritti appartengono ai loro proprietari. Solo i contenuti pubblici sono accessibili.",
+  },
+  stats: {
+    quality: "Qualità massima",
+    speed: "Download medio",
+    price: "Sempre gratis",
   },
 };
 
@@ -1359,6 +1419,11 @@ const es: Translations = {
   tool: {
     disclaimer: "JazzGhost no está afiliado a Instagram™ ni a Meta. No alojamos contenido de Instagram — todos los derechos pertenecen a sus propietarios. Solo se puede acceder al contenido público.",
   },
+  stats: {
+    quality: "Calidad máxima",
+    speed: "Descarga media",
+    price: "Siempre gratis",
+  },
 };
 
 // ─── Turkish ──────────────────────────────────────────────────────────────────
@@ -1464,6 +1529,11 @@ const tr: Translations = {
   tool: {
     disclaimer: "JazzGhost, Instagram™ veya Meta ile bağlantılı değildir. Herhangi bir Instagram içeriğine ev sahipliği yapmıyoruz — tüm haklar sahiplerine aittir. Yalnızca genel içeriklere erişilebilir.",
   },
+  stats: {
+    quality: "Max kalite",
+    speed: "Ort. indirme",
+    price: "Sonsuza dek ücretsiz",
+  },
 };
 
 // ─── Arabic ───────────────────────────────────────────────────────────────────
@@ -1568,6 +1638,11 @@ const ar: Translations = {
   },
   tool: {
     disclaimer: "JazzGhost غير مرتبط بـ Instagram™ أو Meta. لا نستضيف أي محتوى من Instagram — جميع الحقوق تعود لأصحابها. يمكن الوصول إلى المحتوى العام فقط.",
+  },
+  stats: {
+    quality: "أقصى جودة",
+    speed: "متوسط التحميل",
+    price: "مجاني للأبد",
   },
 };
 

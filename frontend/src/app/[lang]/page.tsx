@@ -126,10 +126,10 @@ export default function HomePage() {
             {/* Supported badges — icon labels (no emojis) */}
             <div className="anim-fade-up anim-delay-200 mb-10 flex flex-wrap justify-center gap-2">
               {[
-                { label: "Reel",     icon: <IconReel /> },
-                { label: "Post",     icon: <IconPost /> },
-                { label: "Carousel", icon: <IconCarousel /> },
-                { label: "Story",    icon: <IconStory /> },
+                { label: t.download.typeLabels.reel,     icon: <IconReel /> },
+                { label: t.download.typeLabels.post,     icon: <IconPost /> },
+                { label: t.download.typeLabels.carousel, icon: <IconCarousel /> },
+                { label: t.download.typeLabels.story,    icon: <IconStory /> },
               ].map((s) => (
                 <span
                   key={s.label}
@@ -264,9 +264,9 @@ export default function HomePage() {
           >
             <div className="grid grid-cols-3 divide-x divide-white/[0.06]">
               {[
-                { num: "HD", label: "Max quality" },
-                { num: "3s",  label: "Avg download" },
-                { num: "∞",  label: "Free forever" },
+                { num: "HD", label: t.stats.quality },
+                { num: "3s", label: t.stats.speed },
+                { num: "∞",  label: t.stats.price },
               ].map((s) => (
                 <div key={s.label} className="px-4 text-center">
                   <div
